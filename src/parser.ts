@@ -42,49 +42,80 @@ class Parser {
         for (let event of this.allEvents) {
             this.events.push(new Event(event, this.players));
         }
+
+        const kills = this.events.filter(event => event.eventType === EventType.PlayerFraggedPlayer)
+            .reduce((acc, event) => {
+                const playerFrom = event.playerFrom && event.playerFrom.steamID;
+                if (playerFrom) {
+                    if (!acc[playerFrom])
+                        acc[playerFrom] = 0;
+
+                    acc[playerFrom]++;
+                }
+                return acc;
+            }, {});
+
+        this.players.players.forEach(player => {
+            console.log(`${player.name} killed ${kills[player.steamID]} players.`);
+        })
     }
 }
 
+// TODO: check `logs\L1125012.log` for others (like pills, caltrop, etc.)
 export enum EventType {
-    StartLog,
-    MapLoading,
-    ServerCvarStart,
-    ServerCvar,
-    ServerCvarEnd,
-    ServerName,
-    MapLoaded,
-    PlayerJoinTeam,
-    PlayerJoinServer,
-    PlayerChangeRole,
-    PlayerCommitSuicide,
-    PlayerMM1,
-    PlayerMM2,
-    PlayerFraggedPlayer, /* done */
-    RconCommand,
+    StartLog, /* done */
+    MapLoading, /* done */
+    ServerCvarStart, /* done */
+    ServerCvar, /* done */
+    ServerCvarEnd, /* done */
+    ServerName, /* done */
+    MapLoaded, /* done */
+    PlayerJoinTeam, /* done, need to normalize team */
+    PlayerJoinServer, /* done */
+    PlayerChangeRole, /* done, need to normalize class */
+    PlayerCommitSuicide, /* done */
+    PlayerMM1, /* done */
+    PlayerMM2, /* done */
+    RconCommand, /* done */
     ServerSay,
-    WorldTrigger,
-    PrematchEnd,
-    PlayerSpawn,
+    WorldTrigger, 
+    PrematchEnd, /* done */
+    PlayerSpawn, /* done */
     PlayerConced, /* done */
+    PlayerCaltroppedPlayer, /* done */
+    PlayerFraggedPlayer, /* done */
     PlayerFraggedGun, /* done */
     PlayerFraggedDispenser, /* done */
-    PlayerDetpackSet,
-    PlayerDetpackExplode,
+    PlayerTranqedPlayer, /* done */
+    PlayerHallucinatedPlayer, /* done */
+    PlayerInfectedPlayer, /* done */
+    PlayerPassedInfection, /* done */
+    PlayerDetpackSet, /* done, not verified */
+    PlayerDetpackExplode, /* done, not verified */
     PlayerDetpackDisarm, /* done, not verified */
-    PlayerUpgradedGun,
+    PlayerUpgradedGun, /* done */
     PlayerUpgradedOtherGun, /* done, not verified */
-    PlayerBuiltSentryGun,
-    PlayerBuiltDispenser,
-    PlayerBuiltTeleporter,
-    PlayerDetonatedBuilding,
-    PlayerDismantledBuilding,
+    PlayerBuiltSentryGun, /* done */
+    PlayerBuiltDispenser, /* done */
+    PlayerBuiltTeleporter, /* done, not verified */
+    PlayerRepairedBuilding, /* done */
+    PlayerDetonatedBuilding, /* done, not verified (no teleporter) */
+    PlayerDismantledBuilding, /* done, not verified (only sentrygun) */
+    PlayerPickedUpFlag, /* TODO: will be very map-specific */
+    PlayerCapturedFlag, /* TODO: will be very map-specific */
+    PlayerGotSecurity, /* TODO: will be very map-specific */
+    PlayerOpenedDetpackEntrance, /* TODO: will be very map-specific */
     PlayerHeal, /* done */
-    TeamScore,
+    FlagReturn, /* done, not verified */
+    SecurityUp, /* done, need to normalize team */
+    TeamScore, /* done, need to normalize team */
     MetaModMessages,
-    EndLog,
+    EndLog, /* done */
 };
 
+// TODO: check `logs\L1125012.log` for others (like pills, tranq, knife, detpack, caltrop, etc.)
 export enum Weapon {
+    None = 0,
     NormalGrenade,
     NailGrenade,
     MirvGrenade,
@@ -92,9 +123,12 @@ export enum Weapon {
     Supernails,
     Nails,
     Crowbar,
+    Spanner,
+    Medkit,
     Shotgun,
     SuperShotgun,
     Rocket,
+    AutoCannon,
     Railgun,
     SentryGun,
     BuildingDispenser,
@@ -102,6 +136,19 @@ export enum Weapon {
     GreenPipe,
     BluePipe,
     Detpack,
+    Flames,
+    NapalmGrenade,
+    Caltrop,
+    GasGrenade,
+    Knife,
+    Headshot,
+    SniperRifle,
+    AutoRifle,
+    Infection,
+    WorldSpawn, /* can we distinguish between world/fall dmg? */
+    Train,
+    Lasers,
+    Pit,
 }
 
 class Event {
@@ -124,10 +171,17 @@ class Event {
 
             // figure out the type of event (TODO)
             const lineData = line.substr(25);
+            
+            // RE to split up words (TODO: also remove quotes?)
+            let lineDataRE = /(\b[^\s]+\b)/ig
 
             // try to match player names
-            let playerRE = /"([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[a-z]+>"/ig
+            let playerRE = /"([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[a-z]*>"/ig
             const lineDataParts = lineData.split(playerRE);
+
+            // short-circuit HLTV/Metamod for now (TODO)
+            if (lineData.indexOf('<HLTV><>') !== -1 || lineData.indexOf('[META]') !== -1)
+                return;
 
             // if there is a player match, we'll have multiple parts
             if (lineDataParts.length >= 2) {
@@ -174,6 +228,7 @@ class Event {
 
                             } else if (eventTextParts[1].startsWith(`"Sentry_Upgrade`)) {
                                 this.eventType = EventType.PlayerUpgradedOtherGun;
+                                // TODO: to what level?
 
                             } else if (eventTextParts[1] === `"Detpack_Disarmed"`) {
                                 this.eventType = EventType.PlayerDetpackDisarm;
@@ -181,6 +236,21 @@ class Event {
                             } else if (eventTextParts[1] === `"Medic_Heal"`) {
                                 this.eventType = EventType.PlayerHeal;
 
+                            } else if (eventTextParts[1] === `"Caltrop_Grenade"`) {
+                                this.eventType = EventType.PlayerCaltroppedPlayer;
+
+                            } else if (eventTextParts[1] === `"Spy_Tranq"`) {
+                                this.eventType = EventType.PlayerTranqedPlayer;
+                                
+                            } else if (eventTextParts[1] === `"Hallucination_Grenade"`) {
+                                this.eventType = EventType.PlayerHallucinatedPlayer;
+
+                            } else if (eventTextParts[1] === `"Medic_Infection"`) {
+                                this.eventType = EventType.PlayerInfectedPlayer;
+                            
+                            } else if (eventTextParts[1] === `"Passed_On_Infection"`) {
+                                this.eventType = EventType.PlayerPassedInfection;
+                                
                             } else {
                                 console.log("unknown 'triggered' event: " + line);
                                 throw ""; // TODO
@@ -190,6 +260,257 @@ class Event {
                             console.log("Unknown multi-player event: " + line);
                             throw ""; // TODO
                     }
+                } else {
+                    let parts = eventText.match(lineDataRE) as RegExpMatchArray; // force to never be null (should always find words)
+                    switch (parts[0]) {
+                        case "say_team":
+                        case "say":
+                            // TODO: does say_team always create an extra new-line?
+                            this.eventType = parts[0] === "say_team" ? EventType.PlayerMM2 : EventType.PlayerMM1;
+                            const firstQuote = eventText.search('"');
+                            let text = eventText.slice(firstQuote + 1);
+
+                            // remove the last quote, if it exists
+                            if (text[text.length - 1] === '"')
+                                text = text.slice(0, text.length - 1).trim();
+
+                            this.data = [text];
+                            break;
+                        case "joined":
+                            this.eventType = EventType.PlayerJoinTeam;
+                            this.data = [parts[2]];
+                            break;
+                        case "entered":
+                            this.eventType = EventType.PlayerJoinServer;
+                            break;
+                        case "changed": 
+                            this.eventType = EventType.PlayerChangeRole;
+                            this.data = [parts[3]];
+                            break;
+                        case "committed": // TODO: sometimes this line has extra data
+                        /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
+                            this.eventType = EventType.PlayerCommitSuicide;
+                            this.withWeapon = Event.parseWeapon(parts.slice(3).join(' '));
+                            break;
+                        case "triggered":
+                            switch (parts[1]) {
+                                case "info_player_teamspawn":
+                                    this.eventType = EventType.PlayerSpawn;
+                                    break;
+                                case "Sentry_Built_Level_1":
+                                    this.eventType = EventType.PlayerBuiltSentryGun;
+                                    break;
+                                case "Sentry_Upgrade_Level_2":
+                                    this.eventType = EventType.PlayerUpgradedGun;
+                                    this.data = ["2"];
+                                    break;
+                                case "Sentry_Upgrade_Level_3":
+                                    this.eventType = EventType.PlayerUpgradedGun;
+                                    this.data = ["3"];
+                                    break;
+                                case "Sentry_Repair":
+                                    this.eventType = EventType.PlayerRepairedBuilding;
+                                    this.withWeapon = Event.parseWeapon("sentrygun");
+                                    break;
+                                case "Built_Dispenser":
+                                    this.eventType = EventType.PlayerBuiltDispenser;
+                                    break;
+                                case "Dispenser_Destroyed":
+                                    this.eventType = EventType.PlayerDetonatedBuilding;
+                                    this.withWeapon = Event.parseWeapon("dispenser");
+                                    break;
+                                case "Sentry_Destroyed":
+                                    this.eventType = EventType.PlayerDetonatedBuilding;
+                                    this.withWeapon = Event.parseWeapon("sentrygun");
+                                    break;
+                                case "Sentry_Dismantle":
+                                    this.eventType = EventType.PlayerDismantledBuilding;
+                                    this.withWeapon = Event.parseWeapon("sentrygun");
+                                    break;
+                                case "Detpack_Set":
+                                    this.eventType = EventType.PlayerDetpackSet;
+                                    break;
+                                case "Detpack_Explode":
+                                    this.eventType = EventType.PlayerDetpackExplode;
+                                    break;
+                                case "goalitem":
+                                    if (parts.length === 2)
+                                        this.eventType = EventType.PlayerPickedUpFlag;
+                                    else
+                                        console.error('unknown player trigger "goalitem": ' + eventText);
+                                    break;
+                                case "Red": 
+                                case "Blue":
+                                    switch (parts[2]) {
+                                        case "Flag":
+                                            this.eventType = EventType.PlayerPickedUpFlag;
+                                            break;
+                                        case "Cap":
+                                            if (parts[3] === "Point") // monkey_l
+                                                this.eventType = EventType.PlayerCapturedFlag;
+                                            else if (parts.length === 3) // waterwar
+                                                this.eventType = EventType.PlayerCapturedFlag;
+                                            else
+                                                console.error('unknown player trigger "Red/Blue Cap": ' + eventText);
+                                            break;
+                                        case "Capture":
+                                            if (parts[3] === "Point") // orbit_l3
+                                                this.eventType = EventType.PlayerCapturedFlag;
+                                            else
+                                                console.error('unknown player trigger "Red/Blue Capture": ' + eventText);
+                                            break;
+                                        default:
+                                            console.error('unknown player trigger Red/Blue: ' + eventText);
+                                    }
+                                    break;
+                                case "Team":
+                                    if (parts.length !== 4) {
+                                        console.error('unknown player trigger Team: ' + eventText);
+                                        break;
+                                    }
+
+                                    switch (parts[3]) {
+                                        case 'dropoff':
+                                            this.eventType = EventType.PlayerCapturedFlag;
+                                            break;
+                                        default:
+                                            console.error('unknown player trigger Team (len 3): ' + eventText);
+                                    }
+                                    break;
+                                case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
+                                    if (parts.length === 2)
+                                        this.eventType = EventType.PlayerCapturedFlag;
+                                    else
+                                        console.error('unknown t1df trigger: ' + eventText);
+                                    break;
+                                case 'rdet': // oppose2k1 water entrance det opened
+                                case 'bdet':
+                                case 'red_det': // 2mesa3 water opened
+                                case 'blue_det': 
+                                    if (parts.length === 2)
+                                        this.eventType = EventType.PlayerOpenedDetpackEntrance;
+                                    else
+                                        console.error('unknown rdet/bdet trigger: ' + eventText);
+                                    break;
+                                case 'red_down': // schtop
+                                case 'blue_down':
+                                    if (parts.length === 2)
+                                        this.eventType = EventType.PlayerGotSecurity;
+                                    else
+                                        console.error('unknown red_down/blue_down trigger: ' + eventText);
+                                    break;
+                                case 'red_up': // schtop
+                                case 'blue_up':
+                                    if (parts.length === 2) {
+                                        this.eventType = EventType.SecurityUp;
+                                        this.data = parts[1] === 'red_up' ? ["red"] : ["blue"];
+                                    }
+                                    break;
+                                // ignore these triggers
+                                case 'red_30': // 30s laser warning on schtop
+                                case 'ful': // full concs on oppose2k1
+                                case 'spawn_pak': // spawn pack on 2mesa3 (?)
+                                case 'blue_pak8': // spawn/gren pack on 2mesa3 (?)
+                                case 'func_button': // spawn door on 2mesa3 (either has "1" or "2" following)
+                                    break;
+                                default:
+                                    console.error(`unknown player trigger: ${parts[1]}: ${eventText}`);
+                            }
+                            break;
+
+                    }
+                }
+            } else {
+                // handle non-player log messages
+                let parts = lineData.match(lineDataRE) as RegExpMatchArray; // force to never be null (should always find words)
+                switch (parts[0]) {
+                    case "Log": 
+                        if (parts[2] === "started")
+                            this.eventType = EventType.StartLog;
+                        else if (parts[2] === "closed")
+                            this.eventType = EventType.EndLog;
+                        else 
+                            console.error("Unknown 'log' message: " + lineData);
+                        break;
+                    case "Loading":
+                        if (parts[1] === "map") {
+                            this.eventType = EventType.MapLoading;
+                            this.data = [parts[2]];
+                        } else
+                            console.error("unknown 'loading' command: " + lineData);
+                        break;
+                    case "Started":
+                        if (parts[1] === "map") {
+                            this.eventType = EventType.MapLoaded;
+                            this.data = [parts[2]];
+                        } else
+                            console.error("unknown 'loading' command: " + lineData);
+                        break;
+                    case "Server":
+                        switch (parts[1]) {
+                            case "name":
+                                this.eventType = EventType.ServerName;
+                                this.data = [parts[3]];
+                                break;
+                            case "cvars":
+                                if (parts[2] === "start")
+                                    this.eventType = EventType.ServerCvarStart;
+                                else if (parts[2] === "end")
+                                    this.eventType = EventType.ServerCvarEnd
+                                else 
+                                    console.error("unknown 'server cvars' command: " + lineData);
+                                break;
+                            case "cvar":
+                                this.eventType = EventType.ServerCvar;
+                                this.data = [parts[2], parts[3]];
+                                break;
+                            default:
+                                console.error("unknown 'server' command: " + lineData);
+                        }
+                        break;
+                    case "Rcon":
+                        this.eventType = EventType.RconCommand;
+                        this.data = [parts.slice(4).join(' ')];
+                        break;
+                    case "World":
+                        if (parts[1] !== "triggered") {
+                            console.error("unknown 'World' command: " + lineData);
+                            break;
+                        }
+                        switch (parts[2]) {
+                            case "Match_Begins_Now":
+                                this.eventType = EventType.PrematchEnd;
+                                break;
+                            case "Red": 
+                            case "Blue":
+                                if (parts.slice(3).join(' ') === "Flag Returned Message")
+                                    this.eventType = EventType.FlagReturn;
+                                else 
+                                    console.log('unknown World "Red/Blue ..." trigger: ' + lineData);
+                                break;
+                            case 'never': // TODO: normalize this a little across maps
+                                this.eventType = EventType.WorldTrigger;
+
+                                let lastIndex = lineData.lastIndexOf('"');
+                                if (lastIndex === lineData.length - 1)
+                                    this.data = [lineData.slice(lineData.lastIndexOf('"', lineData.length - 2), lineData.length - 1)];
+                                else 
+                                    this.data = [lineData.slice(lastIndex)];
+                                break;
+                            default: 
+                                console.log('unknown World trigger: ' + lineData);
+                        }
+                        break;
+                    case "Team":
+                        if (parts[2] !== "scored") {
+                            console.error("unknown 'Team' command: " + lineData);
+                            break;
+                        }
+                        this.eventType = EventType.TeamScore;
+                        this.data = [parts[1], parts[3]];
+                        break;
+                    default:
+                        console.error('unknown non-player log message: ' + lineData);
                 }
             }
         }
@@ -215,26 +536,40 @@ class Event {
             case "mirvgrenade": 
                 return Weapon.MirvGrenade;
             case "supernails":
+            case "superng":
                 return Weapon.Supernails;
             case "nails":
+            case "ng":
                 return Weapon.Nails;
             case "crowbar":
+            case "axe":
                 return Weapon.Crowbar;
+            case 'spanner':
+                return Weapon.Spanner;
+            case 'medikit':
+                return Weapon.Medkit;
             case "shotgun":
                 return Weapon.Shotgun;
             case "supershotgun":
                 return Weapon.SuperShotgun;
             case "rocket":
+            case 'rpg':
                 return Weapon.Rocket;
+            case "ac":
+                return Weapon.AutoCannon;
             case "sentrygun":
                 return Weapon.SentryGun;
             case "pipebomb":
+            case "pl":
                 return Weapon.GreenPipe;
             case 'gl_grenade':
+            case 'gl':
                 return Weapon.BluePipe;
             case "building_dispenser":
+            case "dispenser":
                 return Weapon.BuildingDispenser;
             case "building_sentrygun":
+            case "sentrygun":
                 return Weapon.BuildingSentryGun;
             case "detpack":
                 return Weapon.Detpack;
@@ -242,6 +577,39 @@ class Event {
                 return Weapon.EmpGrenade;
             case "railgun":
                 return Weapon.Railgun;
+            case "flames":
+                return Weapon.Flames;
+            case "napalmgrenade":
+                return Weapon.NapalmGrenade;
+            case "caltrop":
+                return Weapon.Caltrop;
+            case "gasgrenade":
+                return Weapon.GasGrenade;
+            case "knife":
+                return Weapon.Knife;
+            case "headshot":
+                return Weapon.Headshot;
+            case "sniperrifle":
+                return Weapon.SniperRifle;
+            case "autorifle":
+                return Weapon.AutoRifle;
+            case "infection":
+                return Weapon.Infection;
+            case "world":
+            case "worldspawn":
+            case "worldspawn world":
+                return Weapon.WorldSpawn;
+            case "trigger_hurt":
+            case "trigger_hurt world": // TODO: this could be a trigger at the bottom of a pit (shutdown) or world (orbit), how can we distinguish with fall damage?
+            case "the red team's lasers world": // orbit_l3
+            case "the blue team's lasers world": // orbit_l3
+                return Weapon.Lasers;
+            case "train":
+                return Weapon.Train;
+            case "rock_falling_death world": // 2mesa3
+                return Weapon.Pit;
+            case "timer":
+                return Weapon.None;
             default:
                 throw "unknown weapon: " + weapon;
         }
@@ -266,7 +634,7 @@ class Player {
 
     // return the last name??
     public get name(): string {
-        return name[this.names.length - 1];
+        return this.names[this.names.length - 1];
     }
 
     public get steamID(): string {
@@ -283,21 +651,21 @@ class Player {
 }
 
 class PlayerList {
-    private players: Player[];
+    private _players: Player[];
     private teams: number[];
 
     constructor() {
-        this.players = [];
+        this._players = [];
         this.teams = [];
     }
 
     public getPlayer(steamID: string, name: string, playerID: number): Player {
         const playerIndex = this.playerExistsAtIndex(steamID);
         if (playerIndex !== -1)
-            return this.players[playerIndex];
+            return this._players[playerIndex];
 
         const newPlayer = new Player(steamID, name, playerID);
-        this.players.push(newPlayer);
+        this._players.push(newPlayer);
         return newPlayer;
     }
 
@@ -305,8 +673,8 @@ class PlayerList {
         const playerIndex = this.playerExistsAtIndex(player.steamID);
         
         if (playerIndex === -1) {
-            this.players.push(player);
-            return this.players.length - 1;
+            this._players.push(player);
+            return this._players.length - 1;
         } else {
             return playerIndex;
         }
@@ -318,7 +686,7 @@ class PlayerList {
             steamID = "STEAM_" + steamID;
             
         let foundIndex = -1;
-        this.players.some((curPlayer, i) => {
+        this._players.some((curPlayer, i) => {
             if (curPlayer.steamID === steamID) {
                 foundIndex = i;
                 return true;
@@ -328,6 +696,10 @@ class PlayerList {
         });
 
         return foundIndex;
+    }
+
+    public get players(): Player[] {
+        return this._players;
     }
 }
 
