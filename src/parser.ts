@@ -1,4 +1,8 @@
 import * as fs from 'fs';
+import EventType from './eventType';
+import Player from './player';
+import PlayerList from './playerList';
+import { PlayerClass, TeamColor, Weapon } from './constants';
 
 class Parser {
     private allData: string = "";
@@ -57,110 +61,21 @@ class Parser {
 
         this.players.players.forEach(player => {
             console.log(`${player.name} killed ${kills[player.steamID]} players.`);
-        })
+        });
+
+
     }
-}
-
-// TODO: check `logs\L1125012.log` for others (like pills, caltrop, etc.)
-export enum EventType {
-    StartLog, /* done */
-    MapLoading, /* done */
-    ServerCvarStart, /* done */
-    ServerCvar, /* done */
-    ServerCvarEnd, /* done */
-    ServerName, /* done */
-    MapLoaded, /* done */
-    PlayerJoinTeam, /* done, need to normalize team */
-    PlayerJoinServer, /* done */
-    PlayerChangeRole, /* done, need to normalize class */
-    PlayerCommitSuicide, /* done */
-    PlayerMM1, /* done */
-    PlayerMM2, /* done */
-    RconCommand, /* done */
-    ServerSay,
-    WorldTrigger, 
-    PrematchEnd, /* done */
-    PlayerSpawn, /* done */
-    PlayerConced, /* done */
-    PlayerCaltroppedPlayer, /* done */
-    PlayerFraggedPlayer, /* done */
-    PlayerFraggedGun, /* done */
-    PlayerFraggedDispenser, /* done */
-    PlayerTranqedPlayer, /* done */
-    PlayerHallucinatedPlayer, /* done */
-    PlayerInfectedPlayer, /* done */
-    PlayerPassedInfection, /* done */
-    PlayerDetpackSet, /* done, not verified */
-    PlayerDetpackExplode, /* done, not verified */
-    PlayerDetpackDisarm, /* done, not verified */
-    PlayerUpgradedGun, /* done */
-    PlayerUpgradedOtherGun, /* done, not verified */
-    PlayerBuiltSentryGun, /* done */
-    PlayerBuiltDispenser, /* done */
-    PlayerBuiltTeleporter, /* done, not verified */
-    PlayerRepairedBuilding, /* done */
-    PlayerDetonatedBuilding, /* done, not verified (no teleporter) */
-    PlayerDismantledBuilding, /* done, not verified (only sentrygun) */
-    PlayerPickedUpFlag, /* TODO: will be very map-specific */
-    PlayerCapturedFlag, /* TODO: will be very map-specific */
-    PlayerGotSecurity, /* TODO: will be very map-specific */
-    PlayerOpenedDetpackEntrance, /* TODO: will be very map-specific */
-    PlayerHeal, /* done */
-    FlagReturn, /* done, not verified */
-    SecurityUp, /* done, need to normalize team */
-    TeamScore, /* done, need to normalize team */
-    MetaModMessages,
-    EndLog, /* done */
-};
-
-// TODO: check `logs\L1125012.log` for others (like pills, tranq, knife, detpack, caltrop, etc.)
-export enum Weapon {
-    None = 0,
-    NormalGrenade,
-    NailGrenade,
-    MirvGrenade,
-    EmpGrenade,
-    Supernails,
-    Nails,
-    Crowbar,
-    Spanner,
-    Medkit,
-    Shotgun,
-    SuperShotgun,
-    Rocket,
-    AutoCannon,
-    Railgun,
-    SentryGun,
-    BuildingDispenser,
-    BuildingSentryGun,
-    GreenPipe,
-    BluePipe,
-    Detpack,
-    Flames,
-    NapalmGrenade,
-    Caltrop,
-    GasGrenade,
-    Knife,
-    Headshot,
-    SniperRifle,
-    AutoRifle,
-    Infection,
-    WorldSpawn, /* can we distinguish between world/fall dmg? */
-    Train,
-    Lasers,
-    Pit,
 }
 
 class Event {
     // TODO: top three should not be optional; should make required when parsing stable
     public eventType?: EventType;
     public timestamp?: Date;
-    public data?: string[];
+    public data?: ExtraData;
 
     public playerFrom?: Player;
     public playerTo?: Player;
     public withWeapon?: Weapon;
-    public extraData?: string; /** holds sentry levels */
 
     constructor(line: string, private playerList: PlayerList) {
         // a valid log line must start with 'L'
@@ -182,6 +97,8 @@ class Event {
             // short-circuit HLTV/Metamod for now (TODO)
             if (lineData.indexOf('<HLTV><>') !== -1 || lineData.indexOf('[META]') !== -1)
                 return;
+
+            this.data = {};
 
             // if there is a player match, we'll have multiple parts
             if (lineDataParts.length >= 2) {
@@ -274,18 +191,18 @@ class Event {
                             if (text[text.length - 1] === '"')
                                 text = text.slice(0, text.length - 1).trim();
 
-                            this.data = [text];
+                            this.data.value = text;
                             break;
                         case "joined":
                             this.eventType = EventType.PlayerJoinTeam;
-                            this.data = [parts[2]];
+                            this.data.team = Event.parseTeam(parts[2]);
                             break;
                         case "entered":
                             this.eventType = EventType.PlayerJoinServer;
                             break;
                         case "changed": 
                             this.eventType = EventType.PlayerChangeRole;
-                            this.data = [parts[3]];
+                            this.data.class = Event.parseClass(parts[3]);
                             break;
                         case "committed": // TODO: sometimes this line has extra data
                         /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
@@ -302,30 +219,30 @@ class Event {
                                     break;
                                 case "Sentry_Upgrade_Level_2":
                                     this.eventType = EventType.PlayerUpgradedGun;
-                                    this.data = ["2"];
+                                    this.data.level = 2;
                                     break;
                                 case "Sentry_Upgrade_Level_3":
                                     this.eventType = EventType.PlayerUpgradedGun;
-                                    this.data = ["3"];
+                                    this.data.level = 3;
                                     break;
                                 case "Sentry_Repair":
                                     this.eventType = EventType.PlayerRepairedBuilding;
-                                    this.withWeapon = Event.parseWeapon("sentrygun");
+                                    this.data.building = Event.parseWeapon("sentrygun");
                                     break;
                                 case "Built_Dispenser":
                                     this.eventType = EventType.PlayerBuiltDispenser;
                                     break;
                                 case "Dispenser_Destroyed":
                                     this.eventType = EventType.PlayerDetonatedBuilding;
-                                    this.withWeapon = Event.parseWeapon("dispenser");
+                                    this.data.building = Event.parseWeapon("dispenser");
                                     break;
                                 case "Sentry_Destroyed":
                                     this.eventType = EventType.PlayerDetonatedBuilding;
-                                    this.withWeapon = Event.parseWeapon("sentrygun");
+                                    this.data.building = Event.parseWeapon("sentrygun");
                                     break;
                                 case "Sentry_Dismantle":
                                     this.eventType = EventType.PlayerDismantledBuilding;
-                                    this.withWeapon = Event.parseWeapon("sentrygun");
+                                    this.data.building = Event.parseWeapon("sentrygun");
                                     break;
                                 case "Detpack_Set":
                                     this.eventType = EventType.PlayerDetpackSet;
@@ -403,7 +320,8 @@ class Event {
                                 case 'blue_up':
                                     if (parts.length === 2) {
                                         this.eventType = EventType.SecurityUp;
-                                        this.data = parts[1] === 'red_up' ? ["red"] : ["blue"];
+                                        const team = parts[1] === 'red_up' ? "red" : "blue";
+                                        this.data.team = Event.parseTeam(team);
                                     }
                                     break;
                                 // ignore these triggers
@@ -435,14 +353,14 @@ class Event {
                     case "Loading":
                         if (parts[1] === "map") {
                             this.eventType = EventType.MapLoading;
-                            this.data = [parts[2]];
+                            this.data.value = parts[2];
                         } else
                             console.error("unknown 'loading' command: " + lineData);
                         break;
                     case "Started":
                         if (parts[1] === "map") {
                             this.eventType = EventType.MapLoaded;
-                            this.data = [parts[2]];
+                            this.data.value = parts[2];
                         } else
                             console.error("unknown 'loading' command: " + lineData);
                         break;
@@ -450,7 +368,7 @@ class Event {
                         switch (parts[1]) {
                             case "name":
                                 this.eventType = EventType.ServerName;
-                                this.data = [parts[3]];
+                                this.data.value = parts[3];
                                 break;
                             case "cvars":
                                 if (parts[2] === "start")
@@ -462,7 +380,8 @@ class Event {
                                 break;
                             case "cvar":
                                 this.eventType = EventType.ServerCvar;
-                                this.data = [parts[2], parts[3]];
+                                this.data.key = parts[2];
+                                this.data.value = parts[3];
                                 break;
                             default:
                                 console.error("unknown 'server' command: " + lineData);
@@ -470,7 +389,7 @@ class Event {
                         break;
                     case "Rcon":
                         this.eventType = EventType.RconCommand;
-                        this.data = [parts.slice(4).join(' ')];
+                        this.data.value = parts.slice(4).join(' ');
                         break;
                     case "World":
                         if (parts[1] !== "triggered") {
@@ -493,9 +412,9 @@ class Event {
 
                                 let lastIndex = lineData.lastIndexOf('"');
                                 if (lastIndex === lineData.length - 1)
-                                    this.data = [lineData.slice(lineData.lastIndexOf('"', lineData.length - 2), lineData.length - 1)];
+                                    this.data.value = lineData.slice(lineData.lastIndexOf('"', lineData.length - 2), lineData.length - 1);
                                 else 
-                                    this.data = [lineData.slice(lastIndex)];
+                                    this.data.value = lineData.slice(lastIndex);
                                 break;
                             default: 
                                 console.log('unknown World trigger: ' + lineData);
@@ -507,12 +426,61 @@ class Event {
                             break;
                         }
                         this.eventType = EventType.TeamScore;
-                        this.data = [parts[1], parts[3]];
+                        this.data.team = Event.parseTeam(parts[1])
+                        this.data.value = parts[3];
                         break;
                     default:
                         console.error('unknown non-player log message: ' + lineData);
                 }
             }
+        }
+    }
+
+    public static parseClass(playerClass: string): PlayerClass {
+        playerClass = playerClass.trim();
+
+        switch (playerClass) {
+            case "Scout":
+                return PlayerClass.Scout;
+            case "Sniper":
+                return PlayerClass.Sniper;
+            case "Soldier":
+                return PlayerClass.Soldier;
+            case "Demoman":
+                return PlayerClass.Demoman;
+            case "Medic":
+                return PlayerClass.Medic;
+            case "HWGuy":
+                return PlayerClass.HWGuy;
+            case "Pyro":
+                return PlayerClass.Pyro;
+            case "Spy":
+                return PlayerClass.Spy;
+            case "Engineer":
+                return PlayerClass.Engineer;
+            case "Civilian":
+                return PlayerClass.Civilian;
+            default:
+                throw "undefined player class: " + playerClass;
+        }
+    }
+
+    public static parseTeam(team: string): TeamColor {
+        team = team.trim();
+
+        switch (team) {
+            case "Blue": 
+                return TeamColor.Blue;
+            case "Red":
+                return TeamColor.Red;
+            case "Yellow":
+                return TeamColor.Yellow;
+            case "Green":
+                return TeamColor.Green;
+            case "SPECTATOR":
+                return TeamColor.Spectator;
+            default:
+                throw "undefined team: " + team;
         }
     }
 
@@ -616,91 +584,13 @@ class Event {
     }
 }
 
-class Player {
-    private steamNum: string;
-    private names: string[];
-    private playerNum: number;
-
-    constructor(steamID: string, name: string, playerID: number) {
-        this.steamNum = steamID;
-        this.names = [name];
-        this.playerNum = playerID;
-    }
-
-    public addName(name: string): void {
-        if (this.names.indexOf(name) === -1)
-            this.names.push(name);
-    }
-
-    // return the last name??
-    public get name(): string {
-        return this.names[this.names.length - 1];
-    }
-
-    public get steamID(): string {
-        return "STEAM_" + this.steamNum;
-    }
-
-    public get playerID(): number { 
-        return this.playerNum;
-    }
-
-    public toString(): string {
-        return this.name;
-    }
-}
-
-class PlayerList {
-    private _players: Player[];
-    private teams: number[];
-
-    constructor() {
-        this._players = [];
-        this.teams = [];
-    }
-
-    public getPlayer(steamID: string, name: string, playerID: number): Player {
-        const playerIndex = this.playerExistsAtIndex(steamID);
-        if (playerIndex !== -1)
-            return this._players[playerIndex];
-
-        const newPlayer = new Player(steamID, name, playerID);
-        this._players.push(newPlayer);
-        return newPlayer;
-    }
-
-    public getPlayerNum(player: Player): number {
-        const playerIndex = this.playerExistsAtIndex(player.steamID);
-        
-        if (playerIndex === -1) {
-            this._players.push(player);
-            return this._players.length - 1;
-        } else {
-            return playerIndex;
-        }
-    }
-
-    // TODO: set players' teams
-    private playerExistsAtIndex(steamID: string): number { 
-        if (!steamID.startsWith("STEAM"))
-            steamID = "STEAM_" + steamID;
-            
-        let foundIndex = -1;
-        this._players.some((curPlayer, i) => {
-            if (curPlayer.steamID === steamID) {
-                foundIndex = i;
-                return true;
-            }
-
-            return false;
-        });
-
-        return foundIndex;
-    }
-
-    public get players(): Player[] {
-        return this._players;
-    }
+interface ExtraData {
+    class?: PlayerClass;
+    team?: TeamColor;
+    building?: Weapon;
+    level?: number;
+    key?: string;
+    value?: string;
 }
 
 export default Parser;
