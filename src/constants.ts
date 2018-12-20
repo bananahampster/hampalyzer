@@ -57,3 +57,22 @@ export enum TeamColor {
     Spectator,
 };
 
+export namespace TeamColor {
+    export function parseTeamColor(team: string): TeamColor {
+        switch (team) {
+            case "Blue":
+                return TeamColor.Blue;
+            case "Red":
+                return TeamColor.Red;
+            case "Yellow":
+                return TeamColor.Yellow;
+            case "Green":
+                return TeamColor.Green
+            case "Spectator":
+                return TeamColor.Spectator;
+            default:
+                console.warn("unknown team received by `parseTeamColor`; assigning to spectator")
+                return TeamColor.Spectator
+        }
+    }
+}

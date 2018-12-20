@@ -9,6 +9,10 @@ This README describes some of the intended utility of this library.
 The Hampalyzer should have an endpoint to consume a a given Half-Life GoldSource log file, which contains typical events such as frags, spawns, and players' interactions with in-game entities. From this file, the Hampalyzer will generate player-centric events that describe in-game performance, and also generate some metadata about the match (which players are on which team, 
 the final score of the match, what map was played, length of match, etc.).
 
+## To-Do
+
+[ ] Use handlebars.js to render templates to files?
+
 ## Building
 
 Execute `npm install` to install the needed attributes.  Run via node: `node dist/index.js`, or debug using VS Code.

@@ -4,20 +4,23 @@ import { TeamColor } from './constants';
 class PlayerList {
     private _players: Player[];
     private teams: { [team in TeamColor]?: Player[]; };
+    // private teams: TeamComposition;
 
     constructor() {
         this._players = [];
         this.teams = {};
     }
 
-    public getPlayer(steamID: string, name: string, playerID: number): Player {
+    public getPlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
         const playerIndex = this.playerExistsAtIndex(steamID);
         if (playerIndex !== -1)
             return this._players[playerIndex];
 
-        const newPlayer = new Player(steamID, name, playerID);
-        this._players.push(newPlayer);
-        return newPlayer;
+        if (name && playerID) {
+            const newPlayer = new Player(steamID, name!, playerID!);
+            this._players.push(newPlayer);
+            return newPlayer;
+        }
     }
 
     public getPlayerNum(player: Player): number {

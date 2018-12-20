@@ -8,9 +8,9 @@ export enum EventType {
     ServerCvarEnd, /* done */
     ServerName, /* done */
     MapLoaded, /* done */
-    PlayerJoinTeam, /* done, need to normalize team */
+    PlayerJoinTeam, /* done */
     PlayerJoinServer, /* done */
-    PlayerChangeRole, /* done, need to normalize class */
+    PlayerChangeRole, /* done */
     PlayerCommitSuicide, /* done */
     PlayerMM1, /* done */
     PlayerMM2, /* done */
@@ -24,6 +24,7 @@ export enum EventType {
     PlayerFraggedPlayer, /* done */
     PlayerFraggedGun, /* done */
     PlayerFraggedDispenser, /* done */
+    PlayerHitAirshot, /* done, not verified */
     PlayerTranqedPlayer, /* done */
     PlayerHallucinatedPlayer, /* done */
     PlayerInfectedPlayer, /* done */
@@ -37,16 +38,16 @@ export enum EventType {
     PlayerBuiltDispenser, /* done */
     PlayerBuiltTeleporter, /* done, not verified */
     PlayerRepairedBuilding, /* done */
-    PlayerDetonatedBuilding, /* done, not verified (no teleporter) */
-    PlayerDismantledBuilding, /* done, not verified (only sentrygun) */
+    PlayerDetonatedBuilding, /* done (no teleporter) */
+    PlayerDismantledBuilding, /* done (only sentrygun) */
     PlayerPickedUpFlag, /* TODO: will be very map-specific */
     PlayerCapturedFlag, /* TODO: will be very map-specific */
     PlayerGotSecurity, /* TODO: will be very map-specific */
     PlayerOpenedDetpackEntrance, /* TODO: will be very map-specific */
     PlayerHeal, /* done */
     FlagReturn, /* done, not verified */
-    SecurityUp, /* done, need to normalize team */
-    TeamScore, /* done, need to normalize team */
+    SecurityUp, /* done */
+    TeamScore, /* done */
     MetaModMessages,
     EndLog, /* done */
 };
