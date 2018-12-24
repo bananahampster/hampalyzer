@@ -2,16 +2,18 @@ import * as fs from 'fs';
 import EventType from './eventType';
 import Player from './player';
 import PlayerList from './playerList';
-import { PlayerClass, TeamColor, Weapon } from './constants';
+import { OutputStats, PlayerClass, TeamColor, Weapon } from './constants';
 import ParserUtils from './parserUtils';
 
 class Parser {
-    private allData: string = "";
+    private rawLogData: string = "";
     private doneReading: boolean = false;
     private players: PlayerList = new PlayerList();
 
     private allEvents: string[] = [];
     public events: Event[] = [];
+
+    private summarizedStats: OutputStats | undefined;
 
     constructor(private filename: string) { 
         // should probably check if the file exists here
@@ -21,7 +23,7 @@ class Parser {
         return new Promise<void>(resolve => { 
             const logStream = fs.createReadStream(this.filename);
             logStream.on('data', chunk => {
-                this.allData += chunk;
+                this.rawLogData += chunk;
             }).on('end', () => {
                 resolve();
                 this.doneReading = true;
@@ -38,11 +40,15 @@ class Parser {
     }
 
     public data(): string {
-        return this.allData;
+        return this.rawLogData;
+    }
+
+    public get stats(): OutputStats | undefined {
+        return this.summarizedStats;
     }
 
     private parseData(): void {
-        this.allEvents = this.allData.split("\n");
+        this.allEvents = this.rawLogData.split("\n");
 
         for (let event of this.allEvents) {
             const newEvent = Event.CreateEvent(event, this.players);
@@ -58,26 +64,26 @@ class Parser {
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
-        const stats = ParserUtils.getPlayerStats(this.events, teams);
-        console.log(`${stats}`);
+        const playerStats = ParserUtils.getPlayerStats(this.events, teams);
+        // console.log(`${playerStats}`);
 
-        const kills = this.events.filter(event => event.eventType === EventType.PlayerFraggedPlayer)
-            .reduce((acc, event) => {
-                const playerFrom = event.playerFrom && event.playerFrom.steamID;
-                if (playerFrom) {
-                    if (!acc[playerFrom])
-                        acc[playerFrom] = 0;
+        // const kills = this.events.filter(event => event.eventType === EventType.PlayerFraggedPlayer)
+        //     .reduce((acc, event) => {
+        //         const playerFrom = event.playerFrom && event.playerFrom.steamID;
+        //         if (playerFrom) {
+        //             if (!acc[playerFrom])
+        //                 acc[playerFrom] = 0;
 
-                    acc[playerFrom]++;
-                }
-                return acc;
-            }, {});
+        //             acc[playerFrom]++;
+        //         }
+        //         return acc;
+        //     }, {});
 
-        this.players.players.forEach(player => {
-            console.log(`${player.name} killed ${kills[player.steamID]} players.`);
-        });
+        // this.players.players.forEach(player => {
+        //     console.log(`${player.name} killed ${kills[player.steamID]} players.`);
+        // });
 
-
+        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, teams);
     }
 }
 
@@ -110,7 +116,6 @@ export class Event {
         this.playerTo = options.playerTo;
         this.withWeapon = options.withWeapon;
     }
-
 
     public static CreateEvent(line: string, playerList: PlayerList): Event | undefined {
         let eventType: EventType | undefined;
@@ -493,6 +498,14 @@ export class Event {
         }
         
         console.log("unknown line in log: " + line);
+    }
+
+    public get value(): string {
+        return this.data && this.data.value || "(unknown)";
+    }
+
+    public get key(): string {
+        return this.data && this.data.key || "(unknown)";
     }
 
     public static parseClass(playerClass: string): PlayerClass {

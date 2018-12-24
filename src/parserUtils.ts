@@ -1,7 +1,7 @@
 import PlayerList from "./playerList";
 import { Event } from "./parser";
 import Player from "./player";
-import { TeamColor} from "./constants";
+import { TeamColor, OutputStats, OutputPlayerStats} from "./constants";
 import EventType from "./eventType";
 
 export type TeamComposition = { [team in TeamColor]?: Player[]; };
@@ -286,5 +286,123 @@ export default class ParserUtils {
                 return true;
             return false;
         });
+    }
+
+    public static generateOutputStats(events: Event[], stats: PlayerStats, playerList: PlayerList, teams: TeamComposition): OutputStats {
+        // map
+        const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
+        const map = mapEvent && mapEvent.value || "(not found)";
+
+        // date
+        const firstTimestamp = events[0].timestamp;
+        const dayOfMonth = firstTimestamp.getDate();
+        const month = Intl.DateTimeFormat('en-US', { month: 'short' }).format(firstTimestamp);
+        const year = firstTimestamp.getFullYear();
+        const date = [dayOfMonth, month, year].join(" ");
+
+        // time
+        const time = Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+            .format(firstTimestamp);
+
+        // server
+        const serverEvent = events.find(event => event.eventType === EventType.ServerName);
+        const server = serverEvent && serverEvent.value || "(not found)";
+
+        // log name (server [up to 10 char or first word boundary], date string, time)
+        let serverShortName = server.split(/\s+/)[0];
+        if (serverShortName.length > 10) serverShortName = serverShortName.slice(0, 10);
+        const logName = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
+
+        // game time (should we calculate this somewhere else?)
+        const prematchEndEvent = events.find(event => event.eventType === EventType.PrematchEnd);
+        const matchEndEvent = events.find(event => event.eventType === EventType.TeamScore);
+        
+        const matchStart = prematchEndEvent && prematchEndEvent.timestamp || firstTimestamp;
+        const matchEnd = matchEndEvent && matchEndEvent.timestamp || new Date(Date.now());
+
+        const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
+            .format(matchEnd.valueOf() - matchStart.valueOf());
+
+        const players = this.generateOutputPlayerStats(stats, playerList, teams);
+
+        return {
+            log_name: logName,
+            map: map,
+            date: date,
+            time: time,
+            game_time: gameTime,
+            server: server,
+            players: players,
+        };
+    }
+
+    public static generateOutputPlayerStats(stats: PlayerStats, players: PlayerList, teams: TeamComposition): OutputPlayerStats[] {
+        // calculate stats per player
+        let outputStats: OutputPlayerStats[] = [];
+
+        // iterate through the players identified as playing on the teams of interest (for now, Blue and Red)
+        [1, 2].forEach(team => {
+            const teamPlayerIDs = (teams[String(team)] as Player[]).map(player => player.steamID);
+
+            for (const playerID of teamPlayerIDs) {
+                let poStats: OutputPlayerStats = this.blankOutputPlayerStats();
+                poStats.name = players.getPlayer(playerID)!.name;
+                poStats.steam_id = playerID;
+    
+                const playerStats = stats[playerID];
+                for (const stat in playerStats) {
+                    const statEvents = playerStats[stat];
+    
+                    switch (stat) {
+                        case 'flag_capture':
+                            poStats.caps = statEvents.length; break;
+                        case 'conc_jump':
+                            poStats.concs = statEvents.length; break;
+                        case 'death': 
+                            poStats.deaths = statEvents.length; break;
+                        case 'flag_carry':
+                            // TODO calculate flag time (maybe collect all player-specific flag events here?)
+                            // poStats.flagTime = this.calculatePlayerFlagTime(statEvents);
+                            // poStats.toss_percent = this.calculatePlayerFlagTossPercent(statEvents);
+                            poStats.touches = statEvents.length;
+                            break;
+                        case 'kill':
+                            poStats.kills = statEvents.length; break;
+                        case 'got_button':
+                            poStats.obj = statEvents.length; break;
+                        case 'kill_sg':
+                            poStats.sg_kills = statEvents.length; break;
+                        case 'suicide':
+                            poStats.suicides = statEvents.length; break;
+                        case 'team_death':
+                            poStats.team_deaths = statEvents.length; break;
+                        case 'team_kill':
+                            poStats.team_kills = statEvents.length; break;
+                    }
+                }
+                outputStats.push(poStats);
+            }
+        });
+
+        return outputStats;
+    }
+
+    private static blankOutputPlayerStats(): OutputPlayerStats {
+        return {
+            name: "(unknown)",
+            steam_id: "(unknown)",
+            caps: 0,
+            concs: 0,
+            deaths: 0,
+            flag_time: "0:00",
+            kills: 0,
+            obj: 0,
+            sg_kills: 0,
+            suicides: 0,
+            team_deaths: 0,
+            team_kills: 0,
+            toss_percent: 0,
+            touches: 0,
+        };
     }
 }

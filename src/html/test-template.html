@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>TFC Stats: {{map}} at {{server}} ({{date}}, {{time}})</title>
+    
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        crossorigin="anonymous">
+
+    <!-- hamp stylin' -->
+    <link rel="stylesheet" href="hamp.css" />
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-sm-3 mr-0" href="#">Hampalyzer</a>
+        <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search" />
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+                <a class="nav-link" href="#">Other Logs</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                Stats Summary
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Flag Movement
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Pace
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Player List</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        {{#each players}}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                {{name}}
+                            </a>
+                        </li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-sm-9 ml-sm-auto col-lg-10 px-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <p class="h2">TFC Statistics</p>
+                        <ul class="list-unstyled">
+                            <!-- should probably css-style these icons to align text; 
+                                 see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
+                            <li><i class="fas fa-lg fa-server"></i>&nbsp; {{server}} on {{date}}</li>
+                            <li><i class="fas fa-lg fa-map-marked-alt"></i>&nbsp; {{map}}</li>
+                            <li><i class="fas fa-clock"></i>&nbsp;&nbsp; {{game_time}}m at {{time}}</li>
+                        </ul>
+                        
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group mr-2">
+                            <button class="btn btn-sm btn-outline-secondary">Pin</button>
+                            <button class="btn btn-sm btn-outline-secondary">Download</button>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle">
+                            This week
+                        </button>
+                    </div>
+                </div>
+
+                <h2>Statistics</h2>
+                <div class="table-responsive">
+                    <table id="stats" class="table table-striped table-borderless table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Kills</th>
+                                <th><abbr title="Team-Kills">TK</abbr></th>
+                                <th><abbr title="Sentry Gun Kills">SG</abbr></th>
+                                <th>Runs</th>
+                                <th><abbr title="Suicides">Sui</abbr></th>
+                                <th><abbr title="Team-Deaths">TD</abbr></th>
+                                <th><abbr title="Concussion Grenades Used">Concs</abbr></th>
+                                <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
+                                <th><abbr title="Flag/Goal Touches">Touches</abbr></th>
+                                <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
+                                <th>Flag Time</th>
+                                <th><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
+                                <th>Kills</th>
+                                <th><abbr title="Team-Kills">TK</abbr></th>
+                                <th>Deaths</th>
+                                <th><abbr title="Team-Deaths">TD</abbr></th>
+                                <th><abbr title="Suicides">Sui</abbr></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each players}}
+                            <tr>
+                                <td>{{name}}</td>
+                                <td>{{kills}}</td>
+                                <td>{{team_kills}}</td>
+                                <td>{{sg_kills}}</td>
+                                <td>{{deaths}}</td>
+                                <td>{{suicides}}</td>
+                                <td>{{team_deaths}}</td>
+                                <td>{{concs}}</td>
+                                <td>{{caps}}</td>
+                                <td>{{touches}}</td>
+                                <td>{{toss_percent}}</td>
+                                <td>{{flag_time}}</td>
+                                <td>{{obj}}</td>
+                                <td>{{d_kills}}</td>
+                                <td>{{d_tk}}</td>
+                                <td>{{d_deaths}}</td>
+                                <td>{{d_team_deaths}}</td>
+                                <td>{{d_suicides}}</td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
