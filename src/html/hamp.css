@@ -94,6 +94,32 @@ body {
     padding-left: 10px;
 }
 
+/** team styles */
+
+.team1 {
+    background-color: rgba(0, 123, 255, 0.3);
+}
+
+.team2 {
+    background-color: rgba(220, 53, 69, 0.3);
+}
+
+.team3 {
+    background-color: rgba(255, 193, 7, 0.3);
+}
+
+.team4 {
+    background-color: rgba(40, 167, 69, 0.3);
+}
+
+.team5 {
+    background-color: rgba(248, 249, 250, 0.3);
+}
+
+.table-hover tbody tr:hover td {
+    background: rgba(248, 249, 250, 0.25);
+}
+
 /** navbar styles */
 
 .navbar-brand {

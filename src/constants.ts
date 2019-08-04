@@ -1,3 +1,5 @@
+import { TeamScore } from "./parserUtils";
+
 export interface OutputStats {
     log_name: string;
     map: string;
@@ -5,11 +7,17 @@ export interface OutputStats {
     date: string;
     time: string;
     game_time: string;
+    score: TeamScore;
     players: OutputPlayerStats[];
+}
+
+export interface OutputStatsFullGame extends OutputStats {
+    players: OutputPlayerStatsFullGame[];
 }
 
 export interface OutputPlayerStats {
     name: string;
+    team: number;
     steam_id: string;
     kills: number;
     team_kills: number;
@@ -23,11 +31,27 @@ export interface OutputPlayerStats {
     toss_percent: number;
     flag_time: string;
     obj: number;
+    // TODO: unused
     d_kills?: number;
     d_tk?: number;
     d_deaths?: number;
     d_team_deaths?: number;
     d_suicidies?: number;
+}
+
+export interface OutputPlayerStatsFullGame extends OutputPlayerStats {
+    rd2_kills: number;
+    rd2_team_kills: number;
+    rd2_sg_kills: number;
+    rd2_deaths: number;
+    rd2_suicides: number;
+    rd2_team_deaths: number;
+    rd2_concs: number;
+    rd2_caps: number;
+    rd2_touches: number;
+    rd2_toss_percent: number;
+    rd2_flag_time: string;
+    rd2_obj: number;
 }
 
 // TODO: check `logs\L1125012.log` for others (like pills, tranq, knife, detpack, caltrop, etc.)

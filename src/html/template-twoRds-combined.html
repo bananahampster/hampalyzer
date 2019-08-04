@@ -12,7 +12,7 @@
         crossorigin="anonymous">
 
     <!-- hamp stylin' -->
-    <link rel="stylesheet" href="hamp.css" />
+    <link rel="stylesheet" href="hamp2.css" />
 </head>
 
 <body>
@@ -73,7 +73,7 @@
                                  see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
                             <li><i class="fas fa-lg fa-server"></i>&nbsp; {{server}} on {{date}}</li>
                             <li><i class="fas fa-lg fa-map-marked-alt"></i>&nbsp; {{map}}</li>
-                            <li><i class="fas fa-clock"></i>&nbsp;&nbsp; {{game_time}}m at {{time}}</li>
+                            <li><i class="fas fa-clock"></i>&nbsp;&nbsp; {{game_time}}m &times; 2 at {{time}}</li>
                         </ul>
                         
                     </div>
@@ -97,20 +97,27 @@
                                 <th>Kills</th>
                                 <th><abbr title="Team-Kills">TK</abbr></th>
                                 <th><abbr title="Sentry Gun Kills">SG</abbr></th>
-                                <th>Runs</th>
+                                <th>Deaths</th>
                                 <th><abbr title="Suicides">Sui</abbr></th>
                                 <th><abbr title="Team-Deaths">TD</abbr></th>
                                 <th><abbr title="Concussion Grenades Used">Concs</abbr></th>
                                 <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
-                                <th><abbr title="Flag/Goal Touches">Touches</abbr></th>
+                                <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
                                 <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
                                 <th>Flag Time</th>
                                 <th><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
                                 <th>Kills</th>
                                 <th><abbr title="Team-Kills">TK</abbr></th>
+                                <th><abbr title="Sentry Gun Kills">SG</abbr></th>
                                 <th>Deaths</th>
-                                <th><abbr title="Team-Deaths">TD</abbr></th>
                                 <th><abbr title="Suicides">Sui</abbr></th>
+                                <th><abbr title="Team-Deaths">TD</abbr></th>
+                                <th><abbr title="Concussion Grenades Used">Concs</abbr></th>
+                                <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
+                                <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
+                                <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
+                                <th>Flag Time</th>
+                                <th><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -129,11 +136,18 @@
                                 <td>{{toss_percent}}</td>
                                 <td>{{flag_time}}</td>
                                 <td>{{obj}}</td>
-                                <td>{{d_kills}}</td>
-                                <td>{{d_tk}}</td>
-                                <td>{{d_deaths}}</td>
-                                <td>{{d_team_deaths}}</td>
-                                <td>{{d_suicides}}</td>
+                                <td>{{rd2_kills}}</td>
+                                <td>{{rd2_team_kills}}</td>
+                                <td>{{rd2_sg_kills}}</td>
+                                <td>{{rd2_deaths}}</td>
+                                <td>{{rd2_suicides}}</td>
+                                <td>{{rd2_team_deaths}}</td>
+                                <td>{{rd2_concs}}</td>
+                                <td>{{rd2_caps}}</td>
+                                <td>{{rd2_touches}}</td>
+                                <td>{{rd2_toss_percent}}</td>
+                                <td>{{rd2_flag_time}}</td>
+                                <td>{{rd2_obj}}</td>
                             </tr>
                             {{/each}}
                         </tbody>

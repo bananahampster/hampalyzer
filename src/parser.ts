@@ -2,10 +2,41 @@ import * as fs from 'fs';
 import EventType from './eventType';
 import Player from './player';
 import PlayerList from './playerList';
-import { OutputStats, PlayerClass, TeamColor, Weapon } from './constants';
-import ParserUtils from './parserUtils';
+import { OutputStats, OutputStatsFullGame, PlayerClass, TeamColor, Weapon, OutputPlayerStatsFullGame } from './constants';
+import ParserUtils, { TeamComposition } from './parserUtils';
 
-class Parser {
+type RoundStats = (OutputStats | undefined)[];
+export interface ParsedStats {
+    stats: RoundStats,
+    players: TeamComposition | undefined,
+}
+
+export class Parser {
+    private rounds: RoundParser[] = [];
+
+    constructor(...filenames: string[]) {
+        // TODO: should probably check if the files exist here
+        this.rounds = filenames.map(filename => new RoundParser(filename));
+     }
+
+    public get stats(): RoundStats {
+        return this.rounds.map(round => round.stats);
+    }
+
+    public async parseRounds(): Promise<ParsedStats | undefined> {
+        return Promise.all(this.rounds.map(round => round.parseFile()))
+            .then(() => {
+                console.log(`parsed ${this.rounds.length} files.`);
+                // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
+                return <ParsedStats> {
+                    players: this.rounds[0]!.teams,
+                    stats: this.rounds.map(round => round.stats),
+                };
+            });
+    }
+}
+
+export class RoundParser {
     private rawLogData: string = "";
     private doneReading: boolean = false;
     private players: PlayerList = new PlayerList();
@@ -13,6 +44,7 @@ class Parser {
     private allEvents: string[] = [];
     public events: Event[] = [];
 
+    private teamComp: TeamComposition | undefined;
     private summarizedStats: OutputStats | undefined;
 
     constructor(private filename: string) { 
@@ -20,8 +52,12 @@ class Parser {
     }
 
     public async parseFile(): Promise<void> {
+        return this.parseRound(this.filename).catch(() => console.error(`failed to parse file ${this.filename}.`));
+    }
+
+    private async parseRound(filename: string): Promise<void> {
         return new Promise<void>(resolve => { 
-            const logStream = fs.createReadStream(this.filename);
+            const logStream = fs.createReadStream(filename);
             logStream.on('data', chunk => {
                 this.rawLogData += chunk;
             }).on('end', () => {
@@ -47,6 +83,10 @@ class Parser {
         return this.summarizedStats;
     }
 
+    public get teams(): TeamComposition | undefined {
+        return this.teamComp;
+    }
+
     private parseData(): void {
         this.allEvents = this.rawLogData.split("\n");
 
@@ -56,34 +96,16 @@ class Parser {
                 this.events.push(newEvent);
         }
 
-        const teams = ParserUtils.getPlayerTeams(this.events, this.players);
+        this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
         const scores = ParserUtils.getScore(this.events);
-        for (const team in teams) {
-            const teamPlayers = teams[team];
+        for (const team in this.teamComp) {
+            const teamPlayers = this.teamComp[team];
             const score = scores[team];
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
-        const playerStats = ParserUtils.getPlayerStats(this.events, teams);
-        // console.log(`${playerStats}`);
-
-        // const kills = this.events.filter(event => event.eventType === EventType.PlayerFraggedPlayer)
-        //     .reduce((acc, event) => {
-        //         const playerFrom = event.playerFrom && event.playerFrom.steamID;
-        //         if (playerFrom) {
-        //             if (!acc[playerFrom])
-        //                 acc[playerFrom] = 0;
-
-        //             acc[playerFrom]++;
-        //         }
-        //         return acc;
-        //     }, {});
-
-        // this.players.players.forEach(player => {
-        //     console.log(`${player.name} killed ${kills[player.steamID]} players.`);
-        // });
-
-        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, teams);
+        const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
+        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp);
     }
 }
 
@@ -251,7 +273,11 @@ export class Event {
                         case "entered":
                             eventType = EventType.PlayerJoinServer;
                             break;
-                        case "changed": 
+                        case "changed":
+                            // TOOD: track name changes; for now, just drop the event
+                            if (parts[1] === "name")
+                                break;
+
                             eventType = EventType.PlayerChangeRole;
                             data.class = Event.parseClass(parts[3]);
                             break;

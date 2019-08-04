@@ -324,16 +324,30 @@ export default class ParserUtils {
             .format(matchEnd.valueOf() - matchStart.valueOf());
 
         const players = this.generateOutputPlayerStats(stats, playerList, teams);
+        const score = this.getScore(events);
 
         return {
             log_name: logName,
-            map: map,
-            date: date,
-            time: time,
+            map,
+            date,
+            time,
             game_time: gameTime,
-            server: server,
-            players: players,
+            server,
+            players,
+            score,
         };
+    }
+    
+    public static getTeamScores(events: Event[], playerList: PlayerList): TeamScore {
+        const scoreEvents = events.filter(event => event.eventType === EventType.TeamScore);
+
+        // only dump score events for non-spectator teams (1, 2; that's what below does...]
+        let teamsScore: TeamScore = {};
+        for (const scoreEvent of scoreEvents) {
+            teamsScore[scoreEvent.key] = scoreEvent.value;
+        }
+
+        return teamsScore;
     }
 
     public static generateOutputPlayerStats(stats: PlayerStats, players: PlayerList, teams: TeamComposition): OutputPlayerStats[] {
@@ -345,7 +359,7 @@ export default class ParserUtils {
             const teamPlayerIDs = (teams[String(team)] as Player[]).map(player => player.steamID);
 
             for (const playerID of teamPlayerIDs) {
-                let poStats: OutputPlayerStats = this.blankOutputPlayerStats();
+                let poStats: OutputPlayerStats = this.blankOutputPlayerStats(team);
                 poStats.name = players.getPlayer(playerID)!.name;
                 poStats.steam_id = playerID;
     
@@ -387,9 +401,10 @@ export default class ParserUtils {
         return outputStats;
     }
 
-    private static blankOutputPlayerStats(): OutputPlayerStats {
+    private static blankOutputPlayerStats(team: number = 5): OutputPlayerStats {
         return {
             name: "(unknown)",
+            team: team,
             steam_id: "(unknown)",
             caps: 0,
             concs: 0,

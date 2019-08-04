@@ -1,5 +1,5 @@
 import app from './App';
-import Parser from './parser';
+import { Parser } from './parser';
 import * as handlebars from 'handlebars';
 import { readFile, writeFile } from 'fs';
 
@@ -15,19 +15,35 @@ const port = process.env.PORT || 3000;
 
 // let parser = new Parser('logs/Aiidw4yM.log');
 // let parser = new Parser('logs/L1120011.log');
-let parser = new Parser('logs/L1122101.log');
-let parsePromise = parser.parseFile(); 
-parsePromise.then(() => { 
-    const stats = parser.stats;
-    if (stats) {        
-        readFile('src/html/test-template.html', 'utf-8', (error, source) => {
+let parser = new Parser('logs/L1120006.log', 'logs/L1120008.log');
+let parsePromise = parser.parseRounds(); 
+
+parsePromise.then((allStats) => {
+    if (allStats) {
+        readFile('src/html/template-twoRds-stacked.html', 'utf-8', (error, source) => {
             const template = handlebars.compile(source);
-            const html = template(stats);
-            
-            writeFile('src/html/' + stats!.log_name + '.html', html, err => {
-                if (err) console.error("failed to write output: " + err);
+            const html = template(allStats);
+
+            writeFile(`src/html/2rd-${allStats.stats[0]!.log_name}-stacked.html`, html, err => {
+                if (err) console.error(`failed to write output: ${err}`);
                 console.log('saved file');
             });
         });
-    } else console.error("no stats found to write!");
+    } else console.error('no stats found to write!');
 });
+
+// parsePromise.then((allStats) => { 
+//     // const stats = parser.stats[0];
+//     const stats = allStats.stats[0];
+//     if (stats) {        
+//         readFile('src/html/test-template.html', 'utf-8', (error, source) => {
+//             const template = handlebars.compile(source);
+//             const html = template(stats);
+            
+//             writeFile('src/html/' + stats!.log_name + '.html', html, err => {
+//                 if (err) console.error("failed to write output: " + err);
+//                 console.log('saved file');
+//             });
+//         });
+//     } else console.error("no stats found to write!");
+// });

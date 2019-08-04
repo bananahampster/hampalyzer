@@ -1,0 +1,176 @@
+body {
+    font-size: .875rem;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100; /* behind navbar */
+    padding: 48px 0 0; /* navbar height */
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar-sticky {
+    position: relative;
+    top: 0;
+    height: calc(100vh - 48px);
+    padding-top: .5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+@supports ((position: -webkit-sticky) or (position: sticky)) {
+    .sidebar-sticky {
+        position: -webkit-sticky;
+        position: sticky;
+    }
+}
+  
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+}
+
+.sidebar .nav-link.active {
+    color: #007bff;
+}
+
+/** main styles */
+
+[role="main"] {
+    padding-top: 48px; /* space for navbar */
+}
+
+.score-bucket {
+    float: left;
+    /* width: 100px; */
+    /* height: 100%; */
+    font-size: 3rem;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+}
+
+.score-bucket > div {
+    padding: 7px;
+    font-weight: 700;
+    flex-basis: 100%;
+}
+
+.score-bucket div:nth-child(2) {
+    /* height: 7px; */
+    flex-shrink: 2;
+}
+
+.stats {
+    text-align: right;
+    width: auto !important; /* override bootstrap; only size as wide as is needed */
+}
+
+.stats td:first-child, .stats th:first-child {
+    text-align: left;
+}
+
+/** tks */
+.stats td:nth-child(3), .stats th:nth-child(3), 
+.stats td:nth-child(6), .stats th:nth-child(6),
+.stats td:nth-child(7), .stats th:nth-child(7),
+.stats td:nth-child(15), .stats th:nth-child(15), 
+.stats td:nth-child(18), .stats th:nth-child(18),
+.stats td:nth-child(19), .stats th:nth-child(19) {
+    color: rgb(220, 53, 69, .7);
+}
+
+/** minus sign prepend */
+.stats td:nth-child(3)::before, .stats th:nth-child(3)::before,
+.stats td:nth-child(15)::before, .stats th:nth-child(15)::before  {
+    content: "\2212";
+}
+
+.stats td:nth-child(4), .stats th:nth-child(4),
+.stats td:nth-child(16), .stats th:nth-child(16) {
+    color: rgb(23, 162, 184, .7);
+}
+
+.stats td:nth-child(4)::before, .stats th:nth-child(4)::before,
+.stats td:nth-child(6)::before, .stats th:nth-child(6)::before,
+.stats td:nth-child(7)::before, .stats th:nth-child(7)::before,
+.stats td:nth-child(16)::before, .stats th:nth-child(16)::before,
+.stats td:nth-child(18)::before, .stats th:nth-child(18)::before,
+.stats td:nth-child(19)::before, .stats th:nth-child(19)::before {
+    content: "+";
+}
+
+.stats td:nth-child(1), .stats th:nth-child(1),
+.stats td:nth-child(4), .stats th:nth-child(4),
+.stats td:nth-child(7), .stats th:nth-child(7),
+.stats td:nth-child(13), .stats th:nth-child(13),
+.stats td:nth-child(16), .stats th:nth-child(16),
+.stats td:nth-child(19), .stats th:nth-child(19) {
+    border-right: 1px solid #333;
+    padding-right: 15px;
+}
+
+.stats td:nth-child(0), .stats th:nth-child(0),
+.stats td:nth-child(5), .stats th:nth-child(5),
+.stats td:nth-child(8), .stats th:nth-child(8),
+.stats td:nth-child(12), .stats th:nth-child(12),
+.stats td:nth-child(17), .stats th:nth-child(17),
+.stats td:nth-child(20), .stats th:nth-child(20)  {
+    padding-left: 10px;
+}
+
+/** team styles */
+
+.team1 {
+    background-color: rgba(0, 123, 255, 0.3);
+}
+
+.team2 {
+    background-color: rgba(220, 53, 69, 0.3);
+}
+
+.team3 {
+    background-color: rgba(255, 193, 7, 0.3);
+}
+
+.team4 {
+    background-color: rgba(40, 167, 69, 0.3);
+}
+
+.team5 {
+    background-color: rgba(248, 249, 250, 0.3);
+}
+
+.table-hover tbody tr:hover td {
+    background: rgba(248, 249, 250, 0.25);
+}
+
+/** navbar styles */
+
+.navbar-brand {
+    padding-top: .75rem;
+    padding-bottom: .75rem;
+    font-size: 1rem;
+    background-color: rgba(0, 0, 0, .25);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+}
+
+.navbar .form-control {
+    padding: .75rem 1rem;
+    border-width: 0;
+    border-radius: 0;
+}
+
+.form-control-dark {
+    color: #fff;
+    background-color: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .1);
+}
+
+.form-control-dark:focus {
+    border-color: transparent;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
