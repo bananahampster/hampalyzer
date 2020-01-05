@@ -19,6 +19,7 @@ export interface OutputPlayerStats {
     name: string;
     team: number;
     steam_id: string;
+    roles: string;
     kills: number;
     team_kills: number;
     sg_kills: number;

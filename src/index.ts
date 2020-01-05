@@ -15,7 +15,8 @@ const port = process.env.PORT || 3000;
 
 // let parser = new Parser('logs/Aiidw4yM.log');
 // let parser = new Parser('logs/L1120011.log');
-let parser = new Parser('logs/L1120006.log', 'logs/L1120008.log');
+// let parser = new Parser('logs/L1120006.log', 'logs/L1120008.log');
+let parser = new Parser('logs/TSq9rtLa.log');
 let parsePromise = parser.parseRounds(); 
 
 parsePromise.then((allStats) => {
@@ -23,10 +24,11 @@ parsePromise.then((allStats) => {
         readFile('src/html/template-twoRds-stacked.html', 'utf-8', (error, source) => {
             const template = handlebars.compile(source);
             const html = template(allStats);
+            const filename = `src/html/2rd-${allStats.stats[0]!.log_name}-stacked.html`;
 
-            writeFile(`src/html/2rd-${allStats.stats[0]!.log_name}-stacked.html`, html, err => {
+            writeFile(filename, html, err => {
                 if (err) console.error(`failed to write output: ${err}`);
-                console.log('saved file');
+                console.log(`saved file ${filename}`);
             });
         });
     } else console.error('no stats found to write!');

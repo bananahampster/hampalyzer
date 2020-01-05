@@ -75,7 +75,8 @@
                                  see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
                             <li><i class="fas fa-lg fa-server"></i>&nbsp; {{server}} on {{date}}</li>
                             <li><i class="fas fa-lg fa-map-marked-alt"></i>&nbsp; {{map}}</li>
-                            <li><i class="fas fa-clock"></i>&nbsp;&nbsp; {{game_time}}m &times; 2 at {{time}}</li>
+                            <li><i class="fas fa-clock"></i>&nbsp;&nbsp; {{game_time}}m &times; 2 <abbr title="server timezone">starting at {{time}}</abbr></li>
+                            <li><i class="fas fa-trophy"></i>&nbsp;&nbsp; Final score: xxx &ndash; xxx</li>
                         </ul>
 {{/with}}
 {{!-- end giant hack --}}
@@ -94,54 +95,57 @@
                 <h2>
                     Statistics
                     <!-- <small>
-                        {{if }}
                     </small> -->
                 </h2>
                 {{#each stats}}
-                <div class="table-responsive">
-                    <!--<div class="score-bucket">
+                <div class="stats-round">
+                    <div class="score-bucket">
                         <div class="team1">{{score.[1]}}</div>
-                        <div>&ndash;</div>
+                        <!-- <div>&ndash;</div> -->
                         <div class="team2">{{score.[2]}}</div>
-                    </div>-->
-                    <table class="table table-borderless table-hover table-sm stats">
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>Kills</th>
-                                <th><abbr title="Team-Kills">TK</abbr></th>
-                                <th><abbr title="Sentry Gun Kills">SG</abbr></th>
-                                <th>Deaths</th>
-                                <th><abbr title="Suicides">Sui</abbr></th>
-                                <th><abbr title="Team-Deaths">TD</abbr></th>
-                                <th><abbr title="Concussion Grenades Used">Concs</abbr></th>
-                                <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
-                                <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
-                                <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
-                                <th>Flag Time</th>
-                                <th><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each players}}
-                            <tr class="team{{team}}">
-                                <td>{{name}}</td>
-                                <td>{{kills}}</td>
-                                <td>{{team_kills}}</td>
-                                <td>{{sg_kills}}</td>
-                                <td>{{deaths}}</td>
-                                <td>{{suicides}}</td>
-                                <td>{{team_deaths}}</td>
-                                <td>{{#if concs}}{{concs}}{{else}}--{{/if}}</td>
-                                <td>{{#if caps}}{{caps}}{{else}}--{{/if}}</td>
-                                <td>{{#if touches}}{{touches}}{{else}}--{{/if}}</td>
-                                <td>{{#if toss_percent}}{{toss_percent}}{{else}}--{{/if}}</td>
-                                <td>{{flag_time}}</td>
-                                <td>{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-borderless table-hover table-sm stats">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Class</th>
+                                    <th>Kills</th>
+                                    <th><abbr title="Team-Kills">TK</abbr></th>
+                                    <th><abbr title="Sentry Gun Kills">SG</abbr></th>
+                                    <th>Deaths</th>
+                                    <th><abbr title="Suicides">Sui</abbr></th>
+                                    <th><abbr title="Team-Deaths">TD</abbr></th>
+                                    <th><abbr title="Concussion Grenades Used">Concs</abbr></th>
+                                    <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
+                                    <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
+                                    <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
+                                    <th>Flag Time</th>
+                                    <th><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each players}}
+                                <tr class="team{{team}}">
+                                    <td>{{name}}</td>
+                                    <td>{{roles}}</td>
+                                    <td>{{kills}}</td>
+                                    <td>{{team_kills}}</td>
+                                    <td>{{sg_kills}}</td>
+                                    <td>{{deaths}}</td>
+                                    <td>{{suicides}}</td>
+                                    <td>{{team_deaths}}</td>
+                                    <td>{{#if concs}}{{concs}}{{else}}--{{/if}}</td>
+                                    <td>{{#if caps}}{{caps}}{{else}}--{{/if}}</td>
+                                    <td>{{#if touches}}{{touches}}{{else}}--{{/if}}</td>
+                                    <td>{{#if toss_percent}}{{toss_percent}}%{{else}}--{{/if}}</td>
+                                    <td>{{flag_time}}</td>
+                                    <td>{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 {{/each}}
             </main>

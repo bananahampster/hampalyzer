@@ -327,6 +327,9 @@ export class Event {
                                 case "Detpack_Explode":
                                     eventType = EventType.PlayerDetpackExplode;
                                     break;
+                                case "dropitems": // custom event for Inhouse
+                                    eventType = EventType.PlayerThrewFlag;
+                                    break;
                                 case "goalitem":
                                     if (parts.length === 2)
                                         eventType = EventType.PlayerPickedUpFlag;
@@ -564,18 +567,18 @@ export class Event {
     }
 
     public static parseTeam(team: string): TeamColor {
-        team = team.trim();
+        team = team.trim().toLowerCase();
 
         switch (team) {
-            case "Blue": 
+            case "blue": 
                 return TeamColor.Blue;
-            case "Red":
+            case "red":
                 return TeamColor.Red;
-            case "Yellow":
+            case "yellow":
                 return TeamColor.Yellow;
-            case "Green":
+            case "green":
                 return TeamColor.Green;
-            case "SPECTATOR":
+            case "spectator":
                 return TeamColor.Spectator;
             default:
                 throw "undefined team: " + team;
@@ -671,6 +674,7 @@ export class Event {
             case "the blue team's lasers world": // orbit_l3
                 return Weapon.Lasers;
             case "train":
+            case "train world":
                 return Weapon.Train;
             case "rock_falling_death world": // 2mesa3
                 return Weapon.Pit;

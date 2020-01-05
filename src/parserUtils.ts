@@ -1,7 +1,7 @@
 import PlayerList from "./playerList";
 import { Event } from "./parser";
 import Player from "./player";
-import { TeamColor, OutputStats, OutputPlayerStats} from "./constants";
+import { TeamColor, OutputStats, OutputPlayerStats, PlayerClass} from "./constants";
 import EventType from "./eventType";
 
 export type TeamComposition = { [team in TeamColor]?: Player[]; };
@@ -130,7 +130,10 @@ export default class ParserUtils {
                         this.addStat(thisPlayerStats, 'det_entrance', event);
                         break;
                     case EventType.PlayerPickedUpFlag:
-                        this.addStat(thisPlayerStats, 'flag_carry', event);
+                        this.addStat(thisPlayerStats, 'flag_pickup', event);
+                        break;
+                    case EventType.PlayerThrewFlag:
+                        this.addStat(thisPlayerStats, 'flag_throw', event);
                         break;
                     case EventType.PlayerRepairedBuilding:
                         this.addStat(thisPlayerStats, 'repair_building', event);
@@ -146,6 +149,9 @@ export default class ParserUtils {
                     case EventType.PlayerJoinServer:
                     case EventType.PlayerJoinTeam:
                         // no-op
+                        break;
+                    case EventType.SecurityUp:
+                        // dunno what to do with this event
                         break;
                     default:
                         console.log(`didn't log event id ${event.eventType} for ${thisPlayer.name}.`)
@@ -318,12 +324,12 @@ export default class ParserUtils {
         const matchEndEvent = events.find(event => event.eventType === EventType.TeamScore);
         
         const matchStart = prematchEndEvent && prematchEndEvent.timestamp || firstTimestamp;
-        const matchEnd = matchEndEvent && matchEndEvent.timestamp || new Date(Date.now());
+        const matchEnd = matchEndEvent && matchEndEvent.timestamp || events[events.length - 1].timestamp;
 
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEnd.valueOf() - matchStart.valueOf());
 
-        const players = this.generateOutputPlayerStats(stats, playerList, teams);
+        const players = this.generateOutputPlayerStats(stats, playerList, teams, matchEnd);
         const score = this.getScore(events);
 
         return {
@@ -350,7 +356,12 @@ export default class ParserUtils {
         return teamsScore;
     }
 
-    public static generateOutputPlayerStats(stats: PlayerStats, players: PlayerList, teams: TeamComposition): OutputPlayerStats[] {
+    public static generateOutputPlayerStats(
+        stats: PlayerStats,
+        players: PlayerList,
+        teams: TeamComposition,
+        matchEnd: Date): OutputPlayerStats[] {
+
         // calculate stats per player
         let outputStats: OutputPlayerStats[] = [];
 
@@ -374,10 +385,7 @@ export default class ParserUtils {
                             poStats.concs = statEvents.length; break;
                         case 'death': 
                             poStats.deaths = statEvents.length; break;
-                        case 'flag_carry':
-                            // TODO calculate flag time (maybe collect all player-specific flag events here?)
-                            // poStats.flagTime = this.calculatePlayerFlagTime(statEvents);
-                            // poStats.toss_percent = this.calculatePlayerFlagTossPercent(statEvents);
+                        case 'flag_pickup':
                             poStats.touches = statEvents.length;
                             break;
                         case 'kill':
@@ -392,10 +400,19 @@ export default class ParserUtils {
                             poStats.team_deaths = statEvents.length; break;
                         case 'team_kill':
                             poStats.team_kills = statEvents.length; break;
+                        case 'role':
+                            poStats.roles = this.getPlayerClasses(statEvents, matchEnd);
+                            break;
                     }
                 }
+
+                [poStats.flag_time, poStats.toss_percent] = this.calculatePlayerFlagStats(playerStats);
+
                 outputStats.push(poStats);
             }
+
+            // do the stupid thing and order players by number of frags
+            outputStats.sort((a, b) => a.team === b.team ? b.kills - a.kills : 0);
         });
 
         return outputStats;
@@ -406,6 +423,7 @@ export default class ParserUtils {
             name: "(unknown)",
             team: team,
             steam_id: "(unknown)",
+            roles: "(unknown)",
             caps: 0,
             concs: 0,
             deaths: 0,
@@ -419,5 +437,94 @@ export default class ParserUtils {
             toss_percent: 0,
             touches: 0,
         };
+    }
+
+    private static calculatePlayerFlagStats(playerEvents: Stats): [string, number] {
+        // use 'flag_pickup', 'flag_capture', 'team_death'/'death', 'and (future) 'flag_thrown' events to calculate flag time
+        const flagPickups = playerEvents['flag_pickup'];
+        const flagCapture = playerEvents['flag_capture'];
+        const deaths = playerEvents['death'];
+        const team_deaths = playerEvents['team_death'];
+        const flag_thrown = playerEvents['flag_throw'];
+
+        // don't bother trying to calculate flag stats if there were no touches
+        if (flagPickups == null || flagPickups.length == 0)
+            return ["0:00", 0];
+
+        // combine and sort entries to calculate flag time
+        const flagCarries = flagPickups.length;
+        let flagThrows = 0;
+        let flagTimeMS = 0;
+
+        let flagSequence = flagPickups.concat(flagCapture, deaths, team_deaths, flag_thrown);
+        flagSequence.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+
+        flagSequence.reduce<[boolean, Date | undefined]>((flagStatus, thisEvent) => {
+            // ignore undefined events (occurs whenever an event category has no items)
+            if (thisEvent == null)
+                return flagStatus; 
+
+            // record the time the flag was picked up, then continue
+            if (thisEvent.eventType === EventType.PlayerPickedUpFlag)
+                return [true, thisEvent.timestamp];
+
+            // if the flag isn't currently being carried, skip
+            if (!flagStatus[0] || flagStatus[1] === undefined)
+                return flagStatus;
+
+            // otherwise, the flag was dropped; reset flagStatus
+            flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.valueOf();
+            
+            if (thisEvent.eventType === EventType.PlayerThrewFlag)
+                flagThrows++;
+
+            return [false, undefined];
+        }, [false, undefined]);
+
+        const flagTime = Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(flagTimeMS);
+        const tossPercent = Math.round(flagThrows / flagCarries * 100);
+
+        return [flagTime, tossPercent];
+    }
+
+    private static getPlayerClasses(roleChangedEvents: Event[], matchEnd: Date): string {
+        // collect times of classes; rank by most-played to least
+        roleChangedEvents.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+        let classTimes: Partial<{ [key in PlayerClass]: number}> = {};
+
+        let lastClass: PlayerClass | undefined;
+        const lastTimestamp = roleChangedEvents.reduce<Date | undefined>((lastTimestamp, roleChangedEvent) => {
+            lastClass = roleChangedEvent.data!.class;
+
+            // skip the initial role (no previous timestamp set)
+            if (lastTimestamp !== undefined && lastClass !== undefined) {
+                // calculate time for the last class
+                classTimes[lastClass] = classTimes[lastClass] || 0;
+                classTimes[lastClass]! += roleChangedEvent.timestamp.valueOf() - lastTimestamp.valueOf();
+            }
+
+            return roleChangedEvent.timestamp;
+        }, undefined);
+
+        // record last class
+        if (lastClass && lastTimestamp) {
+            classTimes[lastClass] = classTimes[lastClass] || 0;
+            classTimes[lastClass]! += matchEnd.valueOf() - lastTimestamp.valueOf();
+        } else 
+            throw "player never picked a class";
+
+        // generate ranked class list
+        let rankedList: { role: PlayerClass, time: number }[] = [];
+        for (const classId in classTimes) {
+            // are you serious
+            const role = classId as unknown as PlayerClass;
+
+            const classStats = { role, time: classTimes[role] || 0 };
+            rankedList.push(classStats);
+        }
+        rankedList.sort((a, b) => a.time - b.time);
+
+        // print classes
+        return rankedList.map(role => PlayerClass[role.role]).join(', ');
     }
 }
