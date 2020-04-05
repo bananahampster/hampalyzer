@@ -1,7 +1,7 @@
 import PlayerList from "./playerList";
 import { Event } from "./parser";
 import Player from "./player";
-import { TeamColor, OutputStats, OutputPlayerStats, PlayerClass} from "./constants";
+import { TeamColor, OutputStats, OutputPlayerStats, PlayerClass, TeamsOutputStats, TeamStatsComparison, TeamRole, TeamStats, ITeamStats, OffenseTeamStats, DefenseTeamStats} from "./constants";
 import EventType from "./eventType";
 
 export type TeamComposition = { [team in TeamColor]?: Player[]; };
@@ -60,7 +60,7 @@ export default class ParserUtils {
         return teams;
     }
 
-    public static getScore(events: Event[]): TeamScore {
+    public static getScore(events: Event[], teams?: TeamComposition): TeamScore {
         const teamScoreEvents = events.filter(ev => ev.eventType === EventType.TeamScore);
         let scores: TeamScore = {};
         
@@ -71,6 +71,18 @@ export default class ParserUtils {
             if (!score) throw "expected value with a teamScore event";
             scores[team] = Number(score);
         });
+
+        // maybe the server crashed before finishing the log?  fallback to counting caps
+        if (Object.keys(scores).length === 0 && teams) {
+            const flagCapEvents = events.filter(ev => ev.eventType === EventType.PlayerCapturedFlag);
+            flagCapEvents.forEach(event => {
+                const player = event.playerFrom!;
+                const team = ParserUtils.getTeamForPlayer(player, teams);
+
+                let teamScore = scores[team] || 0;
+                scores[team] = teamScore + 10;
+            });
+        }
 
         return scores;
     }
@@ -294,7 +306,17 @@ export default class ParserUtils {
         });
     }
 
-    public static generateOutputStats(events: Event[], stats: PlayerStats, playerList: PlayerList, teams: TeamComposition): OutputStats {
+    private static getTeamForPlayer(player: Player, teams: TeamComposition): number {
+        for (const team in teams) {
+            const foundPlayer = teams[team].findIndex(p => p === player);
+            if (foundPlayer !== -1)
+                return parseInt(team, 10);
+        }
+
+        return -1;
+    }
+
+    public static generateOutputStats(events: Event[], stats: PlayerStats, playerList: PlayerList, teamComp: TeamComposition): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
         const map = mapEvent && mapEvent.value || "(not found)";
@@ -329,8 +351,8 @@ export default class ParserUtils {
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEnd.valueOf() - matchStart.valueOf());
 
-        const players = this.generateOutputPlayerStats(stats, playerList, teams, matchEnd);
-        const score = this.getScore(events);
+        const teams = this.generateOutputTeamsStats(stats, playerList, teamComp, matchEnd);
+        const score = this.getScore(events, teamComp);
 
         return {
             log_name: logName,
@@ -339,7 +361,7 @@ export default class ParserUtils {
             time,
             game_time: gameTime,
             server,
-            players,
+            teams,
             score,
         };
     }
@@ -356,18 +378,19 @@ export default class ParserUtils {
         return teamsScore;
     }
 
-    public static generateOutputPlayerStats(
+    public static generateOutputTeamsStats(
         stats: PlayerStats,
         players: PlayerList,
         teams: TeamComposition,
-        matchEnd: Date): OutputPlayerStats[] {
+        matchEnd: Date): TeamsOutputStats {
 
         // calculate stats per player
-        let outputStats: OutputPlayerStats[] = [];
+        let outputStats: TeamsOutputStats = {};
 
         // iterate through the players identified as playing on the teams of interest (for now, Blue and Red)
         [1, 2].forEach(team => {
             const teamPlayerIDs = (teams[String(team)] as Player[]).map(player => player.steamID);
+            const teamPlayers: OutputPlayerStats[] = [];
 
             for (const playerID of teamPlayerIDs) {
                 let poStats: OutputPlayerStats = this.blankOutputPlayerStats(team);
@@ -408,14 +431,60 @@ export default class ParserUtils {
 
                 [poStats.flag_time, poStats.toss_percent] = this.calculatePlayerFlagStats(playerStats);
 
-                outputStats.push(poStats);
+                teamPlayers.push(poStats);
             }
 
             // do the stupid thing and order players by number of frags
-            outputStats.sort((a, b) => a.team === b.team ? b.kills - a.kills : 0);
+            teamPlayers.sort((a, b) => a.team === b.team ? b.kills - a.kills : 0);
+
+            // dump stats for this team
+            outputStats[team] = { 
+                players: teamPlayers,
+                teamStats: this.generateOutputTeamStats(teamPlayers, team),
+            };
         });
 
         return outputStats;
+    }
+
+    private static generateOutputTeamStats(teamPlayers: OutputPlayerStats[], team: number): TeamStats {
+        // TODO: do some logic based on the plurarity of medics on a team?
+        // for now, assume team 1 (blue) is always offense
+        const teamRole: TeamRole = team === 1 ? TeamRole.Offsense : team === 2 ? TeamRole.Defense : TeamRole.Unknown;
+        
+        let stats =  teamPlayers.reduce((stats, player) => {
+            stats.frags += player.kills - player.team_kills + player.sg_kills;
+            stats.kills += player.kills;
+            stats.team_kills += player.team_kills;
+            stats.deaths += player.deaths + player.team_deaths + player.suicides;
+            stats.d_enemy += player.deaths;
+            stats.d_self += player.suicides;
+            stats.d_team += player.team_deaths;
+
+            switch (stats.teamRole) {
+                case TeamRole.Offsense:
+                    stats.sg_kills += player.sg_kills;
+                    stats.concs += player.concs;
+                    stats.caps += player.caps;
+                    stats.touches += player.touches;
+                    stats.toss_percent += player.toss_percent * player.touches;
+                    // TODO
+                    // stats.flag_time = addTime(stats.flag_time, player.flag_time)
+                    break;
+                case TeamRole.Defense: 
+                    stats.airshots = 0; // TODO
+                    break;
+            }
+
+            return stats;
+        }, this.blankTeamStats(teamRole));
+
+        // do some clean-up (average instead of sum for toss)
+        if (stats.teamRole === TeamRole.Offsense) {
+            stats.toss_percent = Math.round(stats.toss_percent / stats.touches);
+        }
+
+        return stats;
     }
 
     private static blankOutputPlayerStats(team: number = 5): OutputPlayerStats {
@@ -437,6 +506,76 @@ export default class ParserUtils {
             toss_percent: 0,
             touches: 0,
         };
+    }
+    
+    private static blankTeamStats(teamRole: TeamRole = TeamRole.Unknown): TeamStats {
+        let blankStats: TeamStats = {
+            teamRole,
+            frags: 0,
+            kills: 0,
+            team_kills: 0,
+            deaths: 0,
+            d_enemy: 0,
+            d_self: 0,
+            d_team: 0,
+        } as TeamStats;
+
+        switch (blankStats.teamRole) {
+            case TeamRole.Offsense: 
+                blankStats.sg_kills = 0;
+                blankStats.concs = 0;
+                blankStats.caps = 0;
+                blankStats.touches = 0;
+                blankStats.toss_percent = 0;
+                blankStats.flag_time = "0:00";
+                break;
+            case TeamRole.Defense:
+                blankStats.airshots = 0;
+                break;
+        }
+
+        return blankStats;
+    }
+
+    public static generateTeamRoleComparison(stats: [OutputStats, OutputStats]): TeamStatsComparison {
+        // expect that stats is of length 2 (two rounds)
+        const offenseTeams = stats.map(roundStats => roundStats.teams[1]!.teamStats) as [OffenseTeamStats, OffenseTeamStats];
+        
+        // flip so that order matches offense
+        const defenseTeams = stats.map(roundStats => roundStats.teams[2]!.teamStats).reverse() as [DefenseTeamStats, DefenseTeamStats];
+
+        const offenseDiff: OffenseTeamStats = {
+            team: 0,
+            teamRole: TeamRole.Offsense,
+            frags: offenseTeams[0].frags - offenseTeams[1].frags,
+            kills: offenseTeams[0].kills - offenseTeams[1].kills,
+            sg_kills: offenseTeams[0].sg_kills - offenseTeams[1].sg_kills,
+            team_kills: offenseTeams[0].team_kills - offenseTeams[1].team_kills,
+            deaths: offenseTeams[0].deaths - offenseTeams[1].deaths,
+            d_enemy: offenseTeams[0].d_enemy - offenseTeams[1].d_enemy,
+            d_self: offenseTeams[0].d_self - offenseTeams[1].d_self,
+            d_team: offenseTeams[0].d_team - offenseTeams[1].d_team,
+            concs: offenseTeams[0].concs - offenseTeams[1].concs,
+            caps: offenseTeams[0].caps - offenseTeams[1].caps,
+            touches: offenseTeams[0].touches - offenseTeams[1].touches,
+            toss_percent: offenseTeams[0].toss_percent - offenseTeams[1].toss_percent,
+            flag_time: offenseTeams[0].flag_time, // TODO (time diff function)
+        };
+
+        const defenseDiff: DefenseTeamStats = {
+            team: 0,
+            teamRole: TeamRole.Defense,
+            frags: defenseTeams[0].frags - defenseTeams[1].frags,
+            kills: defenseTeams[0].kills - defenseTeams[1].kills,
+            team_kills: defenseTeams[0].team_kills - defenseTeams[1].team_kills,
+            deaths: defenseTeams[0].deaths - defenseTeams[1].deaths,
+            d_enemy: defenseTeams[0].d_enemy - defenseTeams[1].d_enemy,
+            d_self: defenseTeams[0].d_self - defenseTeams[1].d_self,
+            d_team: defenseTeams[0].d_team - defenseTeams[1].d_team,
+            airshots: defenseTeams[0].airshots - defenseTeams[1].airshots,
+        };
+
+        return [offenseDiff, defenseDiff];
     }
 
     private static calculatePlayerFlagStats(playerEvents: Stats): [string, number] {

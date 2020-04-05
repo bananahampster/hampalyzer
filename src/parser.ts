@@ -2,13 +2,14 @@ import * as fs from 'fs';
 import EventType from './eventType';
 import Player from './player';
 import PlayerList from './playerList';
-import { OutputStats, OutputStatsFullGame, PlayerClass, TeamColor, Weapon, OutputPlayerStatsFullGame } from './constants';
+import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison } from './constants';
 import ParserUtils, { TeamComposition } from './parserUtils';
 
 type RoundStats = (OutputStats | undefined)[];
 export interface ParsedStats {
-    stats: RoundStats,
-    players: TeamComposition | undefined,
+    stats: RoundStats;
+    players: TeamComposition | undefined;
+    comparison?: TeamStatsComparison;
 }
 
 export class Parser {
@@ -28,9 +29,16 @@ export class Parser {
             .then(() => {
                 console.log(`parsed ${this.rounds.length} files.`);
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
+                const stats = this.rounds.map(round => round.stats);
+                
+                let comparison: TeamStatsComparison | undefined;
+                if (this.rounds.length === 2) 
+                    comparison = ParserUtils.generateTeamRoleComparison(stats as [OutputStats, OutputStats]);
+
                 return <ParsedStats> {
                     players: this.rounds[0]!.teams,
-                    stats: this.rounds.map(round => round.stats),
+                    stats,
+                    comparison,
                 };
             });
     }
@@ -52,7 +60,8 @@ export class RoundParser {
     }
 
     public async parseFile(): Promise<void> {
-        return this.parseRound(this.filename).catch(() => console.error(`failed to parse file ${this.filename}.`));
+        return this.parseRound(this.filename)
+            .catch(() => console.error(`failed to parse file ${this.filename}.`));
     }
 
     private async parseRound(filename: string): Promise<void> {
@@ -375,6 +384,7 @@ export class Event {
                                     }
                                     break;
                                 case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
+                                case "t2df":
                                     if (parts.length === 2)
                                         eventType = EventType.PlayerCapturedFlag;
                                     else
@@ -421,6 +431,10 @@ export class Event {
             } else {
                 // handle non-player log messages
                 let parts = lineData.match(lineDataRE) as RegExpMatchArray; // force to never be null (should always find words)
+                // if no matches, must be a malformed line (crashed server?)
+                if (!parts || parts.length === 0)
+                    return;
+
                 switch (parts[0]) {
                     case "Log": 
                         if (parts[2] === "started")

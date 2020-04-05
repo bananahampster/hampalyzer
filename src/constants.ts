@@ -8,7 +8,14 @@ export interface OutputStats {
     time: string;
     game_time: string;
     score: TeamScore;
+    teams: TeamsOutputStats;
+}
+
+export type TeamsOutputStats = { [team in TeamColor]?: TeamOutputStats; }
+
+export interface TeamOutputStats { 
     players: OutputPlayerStats[];
+    teamStats?: TeamStats;
 }
 
 export interface OutputStatsFullGame extends OutputStats {
@@ -40,6 +47,43 @@ export interface OutputPlayerStats {
     d_suicidies?: number;
 }
 
+export type TeamStats = OffenseTeamStats | DefenseTeamStats | OtherTeamStats;
+
+export interface ITeamStats {
+    teamRole: TeamRole;
+    frags: number;
+    kills: number;
+    team_kills: number;
+    deaths: number;
+    d_enemy: number;
+    d_self: number;
+    d_team: number;
+}
+
+export interface OffenseTeamStats extends ITeamStats {
+    teamRole: TeamRole.Offsense;
+    team: number;
+    sg_kills: number;
+    concs: number;
+    caps: number;
+    touches: number;
+    toss_percent: number;
+    flag_time: string;
+    obj?: number;
+}
+
+export interface DefenseTeamStats extends ITeamStats {
+    teamRole: TeamRole.Defense;
+    team: number;
+    airshots: number;
+}
+
+export interface OtherTeamStats extends ITeamStats {
+    teamRole: TeamRole.Unknown;
+ }
+
+ export type TeamStatsComparison = [OffenseTeamStats, DefenseTeamStats];
+
 export interface OutputPlayerStatsFullGame extends OutputPlayerStats {
     rd2_kills: number;
     rd2_team_kills: number;
@@ -53,6 +97,13 @@ export interface OutputPlayerStatsFullGame extends OutputPlayerStats {
     rd2_toss_percent: number;
     rd2_flag_time: string;
     rd2_obj: number;
+}
+
+export const enum TeamRole {
+    Comparison = -2,
+    Unknown = -1,
+    Offsense = 0,
+    Defense = 1,
 }
 
 // TODO: check `logs\L1125012.log` for others (like pills, tranq, knife, detpack, caltrop, etc.)

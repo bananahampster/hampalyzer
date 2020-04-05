@@ -66,9 +66,45 @@ body {
     flex-shrink: 0.5;
 }
 
-.stats {
+.stats, .summary {
     text-align: right;
     width: auto !important; /* override bootstrap; only size as wide as is needed */
+}
+
+.icon:before {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.summary tr.comp {
+    /* font-weight: 900; */
+}
+
+.summary tr.comp td.down {
+    background-color: rgba(127,191,123, 0.3);
+}
+.summary tr.comp td.down:before {
+    padding-right: 3px;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f063";
+}
+
+.summary tr.comp td {
+    background-color: rgba(247, 247, 247, 1);
+}
+
+.summary tr.comp td.up {
+    background-color: rgba(175, 141, 195, 0.3);
+}
+.summary tr.comp td.up:before {
+    padding-right: 3px;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f062";
 }
 
 .stats td:first-child, .stats th:first-child,

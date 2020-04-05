@@ -11,7 +11,7 @@ the final score of the match, what map was played, length of match, etc.).
 
 ## To-Do
 
-[ ] Use handlebars.js to render templates to files?
+[ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
 
 ## Building
 

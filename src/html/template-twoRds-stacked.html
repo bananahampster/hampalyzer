@@ -125,6 +125,7 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {{#each teams}}
                                 {{#each players}}
                                 <tr class="team{{team}}">
                                     <td>{{name}}</td>
@@ -142,6 +143,7 @@
                                     <td>{{flag_time}}</td>
                                     <td>{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
                                 </tr>
+                                {{/each}}
                                 {{/each}}
                             </tbody>
                         </table>

@@ -1,7 +1,8 @@
 import app from './App';
 import { Parser } from './parser';
-import * as handlebars from 'handlebars';
+import * as Handlebars from 'handlebars';
 import { readFile, writeFile } from 'fs';
+import TemplateUtils from './templateUtils';
 
 const port = process.env.PORT || 3000;
 
@@ -16,15 +17,24 @@ const port = process.env.PORT || 3000;
 // let parser = new Parser('logs/Aiidw4yM.log');
 // let parser = new Parser('logs/L1120011.log');
 // let parser = new Parser('logs/L1120006.log', 'logs/L1120008.log');
-let parser = new Parser('logs/TSq9rtLa.log');
+// let parser = new Parser('logs/L0322020.log', 'logs/L0322021.log');
+let parser = new Parser('logs/L0405001.log');
+// let parser = new Parser('logs/TSq9rtLa.log');
 let parsePromise = parser.parseRounds(); 
 
 parsePromise.then((allStats) => {
     if (allStats) {
-        readFile('src/html/template-twoRds-stacked.html', 'utf-8', (error, source) => {
-            const template = handlebars.compile(source);
+        let templateFile = 'src/html/template-twoRds-stacked.html';
+        let isSummary = allStats.stats.length === 2;
+        if (isSummary)
+            templateFile = 'src/html/template-summary.html';
+
+        readFile(templateFile, 'utf-8', (error, source) => {
+            TemplateUtils.registerHelpers();
+            const template = Handlebars.compile(source);
             const html = template(allStats);
-            const filename = `src/html/2rd-${allStats.stats[0]!.log_name}-stacked.html`;
+            
+            const filename = `src/html/2rd-${allStats.stats[0]!.log_name}-${isSummary ? 'summary' : 'stacked'}.html`;
 
             writeFile(filename, html, err => {
                 if (err) console.error(`failed to write output: ${err}`);
