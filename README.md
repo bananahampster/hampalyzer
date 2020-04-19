@@ -12,6 +12,7 @@ the final score of the match, what map was played, length of match, etc.).
 ## To-Do
 
 [ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
+[ ] Import bootstrap as [an npm dependency](https://getbootstrap.com/docs/4.4/getting-started/download/#npm) with [webpack](https://getbootstrap.com/docs/4.4/getting-started/webpack/) to write [a custom SCSS theme](https://getbootstrap.com/docs/4.4/getting-started/theming/).
 
 ## Building
 

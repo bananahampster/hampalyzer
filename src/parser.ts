@@ -390,6 +390,15 @@ export class Event {
                                     else
                                         console.error('unknown t1df trigger: ' + eventText);
                                     break;
+                                case "blueflag_point": // run (the map) flag capture
+                                case "blueflag_point2":
+                                case "redflag_point":
+                                case "redflag_point2":
+                                    if (parts.length === 2)
+                                        eventType = EventType.PlayerCapturedFlag;
+                                    else
+                                        console.error('unknown "run"-like trigger: ' + eventText);
+                                    break;
                                 case 'rdet': // oppose2k1 water entrance det opened
                                 case 'bdet':
                                 case 'red_det': // 2mesa3 water opened
