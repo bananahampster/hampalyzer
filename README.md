@@ -21,6 +21,10 @@ the final score of the match, what map was played, length of match, etc.).
 [ ] Dark theme
 [ ] Player-specific stats
 
+### Known bugs:
+
+[ ] Handle player disconnects if they are in the middle of carrying flag (flag time / flag status)
+
 ## Building
 
 Execute `npm install` to install the needed attributes.  Run via node: `node dist/index.js`, or debug using VS Code.

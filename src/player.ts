@@ -34,7 +34,7 @@ class Player {
     }
 
     public matches(other: Player | OutputPlayer) {
-        this.steamID === other.steamID;
+        return this.steamID === other.steamID;
     }
 
     public dumpOutput(teamNum: number = 1): OutputPlayer {

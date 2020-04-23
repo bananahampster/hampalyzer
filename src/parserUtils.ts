@@ -6,7 +6,7 @@ import EventType from "./eventType";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 export type TeamScore = { [team in TeamColor]?: number; };
-export type PlayerStats = { [playerID: string]: Stats };
+export type PlayerStats = { [playerID: string]: Stats } & { 'flag': Stats };
 export type Stats = { [stat: string]: Event[] };
 
 export default class ParserUtils {
@@ -151,11 +151,17 @@ export default class ParserUtils {
 
     public static getPlayerStats(events: Event[], teams: TeamComposition): PlayerStats {
         // sort the events
-        let playerStats: PlayerStats = {};
+        let playerStats: PlayerStats = { flag: {} };
         for (const event of events) {
-            // only deal with player events
-            if (!event.playerFrom)
-                continue;
+            if (!event.playerFrom) {
+                // add flag events
+                switch (event.eventType) {
+                    case EventType.FlagReturn:
+                        this.addStat(playerStats.flag, 'flag_return', event);
+                        break;
+                }
+                continue; // skip all other non-player events
+            }
 
             const thisPlayer = event.playerFrom;
             const thisPlayerStats = this.getPlayerFromStats(playerStats, thisPlayer);
@@ -174,6 +180,7 @@ export default class ParserUtils {
                         break;
                     case EventType.PlayerCapturedFlag:
                         this.addStat(thisPlayerStats, 'flag_capture', event);
+                        this.addStat(playerStats.flag, 'flag_capture', event);
                         break;
                     case EventType.PlayerChangeRole:
                         this.addStat(thisPlayerStats, 'role', event);
@@ -205,9 +212,11 @@ export default class ParserUtils {
                         break;
                     case EventType.PlayerPickedUpFlag:
                         this.addStat(thisPlayerStats, 'flag_pickup', event);
+                        this.addStat(playerStats.flag, 'flag_pickup', event);
                         break;
                     case EventType.PlayerThrewFlag:
                         this.addStat(thisPlayerStats, 'flag_throw', event);
+                        this.addStat(playerStats.flag, 'flag_throw', event);
                         break;
                     case EventType.PlayerRepairedBuilding:
                         this.addStat(thisPlayerStats, 'repair_building', event);
@@ -485,7 +494,8 @@ export default class ParserUtils {
 
             for (const playerID of teamPlayerIDs) {
                 let poStats: OutputPlayerStats = this.blankOutputPlayerStats(team);
-                poStats.name = players.getPlayer(playerID)!.name;
+                let thisPlayer = players.getPlayer(playerID) as Player;
+                poStats.name = thisPlayer.name;
                 poStats.steamID = playerID;
     
                 const playerStats = stats[playerID];
@@ -520,7 +530,10 @@ export default class ParserUtils {
                     }
                 }
 
-                [poStats.flag_time, poStats.toss_percent] = this.calculatePlayerFlagStats(playerStats);
+                [   poStats.flag_time,
+                    poStats.toss_percent,
+                    poStats.touches_initial
+                ] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag);
 
                 teamPlayers.push(poStats);
             }
@@ -558,6 +571,7 @@ export default class ParserUtils {
                     stats.concs += player.concs;
                     stats.caps += player.caps;
                     stats.touches += player.touches;
+                    stats.touches_initial += player.touches_initial;
                     stats.toss_percent += player.toss_percent * player.touches;
                     stats.flag_time = this.addTime(stats.flag_time, player.flag_time)
                     break;
@@ -595,6 +609,7 @@ export default class ParserUtils {
             team_kills: 0,
             toss_percent: 0,
             touches: 0,
+            touches_initial: 0,
         };
     }
     
@@ -616,6 +631,7 @@ export default class ParserUtils {
                 blankStats.concs = 0;
                 blankStats.caps = 0;
                 blankStats.touches = 0;
+                blankStats.touches_initial = 0;
                 blankStats.toss_percent = 0;
                 blankStats.flag_time = "0:00";
                 break;
@@ -648,6 +664,7 @@ export default class ParserUtils {
             concs: offenseTeams[0].concs - offenseTeams[1].concs,
             caps: offenseTeams[0].caps - offenseTeams[1].caps,
             touches: offenseTeams[0].touches - offenseTeams[1].touches,
+            touches_initial: offenseTeams[0].touches_initial - offenseTeams[1].touches_initial,
             toss_percent: offenseTeams[0].toss_percent - offenseTeams[1].toss_percent,
             flag_time: this.diffTime(offenseTeams[0].flag_time, offenseTeams[1].flag_time),
         };
@@ -668,7 +685,7 @@ export default class ParserUtils {
         return [offenseDiff, defenseDiff];
     }
 
-    private static calculatePlayerFlagStats(playerEvents: Stats): [string, number] {
+    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, flagEvents: Stats): [string, number, number] {
         // use 'flag_pickup', 'flag_capture', 'team_death'/'death', and 'flag_thrown' events to calculate flag time
         const flagPickups = playerEvents['flag_pickup'];
         const flagCapture = playerEvents['flag_capture'];
@@ -678,24 +695,45 @@ export default class ParserUtils {
 
         // don't bother trying to calculate flag stats if there were no touches
         if (flagPickups == null || flagPickups.length == 0)
-            return ["0:00", 0];
+            return ["0:00", 0, 0];
 
         // combine and sort entries to calculate flag time
         const flagCarries = flagPickups.length;
+        let initialTouches = 0;
         let flagThrows = 0;
         let flagTimeMS = 0;
 
-        let flagSequence = flagPickups.concat(flagCapture, deaths, team_deaths, flag_thrown);
+        let flagSequence = flagPickups.concat(
+            flagCapture, deaths, team_deaths, flag_thrown, 
+            flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
         flagSequence.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
 
-        flagSequence.reduce<[boolean, Date | undefined]>((flagStatus, thisEvent) => {
+        // accumulator is [boolean, Date], where 
+        // * boolean is flag state: null = relay, false = dropped, true = carried
+        // * Date is timestamp of current player flag pickup, unset if not carried by this player
+        flagSequence.reduce<[boolean | null, Date | undefined]>((flagStatus, thisEvent) => {
             // ignore undefined events (occurs whenever an event category has no items)
             if (thisEvent == null)
                 return flagStatus; 
 
-            // record the time the flag was picked up, then continue
-            if (thisEvent.eventType === EventType.PlayerPickedUpFlag)
-                return [true, thisEvent.timestamp];
+            const eventType = thisEvent.eventType;
+
+            // if the flag returned, set state to null
+            if (eventType === EventType.FlagReturn || eventType === EventType.PlayerCapturedFlag)
+                return [null, undefined];
+
+            if (eventType === EventType.PlayerPickedUpFlag) {
+                // did this player pick up the flag?
+                if (thisEvent.playerFrom?.matches(thisPlayer)) {
+                    // is this an initial touch?
+                    if (flagStatus[0] === null) initialTouches++;
+
+                    // record the time the flag was picked up, then continue
+                    return [true, thisEvent.timestamp];
+                }
+                // otherwise, mark flag as moved
+                return [false, undefined];
+            }
 
             // if the flag isn't currently being carried, skip
             if (!flagStatus[0] || flagStatus[1] === undefined)
@@ -704,16 +742,16 @@ export default class ParserUtils {
             // otherwise, the flag was dropped; reset flagStatus
             flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.valueOf();
             
-            if (thisEvent.eventType === EventType.PlayerThrewFlag)
+            if (eventType === EventType.PlayerThrewFlag)
                 flagThrows++;
 
             return [false, undefined];
-        }, [false, undefined]);
+        }, [null, undefined]);
 
         const flagTime = Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(flagTimeMS);
         const tossPercent = Math.round(flagThrows / flagCarries * 100);
 
-        return [flagTime, tossPercent];
+        return [flagTime, tossPercent, initialTouches];
     }
 
     private static getPlayerClasses(roleChangedEvents: Event[], matchEnd: Date): string {

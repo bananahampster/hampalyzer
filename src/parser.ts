@@ -116,7 +116,6 @@ export class RoundParser {
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
-        // TODO: const flagStats = ParserUtils.generateFlagStats(this.events);
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp);
     }

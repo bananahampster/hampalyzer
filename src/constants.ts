@@ -39,6 +39,7 @@ export interface OutputPlayerStats extends OutputPlayer {
     concs: number;
     caps: number;
     touches: number;
+    touches_initial: number;
     toss_percent: number;
     flag_time: string;
     obj: number;
@@ -70,6 +71,7 @@ export interface OffenseTeamStats extends ITeamStats {
     concs: number;
     caps: number;
     touches: number;
+    touches_initial: number;
     toss_percent: number;
     flag_time: string;
     obj?: number;
