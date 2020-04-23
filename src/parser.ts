@@ -2,13 +2,13 @@ import * as fs from 'fs';
 import EventType from './eventType';
 import Player from './player';
 import PlayerList from './playerList';
-import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison } from './constants';
+import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants';
 import ParserUtils, { TeamComposition } from './parserUtils';
 
 type RoundStats = (OutputStats | undefined)[];
 export interface ParsedStats {
     stats: RoundStats;
-    players: TeamComposition | undefined;
+    players: TeamComposition<OutputPlayer>;
     comparison?: TeamStatsComparison;
 }
 
@@ -32,11 +32,14 @@ export class Parser {
                 const stats = this.rounds.map(round => round.stats);
                 
                 let comparison: TeamStatsComparison | undefined;
-                if (this.rounds.length === 2) 
+                let teamComp: TeamComposition<OutputPlayer> = ParserUtils.teamCompToOutput(this.rounds[0]!.teams!);
+                if (this.rounds.length === 2) {
                     comparison = ParserUtils.generateTeamRoleComparison(stats as [OutputStats, OutputStats]);
+                    teamComp = ParserUtils.generateTeamComposition(this.rounds) || teamComp;
+                }
 
                 return <ParsedStats> {
-                    players: this.rounds[0]!.teams,
+                    players: teamComp,
                     stats,
                     comparison,
                 };
@@ -113,6 +116,7 @@ export class RoundParser {
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
+        // TODO: const flagStats = ParserUtils.generateFlagStats(this.events);
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp);
     }

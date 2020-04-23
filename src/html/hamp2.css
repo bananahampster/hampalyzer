@@ -43,6 +43,23 @@ body {
     padding-top: 48px; /* space for navbar */
 }
 
+.team-comp p {
+    padding: 0.5rem;
+    margin: 0;
+}
+
+.team-comp .team-title {
+    font-weight: 700;
+}
+
+.team-comp > :nth-child(1) {
+    background-color: rgba(175, 141, 195, 0.3);
+}
+
+.team-comp > :nth-child(2) {
+    background-color: rgba(127, 191, 123, 0.3);
+}
+
 .stats-round {
     display: flex;
 }
@@ -53,6 +70,7 @@ body {
     display: flex;
     flex-flow: column nowrap;
     justify-content: center;
+    width: 6.5rem;
 }
 
 .score-bucket > div {
@@ -62,7 +80,6 @@ body {
 }
 
 .score-bucket div:nth-child(2) {
-    /* height: 7px; */
     flex-shrink: 0.5;
 }
 
@@ -92,6 +109,10 @@ table tr.total {
     border-bottom: 2px solid #333;
 }
 
+.summary tr {
+    border-bottom: 1px solid #333;
+}
+
 .summary td {
     padding: 0.5rem;
 }
@@ -100,34 +121,36 @@ table tr.total {
     background-color: rgba(175, 141, 195, 0.3);
 }
 
+.summary tr.comp td.up {
+    background-color: rgba(175, 141, 195, 0.2);
+}
+
 .summary tr:nth-child(3) {
     background-color: rgba(127, 191, 123, 0.3);
 }
 
 .summary tr.comp td.down {
-    background-color: rgba(127,191,123, 0.3);
+    background-color: rgba(127, 191, 123, 0.2);
 }
+
 .summary tr.comp td.down:before {
-    padding-right: 3px;
+    padding-right: 5px;
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     content: "\f063";
-    opacity: 0.5;
 }
 
 .summary tr.comp td {
+    /* opacity: 0.6; */
+    color: rgba(0, 0, 0, 0.4);
     background-color: rgba(240, 240, 240, 1);
 }
 
-.summary tr.comp td.up {
-    background-color: rgba(175, 141, 195, 0.3);
-}
 .summary tr.comp td.up:before {
-    padding-right: 3px;
+    padding-right: 5px;
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     content: "\f062";
-    opacity: 0.5;
 }
 
 .score-bucket div {
@@ -208,9 +231,15 @@ table tr.total {
 .team1 {
     background-color: rgba(0, 123, 255, 0.3);
 }
+.total.team1 {
+    background-color: rgba(0, 123, 255, 0.4);
+}
 
 .team2 {
     background-color: rgba(220, 53, 69, 0.3);
+}
+.total.team2 {
+    background-color: rgba(220, 53, 69, 0.4);
 }
 
 .team3 {

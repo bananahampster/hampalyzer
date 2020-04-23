@@ -69,17 +69,21 @@
             <main role="main" class="col-sm-9 ml-sm-auto col-lg-10 px-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <div>
-                        <p class="h2">TFC Statistics</p>
+                        <p class="h3">TFC Statistics</p>
                         <ul class="list-unstyled">
                             <!-- should probably css-style these icons to align text; 
                                  see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
-                            <li><i class="fas fa-lg fa-server"></i>&nbsp; {{server}} on {{date}}</li>
-                            <li><i class="fas fa-lg fa-map-marked-alt"></i>&nbsp; {{map}}</li>
-                            <li><i class="fas fa-clock"></i>&nbsp;&nbsp; {{game_time}}m &times; 2 <abbr title="server timezone">starting at {{time}}</abbr></li>
+                            <li><i class="fas fa-lg fa-server" title="Server name + Date"></i>&nbsp; {{server}} on {{date}}</li>
+                            <li><i class="fas fa-lg fa-map-marked-alt" title="Map played"></i>&nbsp; {{map}}</li>
+                            <li><i class="fas fa-clock" title="Length of match"></i>&nbsp;&nbsp; {{game_time}}m &times; 2 <abbr title="server timezone">starting at {{time}}</abbr></li>
                             <li><i class="fas fa-trophy"></i>&nbsp;&nbsp; Final score: xxx &ndash; xxx</li>
                         </ul>
 {{/with}}
 {{!-- end giant hack --}}
+                    </div>
+                    <div class="team-comp">
+                        {{#with players.[1]}}{{{playerList "A"}}}{{/with}}
+                        {{#with players.[2]}}{{{playerList "B"}}}{{/with}}
                     </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group mr-2">
@@ -92,63 +96,9 @@
                     </div>
                 </div>
 
-                <h2>Statistics</h2>
-                
-                <div class="team-comparison">
-                    <h4>Offense comparison</h4>
-                    <div class="table-responsive">
-                        <table class="table table-borderless table-sm summary summary-offense">
-                            <thead>
-                                <tr>
-                                    <th>Team</th>
-                                    <th><abbr title="Kills - TK + SG">Frags</abbr></th>
-                                    <th>Kills</th>
-                                    <th><abbr title="Team kills">TK</abbr></th>
-                                    <th><abbr title="Sentry gun kills">SG</abbr></th>
-                                    <th><abbr title="Enemy + Self + Team">Deaths</abbr></th>
-                                    <th><abbr title="Deaths by enemy">Enemy</abbr></th>
-                                    <th><abbr title="Deaths by suicide">Self</abbr></th>
-                                    <th><abbr title="Deaths by teammate">Team</abbr></th>
-                                    <th><abbr title="Concussion grenades used">Concs</abbr></th>
-                                    <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
-                                    <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
-                                    <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
-                                    <th>Flag Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{#with stats.[0].teams.[1].teamStats}}{{{offsenseSummary}}}{{/with}}
-                                {{#with comparison.[0]}}{{{offsenseSummary true}}}{{/with}}
-                                {{#with stats.[1].teams.[1].teamStats}}{{{offsenseSummary}}}{{/with}}
-                            </tbody>
-                        </table>
-                    </div>
-                    <h4>Defense comparison</h4>
-                    <div class="table-responsive">
-                        <table class="table table-borderless table-sm summary summary-defense">
-                            <thead>
-                                <tr>
-                                    <th>Team</th>
-                                    <th><abbr title="Kills - TK + SG">Frags</abbr></th>
-                                    <th>Kills</th>
-                                    <th><abbr title="Team-Kills">TK</abbr></th>
-                                    <th>Deaths</th>
-                                    <th><abbr title="Enemy death">Enemy</abbr></th>
-                                    <th><abbr title="Suicides">Self</abbr></th>
-                                    <th><abbr title="Team-Deaths">Team</abbr></th>
-                                    <th>Airshots</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary}}}{{/with}}
-                                {{#with comparison.[1]}}{{{defenseSummary true}}}{{/with}}
-                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary}}}{{/with}}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <!-- <p class="h3">Statistics</p> -->
                 {{#each stats}}
-                <h4>Round {{math @index "+" 1}}</h4>
+                <p class="h3">Round {{math @index "+" 1}}</p>
                 <div class="stats-round">
                     <div class="score-bucket">
                         <div class="team1">{{score.[1]}}</div>
@@ -196,7 +146,7 @@
                                 </tr>
                                 {{/each}}
                                 {{#with teamStats}}
-                                <tr class="total">
+                                <tr class="total team{{math @index "+" 1}}">
                                     <td>Total</td>
                                     <td>--</td>
                                     <td>{{kills}}</td>
@@ -219,6 +169,60 @@
                     </div>
                 </div>
                 {{/each}}
+
+                <div class="team-comparison my-5">
+                    <p class="h3 my-3">Offense comparison</p>
+                    <div class="table-responsive">
+                        <table class="table table-borderless table-sm summary summary-offense">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th><abbr title="Kills - TK + SG">Frags</abbr></th>
+                                    <th>Kills</th>
+                                    <th><abbr title="Team kills">TK</abbr></th>
+                                    <th><abbr title="Sentry gun kills">SG</abbr></th>
+                                    <th><abbr title="Enemy + Self + Team">Deaths</abbr></th>
+                                    <th><abbr title="Deaths by enemy">Enemy</abbr></th>
+                                    <th><abbr title="Deaths by suicide">Self</abbr></th>
+                                    <th><abbr title="Deaths by teammate">Team</abbr></th>
+                                    <th><abbr title="Concussion grenades used">Concs</abbr></th>
+                                    <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
+                                    <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
+                                    <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
+                                    <th>Flag Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#with stats.[0].teams.[1].teamStats}}{{{offsenseSummary "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[0]}}{{{offsenseSummary "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[1].teamStats}}{{{offsenseSummary "B" @root.players.[2]}}}{{/with}}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="h3 my-3">Defense comparison</p>
+                    <div class="table-responsive">
+                        <table class="table table-borderless table-sm summary summary-defense">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th><abbr title="Kills - TK + SG">Frags</abbr></th>
+                                    <th>Kills</th>
+                                    <th><abbr title="Team-Kills">TK</abbr></th>
+                                    <th>Deaths</th>
+                                    <th><abbr title="Enemy death">Enemy</abbr></th>
+                                    <th><abbr title="Suicides">Self</abbr></th>
+                                    <th><abbr title="Team-Deaths">Team</abbr></th>
+                                    <th>Airshots</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[1]}}{{{defenseSummary "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary "B" @root.players.[2]}}}{{/with}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </main>
         </div>
     </div>

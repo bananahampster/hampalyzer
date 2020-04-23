@@ -1,10 +1,10 @@
 import PlayerList from "./playerList";
-import { Event } from "./parser";
+import { Event, RoundParser } from "./parser";
 import Player from "./player";
-import { TeamColor, OutputStats, OutputPlayerStats, PlayerClass, TeamsOutputStats, TeamStatsComparison, TeamRole, TeamStats, ITeamStats, OffenseTeamStats, DefenseTeamStats} from "./constants";
+import { TeamColor, OutputStats, OutputPlayerStats, PlayerClass, TeamsOutputStats, TeamStatsComparison, TeamRole, TeamStats, ITeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer} from "./constants";
 import EventType from "./eventType";
 
-export type TeamComposition = { [team in TeamColor]?: Player[]; };
+export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 export type TeamScore = { [team in TeamColor]?: number; };
 export type PlayerStats = { [playerID: string]: Stats };
 export type Stats = { [stat: string]: Event[] };
@@ -58,6 +58,68 @@ export default class ParserUtils {
         }
 
         return teams;
+    }
+
+    // expecting round length of 2
+    public static generateTeamComposition(rounds: RoundParser[]): TeamComposition<OutputPlayer> | undefined {
+        // gather all team compositions
+        let teamComps = rounds.map(round => round.teams) as TeamComposition[];
+
+        // let's make the assumption that the team assignments should switch (blue -> red and vice versa)
+        // arbitrary decision: make sure 50% of the players match
+        const numRd1BluePlayers = ParserUtils.num(teamComps[0][1]);
+        const numRd2BluePlayers = ParserUtils.num(teamComps[1][1]);
+        const threshold = Math.floor(Math.max(numRd1BluePlayers, numRd2BluePlayers) / 2);
+        if (Math.abs(numRd1BluePlayers - numRd2BluePlayers) > threshold) {
+            return undefined;
+        }
+
+        // make sure at least 50% of players are represented on the "first" team (could also do this for other team, buttfuckit)
+        const rd1BluePlayers = teamComps[0][1];
+        const rd2RedPlayers = teamComps[1][2];
+        
+        const numMatchingPlayers = rd1BluePlayers?.reduce<number>((numMatchingPlayers, player): number => {
+            if (rd2RedPlayers?.some(redPlayer => redPlayer.matches(player)))
+                numMatchingPlayers++;
+            return numMatchingPlayers;
+        }, 0) || 0;
+
+        if ((numMatchingPlayers / numRd1BluePlayers) < 0.5) {
+            return undefined;
+        }
+
+        // map all players together
+        let teamComp: TeamComposition<OutputPlayer> = {
+            '1': teamComps[0][1]?.map(player => player.dumpOutput()),
+            '2': teamComps[0][2]?.map(player => player.dumpOutput()),
+        };
+
+        // fill in missing players
+        rd2RedPlayers?.forEach(player => {
+            // add missing players
+            if (!teamComp[1]?.some(rd1Player => player.matches(rd1Player)))
+                teamComp[1]?.push(player.dumpOutput());
+        });
+
+        teamComps[1][1]?.forEach(player => {
+            // add missing players
+            if (!teamComp[2]?.some(rd1Player => player.matches(rd1Player)))
+                teamComp[2]?.push(player.dumpOutput());
+        });
+
+        return teamComp;
+    }
+
+    public static teamCompToOutput(teamComp: TeamComposition): TeamComposition<OutputPlayer> {
+        return {
+            '1': teamComp[1]?.map(player => player.dumpOutput()),
+            '2': teamComp[2]?.map(player => player.dumpOutput()),
+        };
+    }
+
+    public static num<T>(arr: undefined | Array<T>): number {
+        if (arr == null) return 0;
+        return arr.length;
     }
 
     public static getScore(events: Event[], teams?: TeamComposition): TeamScore {
@@ -282,6 +344,35 @@ export default class ParserUtils {
         return playerStats;
     }
 
+    // expects time of format 00:00 (min:sec)
+    private static addTime(timeA: string, timeB: string): string {
+        const timeAParts = timeA.split(":");
+        const timeBParts = timeB.split(":");
+        const seconds = parseInt(timeAParts[1]) + parseInt(timeBParts[1]);
+        const minutes = parseInt(timeAParts[0]) + parseInt(timeBParts[0]) + Math.floor(seconds / 60);
+
+        const minPad = minutes < 10 ? "0" : "";
+        const dispSeconds = seconds % 60;
+        const secPad = dispSeconds < 10 ? "0" : "";
+
+        return `${minPad + minutes}:${secPad + dispSeconds}`;
+    }
+
+    // expects time of format 00:00 (min:sec)
+    private static diffTime(timeA: string, timeB: string): string {
+        const timeAParts = timeA.split(":");
+        const timeBParts = timeB.split(":");
+        const seconds = parseInt(timeAParts[1]) - parseInt(timeBParts[1]);
+        const minCarryover = seconds >= 0 ? Math.floor(seconds / 60) : Math.ceil(seconds / 60);
+        const minutes = parseInt(timeAParts[0]) - parseInt(timeBParts[0]) + minCarryover;
+
+        const minPad = minutes < 10 && minutes >= 0 ? "0" : "";
+        const dispSeconds = Math.abs(seconds % 60);
+        const secPad = dispSeconds < 10 ? "0" : "";
+
+        return `${minPad + minutes}:${secPad + dispSeconds}`;
+    }
+
     private static addStat(stats: Stats, key: string, event: Event) {
         if (!stats[key])
             stats[key] = [];
@@ -395,7 +486,7 @@ export default class ParserUtils {
             for (const playerID of teamPlayerIDs) {
                 let poStats: OutputPlayerStats = this.blankOutputPlayerStats(team);
                 poStats.name = players.getPlayer(playerID)!.name;
-                poStats.steam_id = playerID;
+                poStats.steamID = playerID;
     
                 const playerStats = stats[playerID];
                 for (const stat in playerStats) {
@@ -468,8 +559,7 @@ export default class ParserUtils {
                     stats.caps += player.caps;
                     stats.touches += player.touches;
                     stats.toss_percent += player.toss_percent * player.touches;
-                    // TODO
-                    // stats.flag_time = addTime(stats.flag_time, player.flag_time)
+                    stats.flag_time = this.addTime(stats.flag_time, player.flag_time)
                     break;
                 case TeamRole.Defense: 
                     stats.airshots = 0; // TODO
@@ -491,7 +581,7 @@ export default class ParserUtils {
         return {
             name: "(unknown)",
             team: team,
-            steam_id: "(unknown)",
+            steamID: "(unknown)",
             roles: "(unknown)",
             caps: 0,
             concs: 0,
@@ -559,27 +649,27 @@ export default class ParserUtils {
             caps: offenseTeams[0].caps - offenseTeams[1].caps,
             touches: offenseTeams[0].touches - offenseTeams[1].touches,
             toss_percent: offenseTeams[0].toss_percent - offenseTeams[1].toss_percent,
-            flag_time: offenseTeams[0].flag_time, // TODO (time diff function)
+            flag_time: this.diffTime(offenseTeams[0].flag_time, offenseTeams[1].flag_time),
         };
 
         const defenseDiff: DefenseTeamStats = {
             team: 0,
             teamRole: TeamRole.Defense,
-            frags: defenseTeams[0].frags - defenseTeams[1].frags,
-            kills: defenseTeams[0].kills - defenseTeams[1].kills,
-            team_kills: defenseTeams[0].team_kills - defenseTeams[1].team_kills,
-            deaths: defenseTeams[0].deaths - defenseTeams[1].deaths,
-            d_enemy: defenseTeams[0].d_enemy - defenseTeams[1].d_enemy,
-            d_self: defenseTeams[0].d_self - defenseTeams[1].d_self,
-            d_team: defenseTeams[0].d_team - defenseTeams[1].d_team,
-            airshots: defenseTeams[0].airshots - defenseTeams[1].airshots,
+            frags: defenseTeams[1].frags - defenseTeams[0].frags,
+            kills: defenseTeams[1].kills - defenseTeams[0].kills,
+            team_kills: defenseTeams[1].team_kills - defenseTeams[0].team_kills,
+            deaths: defenseTeams[1].deaths - defenseTeams[0].deaths,
+            d_enemy: defenseTeams[1].d_enemy - defenseTeams[0].d_enemy,
+            d_self: defenseTeams[1].d_self - defenseTeams[0].d_self,
+            d_team: defenseTeams[1].d_team - defenseTeams[0].d_team,
+            airshots: defenseTeams[1].airshots - defenseTeams[0].airshots,
         };
 
         return [offenseDiff, defenseDiff];
     }
 
     private static calculatePlayerFlagStats(playerEvents: Stats): [string, number] {
-        // use 'flag_pickup', 'flag_capture', 'team_death'/'death', 'and (future) 'flag_thrown' events to calculate flag time
+        // use 'flag_pickup', 'flag_capture', 'team_death'/'death', and 'flag_thrown' events to calculate flag time
         const flagPickups = playerEvents['flag_pickup'];
         const flagCapture = playerEvents['flag_capture'];
         const deaths = playerEvents['death'];

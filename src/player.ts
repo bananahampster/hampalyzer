@@ -1,3 +1,5 @@
+import { OutputPlayer } from "./constants";
+
 class Player {
     private steamNum: string;
     private names: string[];
@@ -29,6 +31,18 @@ class Player {
 
     public toString(): string {
         return this.name;
+    }
+
+    public matches(other: Player | OutputPlayer) {
+        this.steamID === other.steamID;
+    }
+
+    public dumpOutput(teamNum: number = 1): OutputPlayer {
+        return {
+            name: this.name,
+            steamID: this.steamID,
+            team: teamNum,
+        };
     }
 }
 

@@ -22,10 +22,13 @@ export interface OutputStatsFullGame extends OutputStats {
     players: OutputPlayerStatsFullGame[];
 }
 
-export interface OutputPlayerStats {
-    name: string;
+export interface OutputPlayer {
     team: number;
-    steam_id: string;
+    name: string;
+    steamID: string;
+}
+
+export interface OutputPlayerStats extends OutputPlayer {
     roles: string;
     kills: number;
     team_kills: number;
