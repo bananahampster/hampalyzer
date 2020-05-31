@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8" />
 
-    <title>TFC Stats: {{map}} at {{server}} ({{date}}, {{time}})</title>
+    <title>Hampalyzer TFC Stats: {{map}} at {{server}} ({{date}}, {{time}})</title>
     
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 
@@ -20,7 +20,7 @@
 <body>
 
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-sm-3 mr-0" href="#">Hampalyzer</a>
+        <a class="navbar-brand col-sm-3 mr-0" href="#">Hampalyzer &mdash; TFC Statistics</a>
         <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search" />
         <ul class="navbar-nav px-3">
             <li class="nav-item text-nowrap">
@@ -31,31 +31,50 @@
 
     <div class="container-fluid">
         <div class="row">
-            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <nav class="col-md-2 d-none d-md-block bg-dark sidebar">
                 <div class="sidebar-sticky">
                     <ul class="nav flex-column">
+                        
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
+                            <span>Overall statistics</span>
+                        </h6>
                         <li class="nav-item">
                             <a class="nav-link active" href="#">
-                                Stats Summary
+                                Stats by round
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">
-                                Flag Movement
+                                O/D comparison
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">
-                                Pace
+                                Flag pace
                             </a>
                         </li>
                     </ul>
 
-                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>Player List</span>
+                    <h6 class="sidebar-heading px-3 mt-4 mb-1">
+                        <div class="icon icon-team-a"></div>
+                        <span>Team A</span>
                     </h6>
                     <ul class="nav flex-column mb-2">
-                        {{#each players}}
+                        {{#each @root.players.[1]}}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                {{name}}
+                            </a>
+                        </li>
+                        {{/each}}
+                    </ul>
+
+                    <h6 class="sidebar-heading px-3 mt-4 mb-1">
+                        <div class="icon icon-team-b"></div>
+                        <span>Team B</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                       {{#each @root.players.[2]}}
                         <li class="nav-item">
                             <a class="nav-link" href="#">
                                 {{name}}
@@ -69,7 +88,6 @@
             <main role="main" class="col-sm-9 ml-sm-auto col-lg-10 px-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <div>
-                        <p class="h3">TFC Statistics</p>
                         <ul class="list-unstyled">
                             <!-- should probably css-style these icons to align text; 
                                  see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
@@ -80,10 +98,6 @@
                         </ul>
 {{/with}}
 {{!-- end giant hack --}}
-                    </div>
-                    <div class="team-comp">
-                        {{#with players.[1]}}{{{playerList "A"}}}{{/with}}
-                        {{#with players.[2]}}{{{playerList "B"}}}{{/with}}
                     </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group mr-2">
@@ -171,7 +185,12 @@
                 {{/each}}
 
                 <div class="team-comparison my-5">
-                    <p class="h3 my-3">Offense comparison</p>
+                    <p class="h3 my-3">O/D comparison</p>
+                    <div class="team-comp">
+                        {{#with players.[1]}}{{{playerList "A"}}}{{/with}}
+                        {{#with players.[2]}}{{{playerList "B"}}}{{/with}}
+                    </div>
+                    <p class="h4 my-3">Offense</p>
                     <div class="table-responsive">
                         <table class="table table-borderless table-sm summary summary-offense">
                             <thead>
@@ -199,7 +218,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="h3 my-3">Defense comparison</p>
+                    <p class="h4 my-3">Defense</p>
                     <div class="table-responsive">
                         <table class="table table-borderless table-sm summary summary-defense">
                             <thead>
