@@ -7,10 +7,10 @@ import TemplateUtils from './templateUtils';
 const port = process.env.PORT || 3000;
 
 // example of invocating a webserver/API
-// app.listen(port, err => {
-//     if (err) return console.log(err);
-//     return console.log(`server is listening on ${port}.`);
-// });
+app.listen(port, err => {
+    if (err) return console.log(err);
+    return console.log(`server is listening on ${port}.`);
+});
 
 // for now, try to read the log file always
 

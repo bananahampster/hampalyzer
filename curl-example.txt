@@ -1,0 +1,6 @@
+
+
+
+
+
+curl -X POST -F 'logs[]=@logs/L0526012.log' -F 'logs[]=@logs/L0526013.log' http://127.0.0.1:3000/parseGame
