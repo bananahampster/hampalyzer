@@ -1,12 +1,12 @@
 import PlayerList from "./playerList";
 import { Event, RoundParser } from "./parser";
 import Player from "./player";
-import { TeamColor, OutputStats, OutputPlayerStats, PlayerClass, TeamsOutputStats, TeamStatsComparison, TeamRole, TeamStats, ITeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer} from "./constants";
+import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime,} from "./constants";
 import EventType from "./eventType";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 export type TeamScore = { [team in TeamColor]?: number; };
-export type PlayerStats = { [playerID: string]: Stats } & { 'flag': Stats };
+export type PlayersStats = { [playerID: string]: Stats } & { 'flag': Stats };
 export type Stats = { [stat: string]: Event[] };
 
 export default class ParserUtils {
@@ -136,6 +136,8 @@ export default class ParserUtils {
 
         // maybe the server crashed before finishing the log?  fallback to counting caps
         if (Object.keys(scores).length === 0 && teams) {
+            console.warn("Can't find ending score, manually counting caps...");
+
             const flagCapEvents = events.filter(ev => ev.eventType === EventType.PlayerCapturedFlag);
             flagCapEvents.forEach(event => {
                 const player = event.playerFrom!;
@@ -149,9 +151,9 @@ export default class ParserUtils {
         return scores;
     }
 
-    public static getPlayerStats(events: Event[], teams: TeamComposition): PlayerStats {
+    public static getPlayerStats(events: Event[], teams: TeamComposition): PlayersStats {
         // sort the events
-        let playerStats: PlayerStats = { flag: {} };
+        let playerStats: PlayersStats = { flag: {} };
         for (const event of events) {
             if (!event.playerFrom) {
                 // add flag events
@@ -389,10 +391,10 @@ export default class ParserUtils {
         stats[key].push(event);
     }
 
-    private static getPlayerFromStats(playerStats: PlayerStats, player: Player): Stats {
-        let thisPlayerStats = playerStats[player.steamID];
+    private static getPlayerFromStats(playersStats: PlayersStats, player: Player): Stats {
+        let thisPlayerStats = playersStats[player.steamID];
         if (!thisPlayerStats)
-            thisPlayerStats = playerStats[player.steamID] = {};
+            thisPlayerStats = playersStats[player.steamID] = {};
 
         return thisPlayerStats;
     }
@@ -416,7 +418,7 @@ export default class ParserUtils {
         return -1;
     }
 
-    public static generateOutputStats(events: Event[], stats: PlayerStats, playerList: PlayerList, teamComp: TeamComposition): OutputStats {
+    public static generateOutputStats(events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
         const map = mapEvent && mapEvent.value || "(not found)";
@@ -451,7 +453,7 @@ export default class ParserUtils {
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEnd.valueOf() - matchStart.valueOf());
 
-        const teams = this.generateOutputTeamsStats(stats, playerList, teamComp, matchEnd);
+        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEnd);
         const score = this.getScore(events, teamComp);
 
         return {
@@ -478,105 +480,154 @@ export default class ParserUtils {
         return teamsScore;
     }
 
-    public static generateOutputTeamsStats(
-        stats: PlayerStats,
+    public static generateOutputTeamsStatsDetailed(
+        stats: PlayersStats,
         players: PlayerList,
         teams: TeamComposition,
-        matchEnd: Date): TeamsOutputStats {
+        matchEnd: Date): TeamsOutputStatsDetailed {
 
         // calculate stats per player
-        let outputStats: TeamsOutputStats = {};
+        let outputStats: TeamsOutputStatsDetailed = {};
 
         // iterate through the players identified as playing on the teams of interest (for now, Blue and Red)
         [1, 2].forEach(team => {
             const teamPlayerIDs = (teams[String(team)] as Player[]).map(player => player.steamID);
-            const teamPlayers: OutputPlayerStats[] = [];
+            const teamPlayers: PlayerOutputStatsRound[] = [];
 
             for (const playerID of teamPlayerIDs) {
-                let poStats: OutputPlayerStats = this.blankOutputPlayerStats(team);
+                let poStats: PlayerOutputStatsRound = this.blankOutputPlayerStatsDetail(team);
                 let thisPlayer = players.getPlayer(playerID) as Player;
                 poStats.name = thisPlayer.name;
                 poStats.steamID = playerID;
-    
+
                 const playerStats = stats[playerID];
                 for (const stat in playerStats) {
                     const statEvents = playerStats[stat];
-    
+
+                    let outputStat: GenericStat;
                     switch (stat) {
-                        case 'flag_capture':
-                            poStats.caps = statEvents.length; break;
-                        case 'conc_jump':
-                            poStats.concs = statEvents.length; break;
-                        case 'death': 
-                            poStats.deaths = statEvents.length; break;
-                        case 'flag_pickup':
-                            poStats.touches = statEvents.length;
-                            break;
-                        case 'kill':
-                            poStats.kills = statEvents.length; break;
-                        case 'got_button':
-                            poStats.obj = statEvents.length; break;
-                        case 'kill_sg':
-                            poStats.sg_kills = statEvents.length; break;
-                        case 'suicide':
-                            poStats.suicides = statEvents.length; break;
-                        case 'team_death':
-                            poStats.team_deaths = statEvents.length; break;
-                        case 'team_kill':
-                            poStats.team_kills = statEvents.length; break;
+                        /** classes */
                         case 'role':
-                            poStats.roles = this.getPlayerClasses(statEvents, matchEnd);
+                            poStats.classes = this.getPlayerRoles(statEvents, matchEnd);
+                            poStats.roles = this.getPlayerClasses(statEvents, matchEnd); // TODO: merge these two implementations
                             break;
+                        /** kills */
+                        case 'kill':
+                            this.hydrateStat(poStats, 'kills', 'kill', statEvents);
+                            break;
+                        case 'team_kill':
+                            this.hydrateStat(poStats, 'kills', 'teamkill', statEvents);
+                            break;
+                        case 'kill_sg':
+                            this.hydrateStat(poStats, 'kills', 'sg', statEvents);
+                            break;
+                        /** deaths */
+                        case 'death':
+                            this.hydrateStat(poStats, 'deaths', 'death', statEvents);
+                            break;
+                        case 'team_death':
+                            this.hydrateStat(poStats, 'deaths', 'by_team', statEvents);
+                            break;
+                        case 'suicide':
+                            this.hydrateStat(poStats, 'deaths', 'by_self', statEvents);
+                            break;
+                        /** objectives */
+                        case 'flag_pickup':
+                            this.hydrateStat(poStats, 'objectives', 'flag_touch', statEvents);
+                            break;
+                        case 'flag_capture':
+                            this.hydrateStat(poStats, 'objectives', 'flag_capture', statEvents);
+                            break;
+                        case 'got_button':
+                            this.hydrateStat(poStats, 'objectives', 'button', statEvents);
+                            break;
+                        case 'det_entrance':
+                            this.hydrateStat(poStats, 'objectives', 'det_entrance', statEvents);
+                            break;
+                        /** weaponStats */
+                        case 'conc_jump':
+                            this.hydrateStat(poStats, 'weaponStats', 'concs', statEvents);
+                            break;
+                        case 'airshot':
+                            this.hydrateStat(poStats, 'weaponStats', 'airshot', statEvents);
+                            break;
+                        case 'airshoted':
+                            this.hydrateStat(poStats, 'weaponStats', 'airshoted', statEvents);
+                            break;
+                        // TODO: a bunch of others, save for later
+                        /** buildables */
+                        case 'build_disp':
+                            this.hydrateStat(poStats, 'buildables', 'build_disp', statEvents);
+                            break;
+                        case 'build_sg':
+                            this.hydrateStat(poStats, 'buildables', 'build_sg', statEvents);
+                            break;
+                        // TODO: a bunch of others, save for later
                     }
                 }
+                
+                // flag statistics (requires holistic view of flag movement)
+                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag);
+                this.ensureStat<string>(poStats, 'objectives', 'flag_time').value = flag_time;
+                this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
+                this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
 
-                [   poStats.flag_time,
-                    poStats.toss_percent,
-                    poStats.touches_initial
-                ] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag);
 
                 teamPlayers.push(poStats);
             }
 
             // do the stupid thing and order players by number of frags
-            teamPlayers.sort((a, b) => a.team === b.team ? b.kills - a.kills : 0);
+            teamPlayers.sort((a, b) => a.team === b.team ? b.kills?.kill?.events?.length ?? 0 - (a.kills?.kill?.events?.length ?? 0) : 0);
 
             // dump stats for this team
             outputStats[team] = { 
                 players: teamPlayers,
-                teamStats: this.generateOutputTeamStats(teamPlayers, team),
+                teamStats: this.generateOutputTeamStatsDetail(teamPlayers, team),
             };
         });
 
         return outputStats;
     }
 
-    private static generateOutputTeamStats(teamPlayers: OutputPlayerStats[], team: number): TeamStats {
+    private static generateOutputTeamStatsDetail(teamPlayers: PlayerOutputStatsRound[], team: number) {
         // TODO: do some logic based on the plurarity of medics on a team?
         // for now, assume team 1 (blue) is always offense
         const teamRole: TeamRole = team === 1 ? TeamRole.Offsense : team === 2 ? TeamRole.Defense : TeamRole.Unknown;
         
         let stats =  teamPlayers.reduce((stats, player) => {
-            stats.frags += player.kills - player.team_kills + player.sg_kills;
-            stats.kills += player.kills;
-            stats.team_kills += player.team_kills;
-            stats.deaths += player.deaths + player.team_deaths + player.suicides;
-            stats.d_enemy += player.deaths;
-            stats.d_self += player.suicides;
-            stats.d_team += player.team_deaths;
+            stats.frags += this.getSummarizedStat(player, 'kills', 'kill') 
+                - this.getSummarizedStat(player, 'kills', 'teamkill') 
+                + this.getSummarizedStat(player, 'kills', 'sg');
+
+            stats.kills += this.getSummarizedStat(player, 'kills', 'kill');
+            stats.team_kills += this.getSummarizedStat(player, 'kills', 'teamkill');
+
+            stats.deaths += this.getSummarizedStat(player, 'deaths', 'death')
+                + this.getSummarizedStat(player, 'deaths', 'by_team')
+                + this.getSummarizedStat(player, 'deaths', 'by_self');
+
+            stats.d_enemy += this.getSummarizedStat(player, 'deaths', 'death');
+            stats.d_self += this.getSummarizedStat(player, 'deaths', 'by_self');
+            stats.d_team += this.getSummarizedStat(player, 'deaths', 'by_team');
 
             switch (stats.teamRole) {
                 case TeamRole.Offsense:
-                    stats.sg_kills += player.sg_kills;
-                    stats.concs += player.concs;
-                    stats.caps += player.caps;
-                    stats.touches += player.touches;
-                    stats.touches_initial += player.touches_initial;
-                    stats.toss_percent += player.toss_percent * player.touches;
-                    stats.flag_time = this.addTime(stats.flag_time, player.flag_time)
+                    stats.sg_kills += this.getSummarizedStat(player, 'kills', 'sg');
+                    stats.concs += this.getSummarizedStat(player, 'weaponStats', 'concs');
+                    stats.caps += this.getSummarizedStat(player, 'objectives', 'flag_capture');
+                    stats.touches += this.getSummarizedStat(player, 'objectives', 'flag_touch');
+                    stats.touches_initial += this.getSummarizedStat(player, 'objectives', 'touches_initial');
+
+                    stats.toss_percent += this.getSummarizedStat(player, 'objectives', 'toss_percent') 
+                        * this.getSummarizedStat(player, 'objectives', 'flag_touch');
+
+                    stats.flag_time = this.addTime(
+                        stats.flag_time, 
+                        this.getSummarizedStat(player, 'objectives', 'flag_time').toString());
+
                     break;
                 case TeamRole.Defense: 
-                    stats.airshots = 0; // TODO
+                    stats.airshots = this.getSummarizedStat(player, 'weaponStats', 'airshot');
                     break;
             }
 
@@ -591,26 +642,65 @@ export default class ParserUtils {
         return stats;
     }
 
-    private static blankOutputPlayerStats(team: number = 5): OutputPlayerStats {
+    private static blankOutputPlayerStatsDetail(team: number = 5): PlayerOutputStatsRound {
         return {
             name: "(unknown)",
+            roles: "(unknown)",
             team: team,
             steamID: "(unknown)",
-            roles: "(unknown)",
-            caps: 0,
-            concs: 0,
-            deaths: 0,
-            flag_time: "0:00",
-            kills: 0,
-            obj: 0,
-            sg_kills: 0,
-            suicides: 0,
-            team_deaths: 0,
-            team_kills: 0,
-            toss_percent: 0,
-            touches: 0,
-            touches_initial: 0,
+            classes: [],
+            deaths: {},
+            kills: {
+                kill: {
+                    title: 'kill',
+                    value: 0,
+                    events: [],
+                },
+            }
         };
+    }
+
+    private static ensureStat<T = number>(
+        playerStats: NonNullable<PlayerOutputStatsRound>,
+        category: string,
+        item: string,
+        description?: string): GenericStat<any, T> {
+
+        if (!playerStats[category]) {
+            playerStats[category] = {};
+        }
+
+        if (!playerStats[category][item]) {
+            playerStats[category][item] = {
+                title: item,
+                value: undefined,
+                description,
+                events: [],
+            };
+        }
+
+        return playerStats[category][item];
+    }
+
+    private static hydrateStat(
+        playerStats: PlayerOutputStatsRound, 
+        category: string, 
+        item: string, 
+        events: Event[], 
+        description?: string): GenericStat {
+
+        const thisStat = this.ensureStat(playerStats, category, item, description);
+        thisStat.value = events.length;
+        thisStat.events = events;
+        return thisStat;
+    }
+
+    private static getSummarizedStat(playerStats: PlayerOutputStatsRound, category: string, item: string): number {
+        const statCategory = playerStats[category];
+        if (statCategory)
+            return statCategory?.[item]?.value ?? 0
+
+        return 0;
     }
     
     private static blankTeamStats(teamRole: TeamRole = TeamRole.Unknown): TeamStats {
@@ -691,6 +781,7 @@ export default class ParserUtils {
         const flagCapture = playerEvents['flag_capture'];
         const deaths = playerEvents['death'];
         const team_deaths = playerEvents['team_death'];
+        const self_deaths = playerEvents['suicide'];
         const flag_thrown = playerEvents['flag_throw'];
 
         // don't bother trying to calculate flag stats if there were no touches
@@ -704,7 +795,7 @@ export default class ParserUtils {
         let flagTimeMS = 0;
 
         let flagSequence = flagPickups.concat(
-            flagCapture, deaths, team_deaths, flag_thrown, 
+            flagCapture, deaths, team_deaths, self_deaths, flag_thrown, 
             flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
         flagSequence.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
 
@@ -793,5 +884,44 @@ export default class ParserUtils {
 
         // print classes
         return rankedList.map(role => PlayerClass[role.role]).join(', ');
+    }
+
+    private static getPlayerRoles(roleChangedEvents: Event[], matchEnd: Date): ClassTime[] {
+        roleChangedEvents.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+        
+        let classTimes: ClassTime[] = [];
+        let lastTimestamp: Date | undefined;
+        let lastClass: PlayerClass | undefined;
+        for (const roleChangedEvent of roleChangedEvents) {
+            lastClass = roleChangedEvent.data!.class;
+
+            // skip the initial role if no timestamp set
+            if (lastTimestamp !== undefined && lastClass !== undefined) {
+                // calculate the time for the last class and add entry
+                const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
+                    .format(roleChangedEvent.timestamp.valueOf() - lastTimestamp.valueOf());
+
+                classTimes.push({
+                    class: PlayerClass.outputClass(lastClass),
+                    time,
+                });
+            }
+
+            lastTimestamp = roleChangedEvent.timestamp;
+        }
+
+        // make sure to record the last class picked
+        if (lastClass && lastTimestamp) {
+            // calculate the time for the last class and add entry
+            const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
+                .format(matchEnd.valueOf() - lastTimestamp.valueOf());
+
+            classTimes.push({
+                class: PlayerClass.outputClass(lastClass),
+                time,
+            });
+        }
+
+        return classTimes;
     }
 }

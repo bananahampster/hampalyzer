@@ -295,6 +295,13 @@ table tr.total {
     background: rgba(248, 249, 250, 0.25);
 }
 
+/** player stats styles */
+
+.player-stats {
+    display: grid;
+    grid-template-columns: 50px 1fr 1fr;
+}
+
 /** navbar styles */
 
 .navbar-brand {

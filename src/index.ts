@@ -40,6 +40,12 @@ parsePromise.then((allStats) => {
                 if (err) console.error(`failed to write output: ${err}`);
                 console.log(`saved file ${filename}`);
             });
+ 
+            // TODO: logic for generating player pages
+            // * collect each player (allStats.players[team][index])
+            // * for each player, collect their stats from available rounds and combine into 
+            //    { player, round: stats[] }  (see PlayerOutputStats)
+            // generate page (compile template, generate template with filename w/steam_id number)
         });
     } else console.error('no stats found to write!');
 });

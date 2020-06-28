@@ -145,18 +145,18 @@
                                 <tr class="team{{team}}">
                                     <td>{{name}}</td>
                                     <td>{{roles}}</td>
-                                    <td>{{kills}}</td>
-                                    <td>{{team_kills}}</td>
-                                    <td>{{sg_kills}}</td>
-                                    <td>{{deaths}}</td>
-                                    <td>{{suicides}}</td>
-                                    <td>{{team_deaths}}</td>
-                                    <td>{{#if concs}}{{concs}}{{else}}--{{/if}}</td>
-                                    <td>{{#if caps}}{{caps}}{{else}}--{{/if}}</td>
-                                    <td>{{#if touches}}{{touches}} ({{touches_initial}}){{else}}--{{/if}}</td>
-                                    <td>{{#if toss_percent}}{{toss_percent}}%{{else}}--{{/if}}</td>
-                                    <td>{{flag_time}}</td>
-                                    <td>{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
+                                    <td>{{kills.kill.value}}</td>
+                                    <td>{{kills.teamkill.value}}</td>
+                                    <td>{{kills.sg.value}}</td>
+                                    <td>{{deaths.death.value}}</td>
+                                    <td>{{deaths.by_self.value}}</td>
+                                    <td>{{deaths.by_team.value}}</td>
+                                    <td>{{#if weaponStats.concs}}{{weaponStats.concs.value}}{{else}}--{{/if}}</td>
+                                    <td>{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{else}}--{{/if}}</td>
+                                    <td>{{#if objectives.flag_touch}}{{objectives.flag_touch.value}} ({{objectives.touches_initial.value}}){{else}}--{{/if}}</td>
+                                    <td>{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}</td>
+                                    <td>{{objectives.flag_time.value}}</td>
+                                    <td>{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
                                 </tr>
                                 {{/each}}
                                 {{#with teamStats}}

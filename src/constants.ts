@@ -1,4 +1,5 @@
-import { TeamScore } from "./parserUtils";
+import { TeamScore, TeamComposition } from "./parserUtils";
+import { Event } from './parser';
 
 export interface OutputStats {
     log_name: string;
@@ -8,18 +9,14 @@ export interface OutputStats {
     time: string;
     game_time: string;
     score: TeamScore;
-    teams: TeamsOutputStats;
+    teams: TeamsOutputStatsDetailed;
 }
 
-export type TeamsOutputStats = { [team in TeamColor]?: TeamOutputStats; }
+export type TeamsOutputStatsDetailed = { [team in TeamColor]?: TeamOutputStatsDetailed; }
 
-export interface TeamOutputStats { 
-    players: OutputPlayerStats[];
+export interface TeamOutputStatsDetailed { 
+    players: PlayerOutputStatsRound[];
     teamStats?: TeamStats;
-}
-
-export interface OutputStatsFullGame extends OutputStats {
-    players: OutputPlayerStatsFullGame[];
 }
 
 export interface OutputPlayer {
@@ -28,27 +25,67 @@ export interface OutputPlayer {
     steamID: string;
 }
 
-export interface OutputPlayerStats extends OutputPlayer {
+export interface PlayerOutputStats {
+    player: string;
+    steamID: string;
+    
+    /** server metadata */
+    map: string;
+    server: string;
+    date: string;
+    time: string;
+    players: TeamComposition<OutputPlayer>[]; // just to get other players to hydrate sidebar
+
+    /** actual player stats, per round */
+    round: PlayerOutputStatsRound[];
+}
+
+export interface PlayerOutputStatsRound extends OutputPlayer, PlayerStats {
+    classes: ClassTime[];
     roles: string;
-    kills: number;
-    team_kills: number;
-    sg_kills: number;
-    deaths: number;
-    suicides: number;
-    team_deaths: number;
-    concs: number;
-    caps: number;
-    touches: number;
-    touches_initial: number;
-    toss_percent: number;
-    flag_time: string;
-    obj: number;
-    // TODO: unused
-    d_kills?: number;
-    d_tk?: number;
-    d_deaths?: number;
-    d_team_deaths?: number;
-    d_suicidies?: number;
+}
+
+export interface PlayerStats {
+    kills: { // frags, TK, sg kills
+        kill?: GenericStat<'kill'>;
+        teamkill?: GenericStat<'teamkill'>;
+        sg?: GenericStat<'sg'>;
+    }; 
+    deaths: { // deaths, team-deaths, suicides
+        death?: GenericStat<'death'>;
+        by_team?: GenericStat<'by_team'>;
+        by_self?: GenericStat<'by_self'>;
+    };
+    objectives?: { // flag touch, throw, capture, initial, security, detpak entrance opened, etc.
+        touches_initial?: GenericStat<'touches_initial'>;
+        flag_touch?: GenericStat<'flag_touch'>;
+        flag_capture?: GenericStat<'flag_capture'>;
+        flag_time?: GenericStat<'flag_time', string>;
+        toss_percent?: GenericStat<'toss_percent'>;
+        button?:  GenericStat<'button'>;
+        det_entrance?: GenericStat<'det_entrance'>;
+    };
+    weaponStats?: { // passed infection, infected, detpack set/disarm, caltrop, hallucinate, airshot, concs, etc.
+        concs?: GenericStat<'concs'>;
+        airshot?: GenericStat<'airshot'>;
+        airshoted?: GenericStat<'airshoted'>;
+    };
+    buildables?: { // sg build, upgrade, detonate, etc.
+        build_sg?: GenericStat<'build_sg'>;
+        build_disp?: GenericStat<'build_disp'>;
+    };
+}
+
+export interface GenericStat<T = string, ValueType = number> {
+    title: T;
+    value: ValueType;
+    description?: string;
+    events?: Event[];
+}
+
+export interface ClassTime {
+    class: string,
+    time: string;
 }
 
 export type TeamStats = OffenseTeamStats | DefenseTeamStats | OtherTeamStats;
@@ -87,22 +124,7 @@ export interface OtherTeamStats extends ITeamStats {
     teamRole: TeamRole.Unknown;
  }
 
- export type TeamStatsComparison = [OffenseTeamStats, DefenseTeamStats];
-
-export interface OutputPlayerStatsFullGame extends OutputPlayerStats {
-    rd2_kills: number;
-    rd2_team_kills: number;
-    rd2_sg_kills: number;
-    rd2_deaths: number;
-    rd2_suicides: number;
-    rd2_team_deaths: number;
-    rd2_concs: number;
-    rd2_caps: number;
-    rd2_touches: number;
-    rd2_toss_percent: number;
-    rd2_flag_time: string;
-    rd2_obj: number;
-}
+export type TeamStatsComparison = [OffenseTeamStats, DefenseTeamStats];
 
 export const enum TeamRole {
     Comparison = -2,
@@ -161,6 +183,36 @@ export enum PlayerClass {
     Spy,
     Engineer,
 };
+
+export namespace PlayerClass {
+    export function outputClass(playerClass: PlayerClass): string {
+        switch(playerClass) {
+            case PlayerClass.Civilian:
+                return 'civilian';
+            case PlayerClass.Scout:
+                return 'scout';
+            case PlayerClass.Sniper:
+                return 'sniper';
+            case PlayerClass.Soldier:
+                return 'soldier';
+            case PlayerClass.Demoman:
+                return 'demoman';
+            case PlayerClass.Medic:
+                return 'medic';
+            case PlayerClass.HWGuy:
+                return 'hwguy';
+            case PlayerClass.Pyro:
+                return 'pyro';
+            case PlayerClass.Spy:
+                return 'spy';
+            case PlayerClass.Engineer:
+                return 'engineer';
+            default:
+                console.error(`unknown playerClass: outputClass(${playerClass})`);
+                return 'unknown;'
+        }
+    }
+}
 
 export enum TeamColor {
     Blue = 1,
