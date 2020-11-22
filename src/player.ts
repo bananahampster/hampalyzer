@@ -42,6 +42,7 @@ class Player {
             name: this.name,
             steamID: this.steamID,
             team: teamNum,
+            id: this.steamID.split(":")[2],
         };
     }
 }

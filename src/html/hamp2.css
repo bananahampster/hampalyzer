@@ -71,6 +71,7 @@ body {
     padding-top: 72px; /* space for navbar */
     background-color: rgb(52, 58, 64);
     color: #e6e6e6;
+    min-height: calc(100vh);
 }
 
 .fas {
@@ -297,9 +298,30 @@ table tr.total {
 
 /** player stats styles */
 
+.player-name {
+    font-weight: 700;
+}
+
 .player-stats {
     display: grid;
-    grid-template-columns: 50px 1fr 1fr;
+    grid-template-columns: 75px 1fr 1fr;
+    row-gap: 15px;
+}
+
+.player-stats .emoji {
+    font-size: 2rem;
+}
+
+.player-stats .round-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    align-self: end;
+}
+
+.player-stats .classes > div {
+    padding-right: 10px;
+    align-items: center;
+    justify-content: flex-end;
 }
 
 /** navbar styles */

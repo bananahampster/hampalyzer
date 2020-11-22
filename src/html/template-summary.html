@@ -14,7 +14,7 @@
         crossorigin="anonymous">
 
     <!-- hamp stylin' -->
-    <link rel="stylesheet" href="hamp2.css" />
+    <link rel="stylesheet" href="/hamp2.css" />
 </head>
 
 <body>
@@ -39,17 +39,17 @@
                             <span>Overall statistics</span>
                         </h6>
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">
+                            <a class="nav-link active" href="index.html">
                                 Stats by round
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="index.html#comp">
                                 O/D comparison
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="index.html">
                                 Flag pace
                             </a>
                         </li>
@@ -62,7 +62,7 @@
                     <ul class="nav flex-column mb-2">
                         {{#each @root.players.[1]}}
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
                             </a>
                         </li>
@@ -76,7 +76,7 @@
                     <ul class="nav flex-column mb-2">
                        {{#each @root.players.[2]}}
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
                             </a>
                         </li>

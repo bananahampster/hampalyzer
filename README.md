@@ -6,7 +6,7 @@ This README describes some of the intended utility of this library.
 
 ## Usage
 
-The Hampalyzer should have an endpoint to consume a a given Half-Life GoldSource log file, which contains typical events such as frags, spawns, and players' interactions with in-game entities. From this file, the Hampalyzer will generate player-centric events that describe in-game performance, and also generate some metadata about the match (which players are on which team, 
+The Hampalyzer should have an endpoint to consume a a given Half-Life GoldSource log file, which contains typical events such as frags, spawns, and players' interactions with in-game entities. From this file, the Hampalyzer will generate player-centric events that describe in-game performance, and also generate some metadata about the match (which players are on which team,
 the final score of the match, what map was played, length of match, etc.).
 
 ## To-Do
@@ -16,10 +16,12 @@ the final score of the match, what map was played, length of match, etc.).
 
 ### Immediate to-do:
 
-[ ] Initial touches, total flag time, final score
-[ ] Web API (how does one upload a log to the hampalyzer?)
-[ ] Dark theme
-[ ] Player-specific stats
+[X] Initial touches, total flag time, final score
+[X] Web API (how does one upload a log to the hampalyzer?)
+[X] Dark theme
+[X] Player-specific stats
+[ ] Break player-specific stats down into who/when
+[ ] Make sprite sheet for kill types
 
 ### Known bugs:
 
@@ -67,18 +69,18 @@ The third pass will collect all events and construct a flat representation of th
         matchtime: "15:00",
         matchstart: time_prematch_end,
         teams: [
-            { 
-                team: "red", 
+            {
+                team: "red",
                 number: 4,
                 players: [
                     "STEAM_0:1:206377",
                     ...
-                ] 
+                ]
             },
             ...
         ]
     },
-    
+
 }
 ```
 

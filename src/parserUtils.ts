@@ -1,7 +1,7 @@
 import PlayerList from "./playerList";
 import { Event, RoundParser } from "./parser";
 import Player from "./player";
-import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime,} from "./constants";
+import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed,} from "./constants";
 import EventType from "./eventType";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
@@ -418,6 +418,19 @@ export default class ParserUtils {
         return -1;
     }
 
+    public static getPlayerFromTeams(steamId: string, teams: TeamsOutputStatsDetailed): PlayerOutputStatsRound | undefined {
+        let foundPlayer: PlayerOutputStatsRound | undefined;
+        for (const teamId in teams) {
+            const team = teams[teamId] as TeamOutputStatsDetailed;
+            foundPlayer = team.players.find(player => player.steamID === steamId);
+
+            if (foundPlayer)
+                break;
+        }
+
+        return foundPlayer;
+    }
+
     public static generateOutputStats(events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
@@ -648,6 +661,7 @@ export default class ParserUtils {
             roles: "(unknown)",
             team: team,
             steamID: "(unknown)",
+            id: "unk",
             classes: [],
             deaths: {},
             kills: {

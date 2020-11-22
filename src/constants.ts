@@ -23,18 +23,21 @@ export interface OutputPlayer {
     team: number;
     name: string;
     steamID: string;
+    id: string; // url-sanitized id
 }
 
 export interface PlayerOutputStats {
-    player: string;
+    name: string;
     steamID: string;
+    team: number;
+    id: string; // the url slug
     
     /** server metadata */
     map: string;
     server: string;
     date: string;
     time: string;
-    players: TeamComposition<OutputPlayer>[]; // just to get other players to hydrate sidebar
+    players: TeamComposition<OutputPlayer>; // just to get other players to hydrate sidebar
 
     /** actual player stats, per round */
     round: PlayerOutputStatsRound[];

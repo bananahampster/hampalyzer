@@ -12,7 +12,7 @@
         crossorigin="anonymous">
 
     <!-- hamp stylin' -->
-    <link rel="stylesheet" href="hamp2.css" />
+    <link rel="stylesheet" href="/hamp2.css" />
 </head>
 
 <body>
@@ -37,17 +37,17 @@
                             <span>Overall statistics</span>
                         </h6>
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">
+                            <a class="nav-link active" href="index.html">
                                 Stats by round
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="index.html#comp">
                                 O/D comparison
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="index.html">
                                 Flag pace
                             </a>
                         </li>
@@ -60,7 +60,7 @@
                     <ul class="nav flex-column mb-2">
                         {{#each @root.players.[1]}}
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
                             </a>
                         </li>
@@ -74,7 +74,7 @@
                     <ul class="nav flex-column mb-2">
                        {{#each @root.players.[2]}}
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
                             </a>
                         </li>
@@ -84,23 +84,23 @@
             </nav>
 
             <main role="main" class="col-sm-9 ml-sm-auto col-lg-10 px-4">
-                <p class="h2">{{player}}</p>
+                <p class="h2 player-name">{{name}}</p>
                 <div class="player-stats player-stats-num{{round.length}}">
                     
                     <!-- round titles -->
-                    <div>📰</div>
+                    <div class="emoji">📰</div>
                     {{#each round}}
-                    <div>Round {{math @index "+" 1}}</div>
+                    <div class="round-title">Round {{math @index "+" 1}}</div>
                     {{/each}}
 
                     <!-- player classes -->
-                    <div>🧑</div>
+                    <div class="emoji">🧑</div>
                     {{#each round}}
-                    <div class="d-flex flex-row">
+                    <div class="d-flex flex-row classes">
                         {{#each classes}}
                         <div class="d-flex flex-column">
-                            <!-- TODO: get right selector here-->
-                            <img src="/assets/classes/{{color}}/{{class}}.png" alt="{{class}}" />
+                            <!-- TODO: get right team selector here-->
+                            <img src="/assets/img/classes/blue/{{class}}.gif" alt="{{class}}" />
                             <div>{{time}}</div>
                         </div>
                         {{/each}}
@@ -108,7 +108,7 @@
                     {{/each}}
 
                     <!-- kills -->
-                    <div>💀</div>
+                    <div class="emoji">💀</div>
                     {{#each round}}
                     <div class="d-flex flex-column">
                         {{#each kills}}
@@ -120,10 +120,34 @@
                     {{/each}}
 
                     <!-- deaths -->
-                    <div>☠</div>
+                    <div class="emoji">☠</div>
                     {{#each round}}
                     <div class="d-flex flex-column">
                         {{#each deaths}}
+                        <div>
+                            <span title="{{description}}">{{title}}</span>: {{value}}
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{/each}}
+
+                    <!-- weapons -->
+                    <div class="emoji">🔫</div>
+                    {{#each round}}
+                    <div class="d-flex flex-column">
+                        {{#each weaponStats}}
+                        <div>
+                            <span title="{{description}}">{{title}}</span>: {{value}}
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{/each}}
+
+                    <!-- buildables -->
+                    <div class="emoji">🏗</div>
+                    {{#each round}}
+                    <div class="d-flex flex-column">
+                        {{#each buildables}}
                         <div>
                             <span title="{{description}}">{{title}}</span>: {{value}}
                         </div>
