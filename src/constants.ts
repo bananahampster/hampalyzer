@@ -1,5 +1,6 @@
 import { TeamScore, TeamComposition } from "./parserUtils";
 import { Event } from './parser';
+import Player from "./player";
 
 export interface OutputStats {
     log_name: string;
@@ -14,7 +15,7 @@ export interface OutputStats {
 
 export type TeamsOutputStatsDetailed = { [team in TeamColor]?: TeamOutputStatsDetailed; }
 
-export interface TeamOutputStatsDetailed { 
+export interface TeamOutputStatsDetailed {
     players: PlayerOutputStatsRound[];
     teamStats?: TeamStats;
 }
@@ -31,7 +32,7 @@ export interface PlayerOutputStats {
     steamID: string;
     team: number;
     id: string; // the url slug
-    
+
     /** server metadata */
     map: string;
     server: string;
@@ -53,7 +54,7 @@ export interface PlayerStats {
         kill?: GenericStat<'kill'>;
         teamkill?: GenericStat<'teamkill'>;
         sg?: GenericStat<'sg'>;
-    }; 
+    };
     deaths: { // deaths, team-deaths, suicides
         death?: GenericStat<'death'>;
         by_team?: GenericStat<'by_team'>;
@@ -84,6 +85,16 @@ export interface GenericStat<T = string, ValueType = number> {
     value: ValueType;
     description?: string;
     events?: Event[];
+    details?: FacetedStatDetails; // { "hamp": { by_weapon: "nade", description: "killed at 3:30" }, "killed at 3:40" }
+}
+
+export type FacetedStatDetails = { [key: string]: StatDetails[] };
+export type EventDescriptor = (ev: Event) => string;
+
+export interface StatDetails {
+    description: string;
+    player?: Player;
+    weapon?: Weapon;
 }
 
 export interface ClassTime {
@@ -137,6 +148,7 @@ export const enum TeamRole {
 }
 
 // TODO: check `logs\L1125012.log` for others (like pills, tranq, knife, detpack, caltrop, etc.)
+// TODO: missing tranq
 export enum Weapon {
     None = 0,
     NormalGrenade,

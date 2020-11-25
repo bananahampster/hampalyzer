@@ -33,7 +33,7 @@ body {
 .sidebar .nav-item:hover {
     background-color: rgba(0,0,0,0.3);
 }
-  
+
 .sidebar .nav-link {
     font-weight: 500;
     color: #e6e6e6;
@@ -204,10 +204,10 @@ table tr.total {
 }
 
 /** tks */
-.stats td:nth-child(4), .stats th:nth-child(4), 
+.stats td:nth-child(4), .stats th:nth-child(4),
 .stats td:nth-child(7), .stats th:nth-child(7),
 .stats td:nth-child(8), .stats th:nth-child(8),
-.stats td:nth-child(16), .stats th:nth-child(16), 
+.stats td:nth-child(16), .stats th:nth-child(16),
 .stats td:nth-child(19), .stats th:nth-child(19),
 .stats td:nth-child(20), .stats th:nth-child(20) {
     color: rgb(255, 125, 138);
@@ -244,7 +244,7 @@ table tr.total {
 .summary td:nth-child(1), .summary th:nth-child(1),
 .summary-offense td:nth-child(5), .summary-offense th:nth-child(5),
 .summary-offense td:nth-child(9), .summary-offense th:nth-child(9),
-.summary-defense td:nth-child(4), .summary-defense th:nth-child(4), 
+.summary-defense td:nth-child(4), .summary-defense th:nth-child(4),
 .summary-defense td:nth-child(8), .summary-defense th:nth-child(8) {
     border-right: 1px solid #333;
     padding-right: 15px;
@@ -259,7 +259,7 @@ table tr.total {
 .summary td:nth-child(2), .summary th:nth-child(2),
 .summary-offense td:nth-child(6), .summary-offense th:nth-child(6),
 .summary-offense td:nth-child(10), .summary-offense th:nth-child(10),
-.summary-defense td:nth-child(5), .summary-defense th:nth-child(5), 
+.summary-defense td:nth-child(5), .summary-defense th:nth-child(5),
 .summary-defense td:nth-child(9), .summary-defense th:nth-child(9)  {
     padding-left: 10px;
 }
@@ -304,8 +304,9 @@ table tr.total {
 
 .player-stats {
     display: grid;
-    grid-template-columns: 75px 1fr 1fr;
+    grid-template-columns: 3rem 1fr 1fr;
     row-gap: 15px;
+    column-gap: 40px;
 }
 
 .player-stats .emoji {
@@ -323,6 +324,58 @@ table tr.total {
     align-items: center;
     justify-content: flex-end;
 }
+
+.stats-facets {
+    display: grid;
+    grid-template-columns: max-content max-content auto;
+    column-gap: 15px;
+    row-gap: 5px;
+}
+
+.facet-value {
+    font-weight: 700;
+    justify-self: end;
+}
+
+/** weapon styles **/
+
+.weapon-icon {
+    background: url('assets/img/tfc_dmsg_transparent.png');
+    display: inline-block;
+    width: 60px;
+    height: 16px;
+}
+
+.weapon-1 { background-position: -150px -224px; width: 24px; height: 16px; }
+.weapon-2 { background-position: -84px -2px; width: 24px; height: 16px;}
+.weapon-3 { background-position: -84px -74px; width: 24px; height: 16px; }
+.weapon-4 { background-position: -84px -112px; width: 24px; height: 16px; }
+.weapon-5 { background-position: -112px -64px; width: 48px; }
+.weapon-6 { background-position: -112px -42px; width: 48px; }
+.weapon-7 { background-position: 0px -208px; }
+.weapon-8 { background-position: 0px -48px }
+.weapon-9 { background-position: 0px -192px; }
+.weapon-10 { background-position: 0px -144px; }
+.weapon-11 { background-position: -48px -224px; width: 48px; }
+.weapon-12 { background-position: -96px -208px; width: 48px; }
+.weapon-13 { background-position: 0 -16px; }
+.weapon-14 { background-position: -112px -4px; width: 36px; }
+.weapon-15 { background-position: -208px -137px; width: 48px; }
+.weapon-16 { background-position: 0px 0px ;} /* TODO (dispenser) */
+.weapon-17 { background-position: -208px -137px; width: 48px; } /* same as 15 */
+.weapon-18 { background-position: 0px -112px; }
+.weapon-19 { background-position: 0px -128px; }
+.weapon-20 { background-position: 0px 0px; } /* TODO (detpack) */
+.weapon-21 { background-position: -112px -22px; height: 20px; }
+.weapon-22 { background-position: -84px -26px; width: 24px; }
+.weapon-23 { background-position: -84px -50px; width: 24px; }
+.weapon-24 { background-position: -84px -98px; width: 24px; }
+.weapon-25 { background-position: 0px -32px; }
+.weapon-26 { background-position: -208px -121px; width: 48px; }
+.weapon-27 { background-position: 0px -80px; }
+.weapon-28 { background-position: 0px -96px; }
+.weapon-29, .weapon-30, .weapon-31, .weapon-32, .weapon-33 { background-position: -192px -240px; width: 36px; }
+
 
 /** navbar styles */
 

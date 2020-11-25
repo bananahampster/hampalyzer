@@ -30,7 +30,7 @@ export class Parser {
                 console.log(`parsed ${this.rounds.length} files.`);
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
-                
+
                 let comparison: TeamStatsComparison | undefined;
                 let teamComp: TeamComposition<OutputPlayer> = ParserUtils.teamCompToOutput(this.rounds[0]!.teams!);
                 if (this.rounds.length === 2) {
@@ -58,7 +58,7 @@ export class RoundParser {
     private teamComp: TeamComposition | undefined;
     private summarizedStats: OutputStats | undefined;
 
-    constructor(private filename: string) { 
+    constructor(private filename: string) {
         // should probably check if the file exists here
     }
 
@@ -68,7 +68,7 @@ export class RoundParser {
     }
 
     private async parseRound(filename: string): Promise<void> {
-        return new Promise<void>(resolve => { 
+        return new Promise<void>(resolve => {
             const logStream = fs.createReadStream(filename);
             logStream.on('data', chunk => {
                 this.rawLogData += chunk;
@@ -83,7 +83,7 @@ export class RoundParser {
         });
     }
 
-    public get done(): boolean { 
+    public get done(): boolean {
         return this.doneReading;
     }
 
@@ -103,7 +103,7 @@ export class RoundParser {
         this.allEvents = this.rawLogData.split("\n");
 
         for (let event of this.allEvents) {
-            const newEvent = Event.CreateEvent(event, this.players);
+            const newEvent = Event.createEvent(event, this.players);
             if (newEvent)
                 this.events.push(newEvent);
         }
@@ -116,8 +116,45 @@ export class RoundParser {
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
+        // find prematch start; ignore events before that (except chat/class choice/team join?)
+        this.trimPrematchEvents();
+
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp);
+    }
+
+    private trimPrematchEvents(): void {
+        const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
+        const matchStartDate = matchStartEvent.timestamp;
+        if (matchStartEvent) {
+            const eventsNotToCull = [
+                EventType.MapLoading,
+                EventType.ServerName,
+                EventType.PlayerJoinTeam,
+                EventType.PlayerChangeRole,
+                EventType.PlayerMM1,
+                EventType.PlayerMM2,
+                EventType.ServerSay,
+                EventType.ServerCvar,
+            ];
+
+            // iterate through events, but skip culling chat, role, and team messages
+            for (let i = 0; i < this.events.length; i++) {
+                const e = this.events[i];
+                // also want to cull self-suicides on prematch end
+                if (e.timestamp > matchStartDate) {
+                    e.gametime = (e.timestamp.getTime() - matchStartDate.getTime());
+                } else {
+                    if (eventsNotToCull.indexOf(e.eventType) === -1) {
+                        this.events.splice(i, 1);
+                        i--;
+                    } else {
+                        // will be negative
+                        e.gametime = (e.timestamp.getTime() - matchStartDate.getTime());
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -133,6 +170,7 @@ export interface EventCreationOptions {
 export class Event {
     public eventType: EventType;
     public timestamp: Date;
+    public gametime?: number;
 
     public data?: ExtraData;
     public playerFrom?: Player;
@@ -143,7 +181,7 @@ export class Event {
         // required fields
         this.eventType = options.eventType;
         this.timestamp = options.timestamp;
-        
+
         // optional fields
         this.data = options.data;
         this.playerFrom = options.playerFrom;
@@ -151,10 +189,10 @@ export class Event {
         this.withWeapon = options.withWeapon;
     }
 
-    public static CreateEvent(line: string, playerList: PlayerList): Event | undefined {
+    public static createEvent(line: string, playerList: PlayerList): Event | undefined {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
-        
+
         let data: ExtraData = {};
         let withWeapon: Weapon | undefined;
         let playerFrom: Player | undefined;
@@ -167,7 +205,7 @@ export class Event {
 
             // figure out the type of event (TODO)
             const lineData = line.substr(25);
-            
+
             // RE to split up words (TODO: also remove quotes?)
             let lineDataRE = /(\b[^\s]+\b)/ig
 
@@ -211,10 +249,10 @@ export class Event {
                             } else
                                 console.log("Unknown 'killed' event: " + line);
                             break;
-                        case "triggered": 
+                        case "triggered":
                             if (eventTextParts[1].startsWith("\"airshot")) {
                                 eventType = EventType.PlayerHitAirshot;
-                                withWeapon = eventTextParts[1].indexOf('gl') ? Weapon.BluePipe : Weapon.Rocket;
+                                withWeapon = eventTextParts[1].indexOf('gl') === 0 ? Weapon.BluePipe : Weapon.Rocket;
                                 data.value = withText.split(" ")[4];
 
                             } else if (eventTextParts[1] === "\"Concussion_Grenade\"") {
@@ -243,16 +281,16 @@ export class Event {
 
                             } else if (eventTextParts[1] === `"Spy_Tranq"`) {
                                 eventType = EventType.PlayerTranqedPlayer;
-                                
+
                             } else if (eventTextParts[1] === `"Hallucination_Grenade"`) {
                                 eventType = EventType.PlayerHallucinatedPlayer;
 
                             } else if (eventTextParts[1] === `"Medic_Infection"`) {
                                 eventType = EventType.PlayerInfectedPlayer;
-                            
+
                             } else if (eventTextParts[1] === `"Passed_On_Infection"`) {
                                 eventType = EventType.PlayerPassedInfection;
-                                
+
                             } else {
                                 console.log("unknown 'triggered' event: " + line);
                                 throw ""; // TODO
@@ -348,7 +386,7 @@ export class Event {
                                     else
                                         console.error('unknown player trigger "goalitem": ' + eventText);
                                     break;
-                                case "Red": 
+                                case "Red":
                                 case "Blue":
                                     switch (parts[2]) {
                                         case "Flag":
@@ -405,7 +443,7 @@ export class Event {
                                 case 'rdet': // oppose2k1 water entrance det opened
                                 case 'bdet':
                                 case 'red_det': // 2mesa3 water opened
-                                case 'blue_det': 
+                                case 'blue_det':
                                     if (parts.length === 2)
                                         eventType = EventType.PlayerOpenedDetpackEntrance;
                                     else
@@ -448,12 +486,12 @@ export class Event {
                     return;
 
                 switch (parts[0]) {
-                    case "Log": 
+                    case "Log":
                         if (parts[2] === "started")
                             eventType = EventType.StartLog;
                         else if (parts[2] === "closed")
                             eventType = EventType.EndLog;
-                        else 
+                        else
                             console.error("Unknown 'log' message: " + lineData);
                         break;
                     case "Loading":
@@ -481,7 +519,7 @@ export class Event {
                                     eventType = EventType.ServerCvarStart;
                                 else if (parts[2] === "end")
                                     eventType = EventType.ServerCvarEnd
-                                else 
+                                else
                                     console.error("unknown 'server cvars' command: " + lineData);
                                 break;
                             case "cvar":
@@ -506,11 +544,11 @@ export class Event {
                             case "Match_Begins_Now":
                                 eventType = EventType.PrematchEnd;
                                 break;
-                            case "Red": 
+                            case "Red":
                             case "Blue":
                                 if (parts.slice(3).join(' ') === "Flag Returned Message")
                                     eventType = EventType.FlagReturn;
-                                else 
+                                else
                                     console.log('unknown World "Red/Blue ..." trigger: ' + lineData);
                                 break;
                             case 'never': // TODO: normalize this a little across maps
@@ -519,10 +557,10 @@ export class Event {
                                 let lastIndex = lineData.lastIndexOf('"');
                                 if (lastIndex === lineData.length - 1)
                                     data.value = lineData.slice(lineData.lastIndexOf('"', lineData.length - 2), lineData.length - 1);
-                                else 
+                                else
                                     data.value = lineData.slice(lastIndex);
                                 break;
-                            default: 
+                            default:
                                 console.log('unknown World trigger: ' + lineData);
                         }
                         break;
@@ -539,7 +577,7 @@ export class Event {
                         console.error('unknown non-player log message: ' + lineData);
                 }
             }
-            
+
             if (eventType && timestamp) {
                 return new Event({
                     eventType: eventType,
@@ -551,7 +589,7 @@ export class Event {
                 });
             }
         }
-        
+
         console.log("unknown line in log: " + line);
     }
 
@@ -596,7 +634,7 @@ export class Event {
         team = team.trim().toLowerCase();
 
         switch (team) {
-            case "blue": 
+            case "blue":
                 return TeamColor.Blue;
             case "red":
                 return TeamColor.Red;
@@ -628,7 +666,7 @@ export class Event {
                 return Weapon.NormalGrenade;
             case "nailgrenade":
                 return Weapon.NailGrenade;
-            case "mirvgrenade": 
+            case "mirvgrenade":
                 return Weapon.MirvGrenade;
             case "supernails":
             case "superng":
