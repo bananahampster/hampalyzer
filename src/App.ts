@@ -1,10 +1,9 @@
 import * as express from 'express';
-
-import { Parser } from './parser';
-import TemplateUtils from './templateUtils';
 import * as Handlebars from 'handlebars';
-import { readFile, writeFile } from 'fs';
 import multer = require('multer');
+
+import fileParser from './fileParser';
+import { Parser } from './parser';
 
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
@@ -15,7 +14,7 @@ class App {
     public express: express.Express;
 
     constructor() {
-        this.express = express(); 
+        this.express = express();
         this.mountRoutes();
     }
 
@@ -32,13 +31,15 @@ class App {
                 console.error("expected two files");
             }
 
-            const outputFile = await this.parseLogs([
-                req.files[0].path, 
+            const outputPath = await this.parseLogs([
+                req.files[0].path,
                 req.files[1].path]);
 
-            console.log(`parsed logs and output ${outputFile}`);
-
-            res.send(`Wrote logs: ${outputFile}`)
+            if (outputPath == null) {
+                res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
+            } else {
+                res.status(200).json({ success: { path: outputPath }});
+            }
         });
 
         router.post('/parseLog', upload.single('logs'), async (req, res) => {
@@ -51,37 +52,11 @@ class App {
         this.express.use('/', router);
     }
 
-    private parseLogs(filenames: string[]): Promise<string> {
+    private parseLogs(filenames: string[]): Promise<string | undefined> {
         let parser = new Parser(...filenames)
-        
+
         return parser.parseRounds()
-            .then((allStats) => {
-                if (allStats) {
-                    let templateFile = 'src/html/template-twoRds-stacked.html';
-                    let isSummary = allStats.stats.length === 2;
-                    if (isSummary)
-                        templateFile = 'src/html/template-summary.html';
-
-                    const filename = `parsedlogs/${allStats.stats[0]!.log_name}-${isSummary ? 'summary' : 'stacked'}.html`;
-
-                    readFile(templateFile, 'utf-8', (error, source) => {
-                        TemplateUtils.registerHelpers();
-                        const template = Handlebars.compile(source);
-                        const html = template(allStats);
-
-                        writeFile(filename, html, err => {
-                            if (err) console.error(`failed to write output: ${err}`);
-                            console.log(`saved file ${filename}`);
-                        });
-                    });
-
-                    return filename;
-                } 
-                else {
-                    console.error('no stats found to write!');
-                    return "";
-                }
-            });
+            .then(fileParser);
     }
 }
 
