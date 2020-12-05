@@ -26,21 +26,21 @@ curl -X POST -F 'logs[]=@logs/L0526012.log' -F 'logs[]=@logs/L0526013.log' http:
 
 ### Immediate to-do:
 
-[ ] Sort summary view by # kills (or some other score metric)
-[ ] Make distribution portable; copy template files to dist/ directory
-[ ] Implement outputting events to a database (likely Postgres, but may be Azure-ish)
-[ ] Visualizations
+- [ ] Sort summary view by # kills (or some other score metric)
+- [ ] Make distribution portable; copy template files to dist/ directory
+- [ ] Implement outputting events to a database (likely Postgres, but may be Azure-ish)
+- [ ] Visualizations
 
 ## To-Do
 
-[ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
-[ ] Import bootstrap as [an npm dependency](https://getbootstrap.com/docs/4.4/getting-started/download/#npm) with [webpack](https://getbootstrap.com/docs/4.4/getting-started/webpack/) to write [a custom SCSS theme](https://getbootstrap.com/docs/4.4/getting-started/theming/).
+- [ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
+- [ ] Import bootstrap as [an npm dependency](https://getbootstrap.com/docs/4.4/getting-started/download/#npm) with [webpack](https://getbootstrap.com/docs/4.4/getting-started/webpack/) to write [a custom SCSS theme](https://getbootstrap.com/docs/4.4/getting-started/theming/).
 
 
 ### Known bugs:
 
-[ ] Handle player disconnects if they are in the middle of carrying flag (flag time / flag status)
-[ ] If a player only plays one of two rounds, player stats doesn't format correctly (e.g., stats show in rd2 even though they only played rd1)
+- [ ] Handle player disconnects if they are in the middle of carrying flag (flag time / flag status)
+- [ ] If a player only plays one of two rounds, player stats doesn't format correctly (e.g., stats show in rd2 even though they only played rd1)
 
 ## Building / Running
 
