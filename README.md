@@ -1,87 +1,58 @@
 # hampalyzer
 
-The Hampalzyer is a utility to parse Half-Life GoldSrc logs for the purporses of game statistics.  This project uses functional reactive programming (FRP) to generate events of interest, such a frags, deaths, and flag captures.  With FRP, Hampalyzer can generate events that represent complex sequences of events: capturing a coast-to-coast flag capture involves a "flag pickup" event followed by a "flag captured" event, attributed to the same player with no "flag dropped" event in between.
+The Hampalzyer is a utility to parse Half-Life GoldSrc logs for the purporses of game statistics.  This project was intended to support functional reactive programming (FRP) to generate events of interest, such a frags, deaths, and flag captures.  With FRP, Hampalyzer can generate events that represent complex sequences of events: capturing a coast-to-coast flag capture involves a "flag pickup" event followed by a "flag captured" event, attributed to the same player with no "flag dropped" event in between.
 
-This README describes some of the intended utility of this library.
+Currently, Hampalyzer reads a log file in (see [Usage](#usage) below), then spits out a HTML-encoded set of files that describes team- and player-specific statistics of a Team Fortress Classic game.
 
 ## Usage
 
-The Hampalyzer should have an endpoint to consume a a given Half-Life GoldSource log file, which contains typical events such as frags, spawns, and players' interactions with in-game entities. From this file, the Hampalyzer will generate player-centric events that describe in-game performance, and also generate some metadata about the match (which players are on which team,
-the final score of the match, what map was played, length of match, etc.).
+The Hampalyzer should have an endpoint to consume a a given Half-Life GoldSource log file, which contains typical events such as frags, spawns, and players' interactions with in-game entities. From this file, the Hampalyzer will generate player-centric events that describe in-game performance, and also generate some metadata about the match (which players are on which team, the final score of the match, what map was played, length of match, etc.).
+
+The output will be dumped in /parsedlogs, the library will print the output directory.  To view the logs, point a webserver at that root: `cd parsedlogs; npm i -g http-server; http-server`
+
+You have two options to parse log files:
+
+### Define static log file locations
+
+You can update the log file names in index.ts, recompile, and execute the library.  Gwoss.
+
+### Use as a web endpoint
+
+When the server is running, you can POST two log files to the "/parseGame" route under the "logs" parameter.  Express will respond with a success with a parsed URL, or display an error message if parsing failed.
+
+```
+curl -X POST -F 'logs[]=@logs/L0526012.log' -F 'logs[]=@logs/L0526013.log' http://127.0.0.1:3000/parseGame
+```
+
+### Immediate to-do:
+
+[ ] Sort summary view by # kills (or some other score metric)
+[ ] Make distribution portable; copy template files to dist/ directory
+[ ] Implement outputting events to a database (likely Postgres, but may be Azure-ish)
+[ ] Visualizations
 
 ## To-Do
 
 [ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
 [ ] Import bootstrap as [an npm dependency](https://getbootstrap.com/docs/4.4/getting-started/download/#npm) with [webpack](https://getbootstrap.com/docs/4.4/getting-started/webpack/) to write [a custom SCSS theme](https://getbootstrap.com/docs/4.4/getting-started/theming/).
 
-### Immediate to-do:
-
-[X] Initial touches, total flag time, final score
-[X] Web API (how does one upload a log to the hampalyzer?)
-[X] Dark theme
-[X] Player-specific stats
-[ ] Break player-specific stats down into who/when
-[ ] Make sprite sheet for kill types
 
 ### Known bugs:
 
 [ ] Handle player disconnects if they are in the middle of carrying flag (flag time / flag status)
+[ ] If a player only plays one of two rounds, player stats doesn't format correctly (e.g., stats show in rd2 even though they only played rd1)
 
-## Building
+## Building / Running
 
-Execute `npm install` to install the needed attributes.  Run via node: `node dist/index.js`, or debug using VS Code.
+You must install Node.js/npm and TypeScript to build this project.  To install TypeScript: `node i -g typescript`.  To get dependencies, make sure to `npm install`.
 
-### Requested events (we should add through plugin)
+You can then watch/build the code using `tsc watch`.  You can then launch the project by typing `node dist/index.js`.  Note that currently you must be in the project root for the source to find template files (that'll be fixed shortly so that the distribution is portable).
+
+In Visual Studio Code, you can hit Ctrl-Shift-B to watch the code, then F5 to execute/debug the parser.
+
+### Notes
+
+The following events are added through an external AMX plugin installed on the local game server where the log is generated.  You may need to install this plugin to get these statistics to populate.
 * Airshot events
-* Flag dropped/thrown events
+* Flag thrown events
 
-
-
----
-
-## old data follows (pre-summer 2018)
-
-## Data flow
-
-The data is parsed in three passes:
-
-### Pass 1
-
-The first pass is to obtain metadata about the match that needs to be collected to modify individual statistics.  This pass collects the length of the match (timestamp from first log message to last log message, minus prematch time), the map played, the number of players on the server, the team memberships of each player, etc.  The length of the match will determine the game-relative timestamps used for all events (translates datetime to game time).
-
-### Pass 2
-
-Pass two will collect game statistics concerning each player.
-
-### Pass 3
-
-The third pass will collect all events and construct a flat representation of these events (likely JSON).  The format is anticipated to be something like the following:
-
-```javascript
-{
-    game: {
-        game: "TFC",
-        players: [
-            { name: "Hampster", id: "STEAM_0:1:206377" },
-            ...
-        ],
-        time: [time_start, time_end],
-        matchtime: "15:00",
-        matchstart: time_prematch_end,
-        teams: [
-            {
-                team: "red",
-                number: 4,
-                players: [
-                    "STEAM_0:1:206377",
-                    ...
-                ]
-            },
-            ...
-        ]
-    },
-
-}
-```
-
-## Output format
