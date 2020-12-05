@@ -2,3 +2,7 @@ dist/
 logs/
 node_modules/
 src/html/
+parsedlogs/
+!parsedlogs/hamp2.css
+!parsedlogs/assets/
+uploads/
