@@ -266,9 +266,17 @@ export class Event {
                                 eventType = EventType.PlayerFraggedDispenser;
                                 withWeapon = Event.parseWeapon(withText);
 
+                            } else if (eventTextParts[1] === `"Teleporter_Entrance_Destroyed"` || eventTextParts[1] === `"Teleporter_Exit_Destroyed"`) {
+                                eventType = EventType.PlayerFraggedTeleporter;
+                                withWeapon = Event.parseWeapon(withText);
+
                             } else if (eventTextParts[1].startsWith(`"Sentry_Upgrade`)) {
                                 eventType = EventType.PlayerUpgradedOtherGun;
                                 data.level = Number(eventTextParts[1][eventTextParts[1].length - 1]);
+
+                            } else if (eventTextParts[1] === `"Sentry_Repair"`) {
+                                eventType = EventType.PlayerRepairedBuilding;
+                                data.building = Event.parseWeapon("sentrygun");
 
                             } else if (eventTextParts[1] === `"Detpack_Disarmed"`) {
                                 eventType = EventType.PlayerDetpackDisarm;
@@ -371,6 +379,10 @@ export class Event {
                                     eventType = EventType.PlayerDismantledBuilding;
                                     data.building = Event.parseWeapon("sentrygun");
                                     break;
+                                case "Teleporter_Exit_Destroyed":
+                                case "Teleporter_Entrance_Destroyed":
+                                    eventType = EventType.PlayerDetonatedBuilding;
+                                    data.building = Event.parseWeapon("teleporter");
                                 case "Detpack_Set":
                                     eventType = EventType.PlayerDetpackSet;
                                     break;
@@ -390,6 +402,8 @@ export class Event {
                                 case "Blue":
                                     switch (parts[2]) {
                                         case "Flag":
+                                            if (parts[3] === "Plus") // raiden6 c2c entity pickup; skip
+                                                break;
                                             eventType = EventType.PlayerPickedUpFlag;
                                             break;
                                         case "Cap":
@@ -409,6 +423,15 @@ export class Event {
                                         default:
                                             console.error('unknown player trigger Red/Blue: ' + eventText);
                                     }
+                                    break;
+                                case "Flag": // cornfield; e.g. "Flag 1", "Flag 2"
+                                    eventType = EventType.PlayerPickedUpFlag;
+                                    break;
+                                case "Capture":
+                                    if (parts[2] = "Point")
+                                        eventType = EventType.PlayerCapturedFlag;
+                                    else
+                                        console.error("unknown player trigger Capture: " + eventText);
                                     break;
                                 case "Team":
                                     if (parts.length !== 4) {
@@ -625,6 +648,8 @@ export class Event {
                 return PlayerClass.Engineer;
             case "Civilian":
                 return PlayerClass.Civilian;
+            case "RandomPC":
+                return PlayerClass.Random;
             default:
                 throw "undefined player class: " + playerClass;
         }
@@ -704,6 +729,9 @@ export class Event {
             case "building_sentrygun":
             case "sentrygun":
                 return Weapon.BuildingSentryGun;
+            case "building_teleporter":
+            case "teleporter":
+                return Weapon.BuildingTeleporter;
             case "detpack":
                 return Weapon.Detpack;
             case "empgrenade":

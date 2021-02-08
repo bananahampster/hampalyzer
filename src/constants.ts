@@ -168,6 +168,7 @@ export enum Weapon {
     SentryGun,
     BuildingDispenser,
     BuildingSentryGun,
+    BuildingTeleporter,
     GreenPipe,
     BluePipe,
     Detpack,
@@ -197,6 +198,7 @@ export enum PlayerClass {
     Pyro,
     Spy,
     Engineer,
+    Random,
 };
 
 export namespace PlayerClass {
@@ -222,6 +224,8 @@ export namespace PlayerClass {
                 return 'spy';
             case PlayerClass.Engineer:
                 return 'engineer';
+            case PlayerClass.Random:
+                return 'random';
             default:
                 console.error(`unknown playerClass: outputClass(${playerClass})`);
                 return 'unknown;'

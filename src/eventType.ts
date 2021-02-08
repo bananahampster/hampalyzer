@@ -16,7 +16,7 @@ export enum EventType {
     PlayerMM2, /* done */
     RconCommand, /* done */
     ServerSay,
-    WorldTrigger, 
+    WorldTrigger,
     PrematchEnd, /* done */
     PlayerSpawn, /* done */
     PlayerConced, /* done */
@@ -24,6 +24,7 @@ export enum EventType {
     PlayerFraggedPlayer, /* done */
     PlayerFraggedGun, /* done */
     PlayerFraggedDispenser, /* done */
+    PlayerFraggedTeleporter, /* done */
     PlayerHitAirshot, /* done, not verified */
     PlayerTranqedPlayer, /* done */
     PlayerHallucinatedPlayer, /* done */
