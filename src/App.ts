@@ -1,5 +1,5 @@
 import * as express from 'express';
-import * as Handlebars from 'handlebars';
+import cors = require('cors');
 import multer = require('multer');
 
 import fileParser from './fileParser';
@@ -8,7 +8,18 @@ import { Parser } from './parser';
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
 // and ...?
-let upload = multer({ dest: 'uploads/' });
+let storage = multer.diskStorage({
+    destination: 'uploads',
+    filename: function(req, file, cb) {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+})
+let upload = multer({
+    storage,
+    limits: {
+        fileSize: 2000000,
+    }
+});
 
 class App {
     public express: express.Express;
@@ -26,7 +37,7 @@ class App {
             });
         });
 
-        router.post('/parseGame', upload.array('logs[]', 2), async (req, res) => {
+        router.post('/parseGame', cors(), upload.array('logs[]', 2), async (req, res) => {
             if (req?.files['logs']?.length < 2) {
                 console.error("expected two files");
             }
@@ -42,7 +53,7 @@ class App {
             }
         });
 
-        router.post('/parseLog', upload.single('logs'), async (req, res) => {
+        router.post('/parseLog', cors(), upload.single('logs'), async (req, res) => {
             const outputFile = await this.parseLogs([req.file.path]);
             console.log(`parsed logs and output ${outputFile}`);
 

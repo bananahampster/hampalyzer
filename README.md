@@ -33,6 +33,16 @@ curl -X POST -F 'logs[]=@logs/L0526012.log' -F 'logs[]=@logs/L0526013.log' http:
 
 ## To-Do
 
+Plan:
+- To deploy Hampalyzer as a self-service tool:
+    - Set up redirect from hampalyzer.com/logs -> doof VM
+    - Set up ngnix to serve stuff for app.hampalyzer.com/ with a simple form submittal (see [this example](https://stackabuse.com/handling-file-uploads-in-node-js-with-expres-and-multer/))
+    - Set up ngnix to have a reverse proxy to the hampalyzer library from app.hampalyzer.com/api (see [this example](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04))
+    - Set up ngnix to serve files from non-privileged user and in well-known space (e.g., var/www/?):
+        - ngnix and node.js process should run in non-privileged context
+    - Use [jQuery POST](https://api.jquery.com/jquery.post/) and [this tutorial](https://attacomsian.com/blog/xhr-node-file-upload) to do front-end call
+
+
 - [ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
 - [ ] Import bootstrap as [an npm dependency](https://getbootstrap.com/docs/4.4/getting-started/download/#npm) with [webpack](https://getbootstrap.com/docs/4.4/getting-started/webpack/) to write [a custom SCSS theme](https://getbootstrap.com/docs/4.4/getting-started/theming/).
 
