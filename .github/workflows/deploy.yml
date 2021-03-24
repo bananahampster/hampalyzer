@@ -6,7 +6,7 @@
 
 name: Deploy Hampalyzer
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   push:
     branches: [ master ]
@@ -27,13 +27,14 @@ jobs:
         host: ${{ secrets.SERVER_NAME }}
         username: ${{ secrets.DEPLOY_USER }}
         password: ${{ secrets.DEPLOY_PASSWORD }}
-        script: | 
+        script: |
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
           cd ~/hampalyzer
           git pull origin master
           npm install
           tsc
+          cp -rf ~/hampalyzer/frontend/* -t /var/www/app.hampalyzer.com/html
           cd ~/hampalyzer/dist
-          pm2 restart hampalyzer --update-env
-          
+          pm2 restart hampalyzer --update-env -- server parsedlogs /var/www/app.hampalyzer.com
+

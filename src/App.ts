@@ -4,6 +4,7 @@ import multer = require('multer');
 
 import fileParser from './fileParser';
 import { Parser } from './parser';
+import path = require('path');
 
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
@@ -24,7 +25,7 @@ let upload = multer({
 class App {
     public express: express.Express;
 
-    constructor() {
+    constructor(private webserverRoot = "", private outputRoot = "parsedlogs") {
         this.express = express();
         this.mountRoutes();
     }
@@ -42,13 +43,19 @@ class App {
                 console.error("expected two files");
             }
 
-            const outputPath = await this.parseLogs([
+            let outputPath = await this.parseLogs([
                 req.files[0].path,
                 req.files[1].path]);
 
             if (outputPath == null) {
                 res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
             } else {
+                // sanitize the outputPath by removing the webserverRoot path
+                // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
+                if (outputPath.startsWith(this.webserverRoot)) {
+                    outputPath = outputPath.slice(this.webserverRoot.length);
+                }
+
                 res.status(200).json({ success: { path: outputPath }});
             }
         });
@@ -67,8 +74,8 @@ class App {
         let parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(fileParser);
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot)));
     }
 }
 
-export default new App().express;
+export default App;

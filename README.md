@@ -42,6 +42,12 @@ Plan:
         - ngnix and node.js process should run in non-privileged context
     - Use [jQuery POST](https://api.jquery.com/jquery.post/) and [this tutorial](https://attacomsian.com/blog/xhr-node-file-upload) to do front-end call
 
+    - [ ] Set up reverse proxy for hampalyzer script and shove under /api/
+    - [x] Move "frontend" code to /var/www/app.hampalyzer.com
+    - [x] Remove manual file parsing
+    - [x] Force uploaded files to be local
+    - [x] Force parsedlogs to copy/deploy to /var/www/app.hampalyzer.com/parsedlogs
+
 
 - [ ] Consider using [node-steam/id](https://github.com/node-steam/id) to parse Steam IDs for player-specific pages.
 - [ ] Import bootstrap as [an npm dependency](https://getbootstrap.com/docs/4.4/getting-started/download/#npm) with [webpack](https://getbootstrap.com/docs/4.4/getting-started/webpack/) to write [a custom SCSS theme](https://getbootstrap.com/docs/4.4/getting-started/theming/).

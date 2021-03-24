@@ -8,7 +8,7 @@ import ParserUtils from './parserUtils';
 import TemplateUtils from './templateUtils';
 
 
-export default function(allStats: ParsedStats | undefined): string | undefined {
+export default function(allStats: ParsedStats | undefined, outputRoot: string = 'parsedlogs'): string | undefined {
     if (allStats) {
         let templateFile = 'src/html/template-twoRds-stacked.html';
         const isSummary = allStats.stats.length === 2;
@@ -18,7 +18,7 @@ export default function(allStats: ParsedStats | undefined): string | undefined {
         const playerTemplate = 'src/html/template-summary-player.html';
 
         const logName = allStats.stats[0]!.log_name
-        const outputDir = `parsedlogs/${logName}`;
+        const outputDir = `${outputRoot}/${logName}`;
 
         // ensure directory exists; create if it doesn't
         mkdir(outputDir, { mode: 0o775, recursive: true, }, err => { if (err && err.code !== "EEXIST") throw err; });

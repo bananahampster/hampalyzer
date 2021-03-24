@@ -7,7 +7,17 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Launch server",
+            "program": "${workspaceFolder}/dist/index.js",
+            "args": ["server", "parsedLogs", "/mnt/f/Code/git/hampalyzer-hampster"],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Parse files",
             "program": "${workspaceFolder}/dist/index.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
