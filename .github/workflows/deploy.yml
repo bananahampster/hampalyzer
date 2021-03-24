@@ -36,5 +36,5 @@ jobs:
           tsc
           cp -rf ~/hampalyzer/frontend/* -t /var/www/app.hampalyzer.com/html
           cd ~/hampalyzer/dist
-          pm2 restart hampalyzer --update-env -- server parsedlogs /var/www/app.hampalyzer.com
+          pm2 restart hampalyzer --update-env -- server parsedlogs /var/www/app.hampalyzer.com/html
 
