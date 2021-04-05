@@ -117,10 +117,10 @@
 
             switch (formData.getAll('logs[]').length) {
                 case 1:
-                    url = 'http://127.0.0.1:3000/parseLog';
+                    url = '/api/parseLog';
                     break;
                 case 2:
-                    url = 'http://127.0.0.1:3000/parseGame';
+                    url = '/api/parseGame';
                     break;
                 default:
                     // do some form validation
