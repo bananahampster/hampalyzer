@@ -12,7 +12,8 @@ import path = require('path');
 let storage = multer.diskStorage({
     destination: 'uploads',
     filename: function(req, file, cb) {
-        cb(null, Date.now() + "-" + file.originalname);
+        const now = req.body.date || Date.now();
+        cb(null, now + "-" + file.originalname);
     }
 })
 let upload = multer({

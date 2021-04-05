@@ -42,8 +42,10 @@
                 <form id="logUpload" method="POST" action="/api/parseGame" enctype="multipart/form-data">
                     <div class="form-group">
                         <div class="custom-file">
-                            <input type="file" name="logs[]" class="custom-file-input" id="logFiles" multiple>
+                            <input type="hidden" name="date" id="date" value="0">
+                            <input type="file" name="logs[]" class="custom-file-input" id="logFiles" multiple required>
                             <label class="custom-file-label" for="logFiles">Choose one or two .log files (CTRL+click to select multiple files)</label>
+                            <div class="invalid-feedback">You must select one or two .log files.</div>
                         </div>
                     </div>
                     <div class="form-group">
@@ -70,10 +72,47 @@
 
     <script>
         const form = document.querySelector('form');
+
+        $('#logFiles').on('change', function(e) {
+            let fileNum = e.target.files.length || 0;
+            let label = "";
+            switch (fileNum) {
+                case 0:
+                    label = "No files selected.  Please select a .log file to parse.";
+                    $(this).addClass('is-invalid');
+                    $(this).next('.invalid-feedback').text("You must select one or two .log files.");
+                    break;
+                case 1:
+                    label = "Selected log file: " + e.target.files[0].name;
+                    $(this).removeClass('is-invalid');
+                    break;
+                case 2:
+                    label = "Selected log files: " + e.target.files[0].name + " and " + e.target.files[1].name;
+                    $(this).removeClass('is-invalid');
+                    break;
+                default:
+                    label = "Too many files selected.  Try only picking one or two log files.";
+                    $(this).addClass('is-invalid');
+                    $(this).next('.invalid-feedback').text("Too many files selected.");
+                    break;
+            }
+
+            $(this).next('.custom-file-label').text(label);
+        });
+
         form.addEventListener('submit', e => {
             e.preventDefault();
 
-            let formData = new FormData($('#logUpload')[0]);
+            const formValid = form.checkValidity();
+            form.classList.add('was-validated');
+
+            if (formValid === false)
+                return;
+
+            // add date as poor way to bundle logs together; maybe use session cookie/login later?
+            $("#date").val(+Date.now());
+
+            let formData = new FormData($('#logUpload').get(0));
             let url;
 
             switch (formData.getAll('logs[]').length) {
@@ -88,7 +127,6 @@
                     return;
             }
 
-
             // post
             let request = $.ajax({
                 url: url,
@@ -102,7 +140,7 @@
             request.done(function(data) {
                 if (data.success) {
                     $('#formResponse').attr('class', 'alert alert-primary')
-                        .html(`Your game has been parsed and is available at <a href="/${ data.success.path }">${ data.success.path }</a>!`);
+                        .html(`Your game has been parsed and is available at <a href="${ data.success.path }">${ data.success.path }</a>!`);
                 } else {
                     $('#formResponse').attr('class', 'alert alert-error')
                         .html("There was an error parsing the logs.  Please pass the logs to Hampster for debuggin'!");
