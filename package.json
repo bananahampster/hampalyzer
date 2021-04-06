@@ -4,6 +4,7 @@
   "description": "A utility to parse Half-Life GoldSrc logs for the purporses of game statistics",
   "main": "index.js",
   "scripts": {
+    "prepare": "mkdir -p dist/templates && cp -rf src/html/template* -t dist/templates/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
