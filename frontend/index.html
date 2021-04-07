@@ -137,15 +137,17 @@
                 cache: false,
             });
 
-            request.done(function(data) {
+            let handler = function(data) {
                 if (data.success) {
                     $('#formResponse').attr('class', 'alert alert-primary')
                         .html(`Your game has been parsed and is available at <a href="${ data.success.path }">${ data.success.path }</a>!`);
                 } else {
                     $('#formResponse').attr('class', 'alert alert-error')
-                        .html("There was an error parsing the logs.  Please pass the logs to Hampster for debuggin'!");
+                        .text("There was an error parsing the logs.  More info: &laquo;" + (data || { error: "no additional info" }).error + "&raquo;");
                 }
-            });
+            }
+
+            request.done(handler).fail(handler);
         });
     </script>
 </body>

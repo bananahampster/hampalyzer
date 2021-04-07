@@ -62,19 +62,21 @@ class App {
         });
 
         router.post('/parseLog', cors(), upload.single('logs[]'), async (req, res) => {
-            let outputPath = await this.parseLogs([req.file.path]);
+            res.status(500).json({ error: "Single log parsing is still a work in progress; try uploading two rounds of a game instead." });
 
-            if (outputPath == null) {
-                res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
-            } else {
-                // sanitize the outputPath by removing the webserverRoot path
-                // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
-                if (outputPath.startsWith(this.webserverRoot)) {
-                    outputPath = outputPath.slice(this.webserverRoot.length);
-                }
+            // let outputPath = await this.parseLogs([req.file.path]);
 
-                res.status(200).json({ success: { path: outputPath }});
-            }
+            // if (outputPath == null) {
+            //     res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
+            // } else {
+            //     // sanitize the outputPath by removing the webserverRoot path
+            //     // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
+            //     if (outputPath.startsWith(this.webserverRoot)) {
+            //         outputPath = outputPath.slice(this.webserverRoot.length);
+            //     }
+
+            //     res.status(200).json({ success: { path: outputPath }});
+            // }
         });
 
         this.express.use('/', router);
