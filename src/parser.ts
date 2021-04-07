@@ -757,6 +757,7 @@ export class Event {
                 return Weapon.AutoRifle;
             case "infection":
                 return Weapon.Infection;
+            case "teledeath world": // TODO: is this a spawn telefrag?
             case "world":
             case "worldspawn":
             case "worldspawn world":

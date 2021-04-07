@@ -142,8 +142,8 @@
                     $('#formResponse').attr('class', 'alert alert-primary')
                         .html(`Your game has been parsed and is available at <a href="${ data.success.path }">${ data.success.path }</a>!`);
                 } else {
-                    $('#formResponse').attr('class', 'alert alert-error')
-                        .html("There was an error parsing the logs.  More info: &laquo;" + (data || { error: "no additional info" }).error + "&raquo;");
+                    $('#formResponse').attr('class', 'alert alert-danger')
+                        .html("There was an error parsing the logs.  More info: &laquo;" + (data.responseJSON || { error: "no additional info" }).error + "&raquo;");
                 }
             }
 
