@@ -590,7 +590,7 @@ export default class ParserUtils {
             }
 
             // do the stupid thing and order players by number of frags
-            teamPlayers.sort((a, b) => a.team === b.team ? b.kills?.kill?.events?.length ?? 0 - (a.kills?.kill?.events?.length ?? 0) : 0);
+            teamPlayers.sort((a, b) => a.team === b.team ? (b.kills?.kill?.events?.length ?? 0) - (a.kills?.kill?.events?.length ?? 0) : 0);
 
             // dump stats for this team
             outputStats[team] = {

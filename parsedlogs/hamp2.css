@@ -309,6 +309,10 @@ table tr.total {
     column-gap: 40px;
 }
 
+.player-stats.player-stats-num1 {
+    grid-template-columns: 3rem 1fr;
+}
+
 .player-stats .emoji {
     font-size: 2rem;
 }

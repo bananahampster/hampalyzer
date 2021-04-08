@@ -13,12 +13,9 @@ import TemplateUtils from './templateUtils';
 export default function(allStats: ParsedStats | undefined, outputRoot: string = 'parsedlogs'): string | undefined {
     if (allStats) {
         // depends on npm "prepare" putting template files in the right place (next to js)
-        let templateDir = path.resolve(__dirname, 'templates/');
-        let templateFile = path.join(templateDir, 'template-twoRds-stacked.html');
-        const isSummary = allStats.stats.length === 2;
-        if (isSummary)
-            templateFile = path.join(templateDir, 'template-summary.html');
+        const templateDir = path.resolve(__dirname, 'templates/');
 
+        const templateFile = path.join(templateDir, 'template-summary.html');
         const playerTemplate = path.join(templateDir, 'template-summary-player.html');
 
         const logName = allStats.stats[0]!.log_name

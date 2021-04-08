@@ -38,6 +38,7 @@
                         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
                             <span>Overall statistics</span>
                         </h6>
+                        {{~#if @root.stats.[1]}}
                         <li class="nav-item">
                             <a class="nav-link active" href="index.html">
                                 Stats by round
@@ -48,6 +49,7 @@
                                 O/D comparison
                             </a>
                         </li>
+                        {{/if}}
                         <li class="nav-item">
                             <a class="nav-link" href="index.html">
                                 Flag pace
@@ -93,8 +95,14 @@
                                  see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
                             <li><i class="fas fa-lg fa-server" title="Server name + Date"></i>&nbsp; {{server}} on {{date}}</li>
                             <li><i class="fas fa-lg fa-map-marked-alt" title="Map played"></i>&nbsp; {{map}}</li>
-                            <li><i class="fas fa-clock" title="Length of match"></i>&nbsp;&nbsp; {{game_time}}m &times; 2 <abbr title="server timezone">starting at {{time}}</abbr></li>
-                            <li><i class="fas fa-trophy"></i>&nbsp;&nbsp; Final score: xxx &ndash; xxx</li>
+                            <li><i class="fas fa-clock" title="Length of match"></i>&nbsp;&nbsp; {{game_time}}m {{#if @root.stats.[1]}}&times; 2{{/if}} <abbr title="server timezone">starting at {{time}}</abbr></li>
+                            <li><i class="fas fa-trophy"></i>&nbsp;&nbsp; Final score:
+                                {{~#if @root.stats.[1]}}
+                                {{math @root.stats.[0].score.[1] "+" @root.stats.[1].score.[2]}} &ndash; {{math @root.stats.[0].score.[2] "+" @root.stats.[1].score.[1]}}
+                                {{else}}
+                                {{@root.stats.[0].score.[1]}} &ndash; {{@root.stats.[0].score.[2]}}
+                                {{/if~}}
+                            </li>
                         </ul>
 {{/with}}
 {{!-- end giant hack --}}
@@ -112,7 +120,7 @@
 
                 <!-- <p class="h3">Statistics</p> -->
                 {{#each stats}}
-                <p class="h3">Round {{math @index "+" 1}}</p>
+                {{#if @root.stats.[1]}}<p class="h3">Round {{math @index "+" 1}}</p>{{/if}}
                 <div class="stats-round">
                     <div class="score-bucket">
                         <div class="team1">{{score.[1]}}</div>
@@ -184,6 +192,7 @@
                 </div>
                 {{/each}}
 
+                {{#if @root.stats.[1]}}
                 <div class="team-comparison my-5">
                     <p class="h3 my-3">O/D comparison</p>
                     <div class="team-comp">
@@ -242,6 +251,7 @@
                         </table>
                     </div>
                 </div>
+                {{/if}}
             </main>
         </div>
     </div>

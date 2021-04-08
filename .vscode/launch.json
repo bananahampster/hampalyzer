@@ -22,6 +22,16 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Parse single log",
+            "program": "${workspaceFolder}/dist/index.js",
+            "args": ["logs/L0102102.log"],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
         }
     ]
 }
