@@ -762,6 +762,8 @@ export class Event {
             case "worldspawn":
             case "worldspawn world":
             case "miniturret world": // TODO: call this out?
+            case "the red lift world": // openfire
+            case "the blue lift world": // openfire
                 return Weapon.WorldSpawn;
             case "trigger_hurt":
             case "trigger_hurt world": // TODO: this could be a trigger at the bottom of a pit (shutdown) or world (orbit), how can we distinguish with fall damage?

@@ -6,6 +6,7 @@ export interface OutputStats {
     log_name: string;
     map: string;
     server: string;
+    timestamp: Date;
     date: string;
     time: string;
     game_time: string;

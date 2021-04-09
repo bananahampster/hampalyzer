@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'fs';
 
 import * as Handlebars from 'handlebars';
+import pg = require('pg');
 
 let path = require('path');
 
@@ -10,7 +11,7 @@ import ParserUtils from './parserUtils';
 import TemplateUtils from './templateUtils';
 
 
-export default function(allStats: ParsedStats | undefined, outputRoot: string = 'parsedlogs'): string | undefined {
+export default async function(allStats: ParsedStats | undefined, outputRoot: string = 'parsedlogs', pool?: pg.Pool): Promise<string | undefined> {
     if (allStats) {
         // depends on npm "prepare" putting template files in the right place (next to js)
         const templateDir = path.resolve(__dirname, 'templates/');
@@ -18,7 +19,8 @@ export default function(allStats: ParsedStats | undefined, outputRoot: string = 
         const templateFile = path.join(templateDir, 'template-summary.html');
         const playerTemplate = path.join(templateDir, 'template-summary-player.html');
 
-        const logName = allStats.stats[0]!.log_name
+        const logName = await getLogName(pool, allStats.stats[0]!.log_name);
+
         const outputDir = `${outputRoot}/${logName}`;
 
         // ensure directory exists; create if it doesn't
@@ -89,6 +91,47 @@ export default function(allStats: ParsedStats | undefined, outputRoot: string = 
             }
         });
 
-        return outputDir;
+        // if everything is successful up to this point, log into the database
+        const dbSuccess = await recordLog(pool, logName, allStats.stats[0]!.log_name, allStats.stats[1]?.log_name, allStats.stats[0]!.timestamp);
+
+        return dbSuccess ? outputDir : "";
     } else console.error('no stats found to write!');
+}
+
+async function getLogName(pool: pg.Pool | undefined, firstLogName: string): Promise<string> {
+    if (!pool) return firstLogName;
+
+    return new Promise(function(resolve, reject) {
+        pool.query(
+            "SELECT COUNT(1) FROM logs WHERE parsedlog = $1",
+            [firstLogName],
+            (error, result) => {
+                if (error)
+                    reject("");
+
+                if (result.rows[0] === 0)
+                    resolve(firstLogName);
+
+                // otherwise, add some junk
+                const junk = Math.random().toString(36).substr(2, 5); // 5-char string
+                resolve(firstLogName + junk);
+            }
+        );
+    });
+}
+
+async function recordLog(pool: pg.Pool | undefined, logName: string, logFile_1: string, logFile_2: string | undefined, date_match: Date): Promise<boolean> {
+    if (!pool) return true;
+
+    return new Promise(function(resolve, reject) {
+        pool.query(
+        "INSERT INTO logs(parsedlog, log_file1, log_file2, date_parsed, date_match) VALUES ($1, $2, $3, $4, $5)",
+        [logName, logFile_1, logFile_2, Date.now(), date_match],
+        (error, result) => {
+            if (error)
+                return reject(false);
+
+            resolve(true);
+        });
+    });
 }

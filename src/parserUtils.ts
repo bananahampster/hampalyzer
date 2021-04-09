@@ -472,6 +472,7 @@ export default class ParserUtils {
         return {
             log_name: logName,
             map,
+            timestamp: firstTimestamp,
             date,
             time,
             game_time: gameTime,

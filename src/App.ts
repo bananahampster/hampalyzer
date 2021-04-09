@@ -6,6 +6,8 @@ import fileParser from './fileParser';
 import { Parser } from './parser';
 import path = require('path');
 
+import pg = require('pg');
+
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
 // and ...?
@@ -25,10 +27,18 @@ let upload = multer({
 
 class App {
     public express: express.Express;
+    private pool: pg.Pool;
 
     constructor(private webserverRoot = "", private outputRoot = "parsedlogs") {
         this.express = express();
         this.mountRoutes();
+
+        // create database connection pool
+        this.pool = new pg.Pool({
+            host: 'localhost',
+            database: 'hampalyzer',
+            port: 5432,
+        });
     }
 
     private mountRoutes(): void {
@@ -86,7 +96,7 @@ class App {
         let parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot)));
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.pool));
     }
 }
 
