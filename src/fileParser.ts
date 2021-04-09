@@ -106,8 +106,10 @@ async function getLogName(pool: pg.Pool | undefined, firstLogName: string): Prom
             "SELECT COUNT(1) FROM logs WHERE parsedlog = $1",
             [firstLogName],
             (error, result) => {
-                if (error)
+                if (error) {
+                    console.error("Failed checking for logname collision: " + error);
                     reject("");
+                }
 
                 if (result.rows[0] === 0)
                     resolve(firstLogName);
@@ -126,10 +128,13 @@ async function recordLog(pool: pg.Pool | undefined, logName: string, logFile_1: 
     return new Promise(function(resolve, reject) {
         pool.query(
         "INSERT INTO logs(parsedlog, log_file1, log_file2, date_parsed, date_match) VALUES ($1, $2, $3, $4, $5)",
-        [logName, logFile_1, logFile_2, Date.now(), date_match],
+        [logName, logFile_1, logFile_2, new Date(), date_match],
         (error, result) => {
-            if (error)
+            if (error) {
+                console.error("Failed pushing new match log entry: " + error);
                 return reject(false);
+            }
+
 
             resolve(true);
         });
