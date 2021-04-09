@@ -35,6 +35,8 @@ class App {
 
         // create database connection pool
         this.pool = new pg.Pool({
+            user: process.env.HAMPALYZER_DB_USER,
+            password: process.env.HAMPALYZER_DB_PASSWORD,
             host: 'localhost',
             database: 'hampalyzer',
             port: 5432,
