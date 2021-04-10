@@ -94,7 +94,7 @@ export default async function(allStats: ParsedStats | undefined, outputRoot: str
         // if everything is successful up to this point, log into the database
         const dbSuccess = await recordLog(pool, logName, allStats.stats[0]!.log_name, allStats.stats[1]?.log_name, allStats.stats[0]!.timestamp);
 
-        return dbSuccess ? outputDir : "";
+        return dbSuccess ? outputDir : undefined;
     } else console.error('no stats found to write!');
 }
 

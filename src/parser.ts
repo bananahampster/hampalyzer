@@ -740,6 +740,7 @@ export class Event {
                 return Weapon.Railgun;
             case "flames":
             case "flamethrower": // TODO really?
+            case "ic": // TODO should be IC
                 return Weapon.Flames;
             case "napalmgrenade":
                 return Weapon.NapalmGrenade;
