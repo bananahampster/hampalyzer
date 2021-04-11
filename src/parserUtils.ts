@@ -434,7 +434,7 @@ export default class ParserUtils {
     public static generateOutputStats(events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
-        const map = mapEvent && mapEvent.value || "(not found)";
+        const map = mapEvent && mapEvent.value || "(map not found)";
 
         // date
         const firstTimestamp = events[0].timestamp;
@@ -449,7 +449,7 @@ export default class ParserUtils {
 
         // server
         const serverEvent = events.find(event => event.eventType === EventType.ServerName);
-        const server = serverEvent && serverEvent.value || "(not found)";
+        const server = serverEvent && serverEvent.value || "Unknown server";
 
         // log name (server [up to 10 char or first word boundary], date string, time)
         let serverShortName = server.split(/\s+/)[0];

@@ -28,6 +28,7 @@ let upload = multer({
 class App {
     public express: express.Express;
     private pool: pg.Pool;
+    private readonly PAGE_SIZE: number = 20;
 
     constructor(private webserverRoot = "", private outputRoot = "parsedlogs") {
         this.express = express();
@@ -89,6 +90,21 @@ class App {
 
                 res.status(200).json({ success: { path: outputPath }});
             }
+        });
+
+        router.get('/logs/:page_num', async (req, res) => {
+            const page_num = req.params['page_num'] || 1;
+
+            this.pool.query(
+                'SELECT * FROM logs ORDER BY date_parsed DESC LIMIT $1 OFFSET (($2 - 1) * $1)',
+                [this.PAGE_SIZE, page_num],
+                (error, result) => {
+                    if (error)
+                        res.status(500).json({ error: "Database failure: " + error });
+                    else
+                        res.status(200).json(result.rows);
+                }
+            );
         });
 
         this.express.use('/', router);
