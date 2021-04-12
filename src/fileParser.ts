@@ -92,7 +92,16 @@ export default async function(allStats: ParsedStats | undefined, outputRoot: str
         });
 
         // if everything is successful up to this point, log into the database
-        const dbSuccess = await recordLog(pool, logName, allStats.stats[0]!.log_name, allStats.stats[1]?.log_name, allStats.stats[0]!.timestamp);
+        const dbSuccess = await recordLog(
+            pool,
+            logName,
+            allStats.stats[0]!.log_name,
+            allStats.stats[1]?.log_name,
+            allStats.stats[0]!.timestamp,
+            allStats.stats[0]!.map,
+            allStats.stats[0]!.server,
+            (allStats.players[1]?.length ?? 0) + (allStats.players[2]?.length ?? 0)
+        );
 
         return dbSuccess ? outputDir : undefined;
     } else console.error('no stats found to write!');
@@ -122,19 +131,26 @@ async function getLogName(pool: pg.Pool | undefined, firstLogName: string): Prom
     });
 }
 
-async function recordLog(pool: pg.Pool | undefined, logName: string, logFile_1: string, logFile_2: string | undefined, date_match: Date): Promise<boolean> {
+async function recordLog(
+    pool: pg.Pool | undefined,
+    logName: string,
+    logFile_1: string,
+    logFile_2: string | undefined,
+    date_match: Date,
+    map: string | undefined,
+    server: string | undefined,
+    num_players: number | undefined): Promise<boolean> {
     if (!pool) return true;
 
     return new Promise(function(resolve, reject) {
         pool.query(
-        "INSERT INTO logs(parsedlog, log_file1, log_file2, date_parsed, date_match) VALUES ($1, $2, $3, $4, $5)",
-        [logName, logFile_1, logFile_2, new Date(), date_match],
+        "INSERT INTO logs(parsedlog, log_file1, log_file2, date_parsed, date_match, map, server, num_players) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [logName, logFile_1, logFile_2, new Date(), date_match, map, server, num_players],
         (error, result) => {
             if (error) {
                 console.error("Failed pushing new match log entry: " + error);
                 return reject(false);
             }
-
 
             resolve(true);
         });

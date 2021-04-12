@@ -62,9 +62,17 @@
                         return;
                     }
 
-                    table.html("<tr><th>Parsed log</th><th>Match date</th><th>Parsed date</th>");
+                    table.html("<tr><th>Parsed log</th><th>Match date</th><th>Parsed date</th><th>Map</th><th>Server</th><th># Players</th></tr>");
                     for (const row of data) {
-                        table.append(`<tr><td><a href="parsedlogs/${row.parsedlog}">${row.parsedlog}</a></td><td>${row.date_match}</td><td>${row.date_parsed}</td></tr>`);
+                        table.append(`
+                        <tr>
+                            <td><a href="parsedlogs/${row.parsedlog}">${row.parsedlog}</a></td>
+                            <td>${row.date_match}</td>
+                            <td>${row.date_parsed}</td>
+                            <td>${row.map}</td>
+                            <td>${row.server}</td>
+                            <td>${row.num_players}</td>
+                        </tr>`);
                     }
                 }
             );
