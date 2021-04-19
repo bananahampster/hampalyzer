@@ -51,7 +51,7 @@
                         </li>
                         {{/if}}
                         <li class="nav-item">
-                            <a class="nav-link" href="index.html">
+                            <a class="nav-link" href="index.html#flag">
                                 Flag pace
                             </a>
                         </li>
@@ -118,13 +118,11 @@
                     </div>
                 </div>
 
-                <!-- <p class="h3">Statistics</p> -->
                 {{#each stats}}
-                {{#if @root.stats.[1]}}<p class="h3">Round {{math @index "+" 1}}</p>{{/if}}
+                {{#if @root.stats.[1]}}<h3>Round {{math @index "+" 1}}</h3>{{/if}}
                 <div class="stats-round">
                     <div class="score-bucket">
                         <div class="team1">{{score.[1]}}</div>
-                        <!-- <div>&ndash;</div> -->
                         <div class="team2">{{score.[2]}}</div>
                     </div>
                     <div class="table-responsive">
@@ -194,7 +192,7 @@
 
                 {{#if @root.stats.[1]}}
                 <div class="team-comparison my-5">
-                    <p class="h3 my-3">O/D comparison</p>
+                    <h3 class="my-3" name="comp">O/D comparison</h3>
                     <div class="team-comp">
                         {{#with players.[1]}}{{{playerList "A"}}}{{/with}}
                         {{#with players.[2]}}{{{playerList "B"}}}{{/with}}
@@ -252,6 +250,12 @@
                     </div>
                 </div>
                 {{/if}}
+
+                <div class="flag-movement my-5">
+                    <h3 class="my-3" name="flag">Flag Movement</h3>
+                    <svg id="flag-rd1"></svg>
+                    {{#if @root.stats.[1]}}<svg id="flag-rd2"></svg>{{/if}}
+                </div>
             </main>
         </div>
     </div>
@@ -263,6 +267,15 @@
         crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
         crossorigin="anonymous"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <script type="text/javascript">
+
+        // flag data
+        var flagData = {{{json @root.stats.[0].flagStats}}};
+
+
+    </script>
 </body>
 
 </html>

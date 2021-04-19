@@ -30,7 +30,7 @@
         <div class="row">
             <div class="col-md-9">
                 <h2>Hampalyzer &mdash; TFC Statistics</h2>
-                <table id="all-logs">
+                <table class="table" id="all-logs">
                     <tr>
                         <td>
                             Logs loading ...
@@ -62,13 +62,13 @@
                         return;
                     }
 
-                    table.html("<tr><th>Parsed log</th><th>Match date</th><th>Parsed date</th><th>Map</th><th>Server</th><th># Players</th></tr>");
+                    table.html("<tr><th>Parsed log</th><th>Match date (server time)</th><th>Parsed date</th><th>Map</th><th>Server</th><th># Players</th></tr>");
                     for (const row of data) {
                         table.append(`
                         <tr>
                             <td><a href="parsedlogs/${row.parsedlog}">${row.parsedlog}</a></td>
-                            <td>${row.date_match}</td>
-                            <td>${row.date_parsed}</td>
+                            <td>${getFormattedDate(row.date_match)}</td>
+                            <td>${getFormattedDate(row.date_parsed)}</td>
                             <td>${row.map}</td>
                             <td>${row.server}</td>
                             <td>${row.num_players}</td>
@@ -77,6 +77,19 @@
                 }
             );
         });
+
+        function getFormattedDate(givenDate) {
+            const dayOfMonth = givenDate.getDate();
+            const month = Intl.DateTimeFormat('en-US', { month: 'short' }).format(givenDate);
+            const year = givenDate.getFullYear();
+            const date = [dayOfMonth, month, year].join(" ");
+
+            // time
+            const time = Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                .format(givenDate);
+
+            return date + " " + time;
+        }
     </script>
 </body>
 

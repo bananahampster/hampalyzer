@@ -26,6 +26,13 @@ export default async function(allStats: ParsedStats | undefined, outputRoot: str
         // ensure directory exists; create if it doesn't
         mkdir(outputDir, { mode: 0o775, recursive: true, }, err => { if (err && err.code !== "EEXIST") throw err; });
 
+        // TODO: actually fill in flagStats
+        allStats.stats[0]!.flagStats = [{
+            player: "hampisthebest",
+            how_dropped: 0,
+            timestamp: "LOLZ"
+        }];
+
         readFile(templateFile, 'utf-8', (error, source) => {
             TemplateUtils.registerHelpers();
             const template = Handlebars.compile(source);
@@ -140,6 +147,7 @@ async function recordLog(
     map: string | undefined,
     server: string | undefined,
     num_players: number | undefined): Promise<boolean> {
+
     if (!pool) return true;
 
     return new Promise(function(resolve, reject) {

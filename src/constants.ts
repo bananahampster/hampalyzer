@@ -12,6 +12,22 @@ export interface OutputStats {
     game_time: string;
     score: TeamScore;
     teams: TeamsOutputStatsDetailed;
+    flagStats?: FlagStats;
+}
+
+// expected to be ordered by timestamp ascending
+export type FlagStats = FlagMovement[];
+
+export interface FlagMovement {
+    player: string; // steamID
+    timestamp: string; // ?
+    how_dropped: FlagDrop;
+}
+
+export const enum FlagDrop {
+    Fragged = 0,
+    Captured,
+    Thrown,
 }
 
 export type TeamsOutputStatsDetailed = { [team in TeamColor]?: TeamOutputStatsDetailed; }

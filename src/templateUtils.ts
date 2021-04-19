@@ -5,11 +5,11 @@ import { isNumber } from 'util';
 export default class TemplateUtils {
     public static registerHelpers() {
 
-        // simple math        
+        // simple math
         Handlebars.registerHelper("math", function(lvalue, operator, rvalue, options) {
             lvalue = parseFloat(lvalue);
             rvalue = parseFloat(rvalue);
-                
+
             return {
                 "+": lvalue + rvalue,
                 "-": lvalue - rvalue,
@@ -17,6 +17,11 @@ export default class TemplateUtils {
                 "/": lvalue / rvalue,
                 "%": lvalue % rvalue
             }[operator];
+        });
+
+        // dumping json objects
+        Handlebars.registerHelper('json', function(context) {
+            return JSON.stringify(context);
         });
 
         // team composition
@@ -76,7 +81,7 @@ export default class TemplateUtils {
         let toReturn = "";
         if (teamId === "Comp")
             return toReturn;
-        
+
         const hasPlayers = Array.isArray(players);
         if (hasPlayers && players?.length)
             toReturn += `<abbr title="${players.map(player => player.name).join(', ')}">`;
@@ -89,7 +94,7 @@ export default class TemplateUtils {
         return toReturn;
     }
 
-    static getRow(value: number | string, isComparison: boolean): string { 
+    static getRow(value: number | string, isComparison: boolean): string {
         if (!isComparison || value === 0)
             return `<td>${value}</td>`;
         if (typeof value === 'number') {
