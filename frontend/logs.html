@@ -78,7 +78,8 @@
             );
         });
 
-        function getFormattedDate(givenDate) {
+        function getFormattedDate(theDate) {
+            const givenDate = new Date(theDate);
             const dayOfMonth = givenDate.getDate();
             const month = Intl.DateTimeFormat('en-US', { month: 'short' }).format(givenDate);
             const year = givenDate.getFullYear();
