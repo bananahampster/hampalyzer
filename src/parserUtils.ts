@@ -74,19 +74,20 @@ export default class ParserUtils {
             return undefined;
         }
 
-        // make sure at least 50% of players are represented on the "first" team (could also do this for other team, buttfuckit)
-        const rd1BluePlayers = teamComps[0][1];
-        const rd2RedPlayers = teamComps[1][2];
+        // TODO: commented out because teams sub out the majority of their players; always assume that colors switch
+        // // make sure at least 50% of players are represented on the "first" team (could also do this for other team, buttfuckit)
+        // const rd1BluePlayers = teamComps[0][1];
+        // const rd2RedPlayers = teamComps[1][2];
 
-        const numMatchingPlayers = rd1BluePlayers?.reduce<number>((numMatchingPlayers, player): number => {
-            if (rd2RedPlayers?.some(redPlayer => redPlayer.matches(player)))
-                numMatchingPlayers++;
-            return numMatchingPlayers;
-        }, 0) || 0;
+        // const numMatchingPlayers = rd1BluePlayers?.reduce<number>((numMatchingPlayers, player): number => {
+        //     if (rd2RedPlayers?.some(redPlayer => redPlayer.matches(player)))
+        //         numMatchingPlayers++;
+        //     return numMatchingPlayers;
+        // }, 0) || 0;
 
-        if ((numMatchingPlayers / numRd1BluePlayers) < 0.5) {
-            return undefined;
-        }
+        // if ((numMatchingPlayers / numRd1BluePlayers) < 0.5) {
+        //     return undefined;
+        // }
 
         // map all players together
         let teamComp: TeamComposition<OutputPlayer> = {
@@ -95,7 +96,8 @@ export default class ParserUtils {
         };
 
         // fill in missing players
-        rd2RedPlayers?.forEach(player => {
+        // rd2RedPlayers?.forEach(player => {
+        teamComps[1][2]?.forEach(player => {
             // add missing players
             if (!teamComp[1]?.some(rd1Player => player.matches(rd1Player)))
                 teamComp[1]?.push(player.dumpOutput());
