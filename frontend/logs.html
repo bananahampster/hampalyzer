@@ -41,7 +41,7 @@
                 </table>
             </div>
         </div>
-        <div class="row">
+        <div class="row mb-5">
             <div class="col-md-9">
                 <div class="btn-group" role="group" aria-label="Table navigation">
                     <a id="prevPage" class="btn btn-secondary">&laquo;</a>
@@ -91,12 +91,12 @@
 
                     // update buttons
                     $("#prevPage").css('display', page_num === 1 ? 'none' : 'block');
-                    $('#prevPage').attr('href', '/logs.html?page=' + (page_num) - 1);
+                    $('#prevPage').attr('href', '/logs.html?page=' + ((page_num) - 1));
 
                     $('#pageNum').text(page_num);
 
                     $('#nextPage').css('display', data.length < 20 ? 'none' : 'block');
-                    $('#nextPage').attr('href', '/logs.html?page=' + (page_num) + 1);
+                    $('#nextPage').attr('href', '/logs.html?page=' + ((page_num) + 1));
                 }
             );
         });
