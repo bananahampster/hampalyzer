@@ -3,7 +3,8 @@ import { Event } from './parser';
 import Player from "./player";
 
 export interface OutputStats {
-    log_name: string;
+    parse_name: string;  // 'user-friendly' URI slug
+    log_name: string; // original log name as uploaded
     map: string;
     server: string;
     timestamp: Date;

@@ -431,7 +431,7 @@ export default class ParserUtils {
         return foundPlayer;
     }
 
-    public static generateOutputStats(events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition): OutputStats {
+    public static generateOutputStats(events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition, logfile: string): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
         const map = mapEvent && mapEvent.value || "(map not found)";
@@ -454,7 +454,7 @@ export default class ParserUtils {
         // log name (server [up to 10 char or first word boundary], date string, time)
         let serverShortName = server.split(/\s+/)[0];
         if (serverShortName.length > 10) serverShortName = serverShortName.slice(0, 10);
-        const logName = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
+        const parse_name = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
 
         // game time (should we calculate this somewhere else?)
         const prematchEndEvent = events.find(event => event.eventType === EventType.PrematchEnd);
@@ -470,7 +470,8 @@ export default class ParserUtils {
         const score = this.getScore(events, teamComp);
 
         return {
-            log_name: logName,
+            parse_name,
+            log_name: logfile,
             map,
             timestamp: firstTimestamp,
             date,

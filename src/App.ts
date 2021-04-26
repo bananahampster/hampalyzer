@@ -110,11 +110,41 @@ class App {
         this.express.use('/', router);
     }
 
-    private parseLogs(filenames: string[]): Promise<string | undefined> {
+    /** Attempts to re-parse all the successfully-parsed logs present in the database.
+     * Succeeds if there are no errors, and if the source log files are missing, skips them.
+     * Fails if any previous log fails to parse.
+     **/
+    private async reparseLogs(): Promise<boolean> {
+        const allPromises: Promise<string | undefined>[] = [];
+        this.pool.query(
+            'SELECT * FROM logs',
+            (error, result) => {
+                if (error) {
+                    console.error("crtical error: failed to connect to DB to reparse logs: " + error.message);
+                }
+
+                for (const game of result.rows) {
+                    const filenames: string[] = [];
+                    filenames.push(game.log_file1);
+                    if (game.log_file2 != null && game.log_file2 != "") {
+                        filenames.push(game.log_file2);
+                    }
+
+                    allPromises.push(this.parseLogs(filenames, true /* reparse */));
+                }
+            }
+        );
+
+        // ensure that all passed
+        const results = await Promise.all(allPromises);
+        return !results.some(result => result == null);
+    }
+
+    private parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
         let parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.pool));
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.pool, reparse));
     }
 }
 

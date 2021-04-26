@@ -296,6 +296,14 @@ table tr.total {
     background: rgba(248, 249, 250, 0.25);
 }
 
+.table a {
+    color: #66b0ff;
+}
+
+.table a:hover {
+    color: #3395ff;
+}
+
 /** player stats styles */
 
 .player-name {

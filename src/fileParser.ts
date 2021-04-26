@@ -11,7 +11,13 @@ import ParserUtils from './parserUtils';
 import TemplateUtils from './templateUtils';
 
 
-export default async function(allStats: ParsedStats | undefined, outputRoot: string = 'parsedlogs', pool?: pg.Pool): Promise<string | undefined> {
+export default async function(
+    allStats: ParsedStats | undefined,
+    outputRoot: string = 'parsedlogs',
+    pool?: pg.Pool,
+    reparse?: boolean,
+    ): Promise<string | undefined> {
+
     if (allStats) {
         // depends on npm "prepare" putting template files in the right place (next to js)
         const templateDir = path.resolve(__dirname, 'templates/');
@@ -19,7 +25,7 @@ export default async function(allStats: ParsedStats | undefined, outputRoot: str
         const templateFile = path.join(templateDir, 'template-summary.html');
         const playerTemplate = path.join(templateDir, 'template-summary-player.html');
 
-        const logName = await getLogName(pool, allStats.stats[0]!.log_name);
+        const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
 
         const outputDir = `${outputRoot}/${logName}`;
 
@@ -114,25 +120,25 @@ export default async function(allStats: ParsedStats | undefined, outputRoot: str
     } else console.error('no stats found to write!');
 }
 
-async function getLogName(pool: pg.Pool | undefined, firstLogName: string): Promise<string> {
-    if (!pool) return firstLogName;
+async function getLogName(pool: pg.Pool | undefined, parse_name: string, reparse?: boolean): Promise<string> {
+    if (!pool || !!reparse) return parse_name;
 
     return new Promise(function(resolve, reject) {
         pool.query(
-            "SELECT COUNT(1) FROM logs WHERE parsedlog = $1",
-            [firstLogName],
+            "SELECT COUNT(1) as cnt FROM logs WHERE parsedlog = $1",
+            [parse_name],
             (error, result) => {
                 if (error) {
                     console.error("Failed checking for logname collision: " + error);
                     reject("");
                 }
 
-                if (result.rows[0] === 0)
-                    resolve(firstLogName);
+                if (result.rows[0].cnt == 0)
+                    resolve(parse_name);
 
                 // otherwise, add some junk
                 const junk = Math.random().toString(36).substr(2, 5); // 5-char string
-                resolve(firstLogName + junk);
+                resolve(parse_name + '-' + junk);
             }
         );
     });

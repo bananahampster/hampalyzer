@@ -120,7 +120,7 @@ export class RoundParser {
         this.trimPrematchEvents();
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
-        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp);
+        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
     }
 
     private trimPrematchEvents(): void {
@@ -207,7 +207,10 @@ export class Event {
             const lineData = line.substr(25);
 
             // RE to split up words (TODO: also remove quotes?)
-            let lineDataRE = /(\b[^\s]+\b)/ig
+            let lineDataRE = /(\b[^\s]+\b)/ig;
+
+            // RE to obtain full quoted parts (only needed in certain instances to get user-supplied info like chat/server name)
+            let lineQuoteRE = /(?<=\")[^\"]*(?=\")|[^\" ]+/ig;
 
             // try to match player names
             let playerRE = /"([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[a-z]*>"/ig
@@ -489,6 +492,7 @@ export class Event {
                                     break;
                                 // ignore these triggers
                                 case 'red_30': // 30s laser warning on schtop
+                                case 'blue_30': // 30s laser warning on schtop
                                 case 'ful': // full concs on oppose2k1
                                 case 'spawn_pak': // spawn pack on 2mesa3 (?)
                                 case 'blue_pak8': // spawn/gren pack on 2mesa3 (?)
@@ -535,7 +539,8 @@ export class Event {
                         switch (parts[1]) {
                             case "name":
                                 eventType = EventType.ServerName;
-                                data.value = parts[3];
+                                let quoteParts = lineData.match(lineQuoteRE) as RegExpMatchArray;
+                                data.value = quoteParts?.[3];
                                 break;
                             case "cvars":
                                 if (parts[2] === "start")

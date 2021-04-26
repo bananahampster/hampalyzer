@@ -30,13 +30,24 @@
         <div class="row">
             <div class="col-md-9">
                 <h2>Hampalyzer &mdash; TFC Statistics</h2>
-                <table class="table" id="all-logs">
-                    <tr>
-                        <td>
-                            Logs loading ...
-                        </td>
-                    </tr>
+                <table class="table dy-5">
+                    <tbody id="all-logs">
+                        <tr>
+                            <td>
+                                Logs loading ...
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-9">
+                <div class="btn-group" role="group" aria-label="Table navigation">
+                    <a id="prevPage" class="btn btn-secondary">&laquo;</a>
+                    <a id="curPage" class="btn btn-secondary">Page <span id="pageNum"></span></a>
+                    <a id="nextPage" class="btn btn-secondary">&raquo;</a>
+                  </div>
             </div>
         </div>
     </div>
@@ -74,6 +85,15 @@
                             <td>${row.num_players}</td>
                         </tr>`);
                     }
+
+                    // update buttons
+                    $("#prevPage").css('display', page_num === 1 ? 'none' : 'block');
+                    $('#prevPage').attr('href', '/logs.html?page=' + (page_num) - 1);
+
+                    $('#pageNum').text(page_num);
+
+                    $('#nextPage').css('display', data.length < 30 ? 'none' : 'block');
+                    $('#nextPage').attr('href', '/logs.html?page=' + (page_num) + 1);
                 }
             );
         });
