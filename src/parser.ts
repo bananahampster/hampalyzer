@@ -764,6 +764,7 @@ export class Event {
             case "infection":
                 return Weapon.Infection;
             case "teledeath world": // TODO: is this a spawn telefrag?
+            case "door world": // TODO: door frag?
             case "world":
             case "worldspawn":
             case "worldspawn world":
