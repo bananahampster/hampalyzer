@@ -64,7 +64,10 @@
 
         $(document).ready(() => {
             let urlParams = new URLSearchParams(window.location.search);
-            let page_num = urlParams.has('page') ? urlParams.get('page') : 1;
+            let page_num = urlParams.has('page') ? Number(urlParams.get('page')) : 1;
+
+            if (isNaN(page_num)) return;
+
             $.get(
                 "/api/logs/" + page_num,
                 function (data) {

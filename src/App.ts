@@ -117,7 +117,7 @@ class App {
     private async reparseLogs(): Promise<boolean> {
         const allPromises: Promise<string | undefined>[] = [];
         this.pool.query(
-            'SELECT * FROM logs',
+            'SELECT * FROM logs WHERE id > 42', // before 42, wrong log filenames
             (error, result) => {
                 if (error) {
                     console.error("crtical error: failed to connect to DB to reparse logs: " + error.message);
