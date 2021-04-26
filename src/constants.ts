@@ -65,6 +65,7 @@ export interface PlayerOutputStats {
 export interface PlayerOutputStatsRound extends OutputPlayer, PlayerStats {
     classes: ClassTime[];
     roles: string;
+    round_number: number; // optional; 1-indexed
 }
 
 export interface PlayerStats {

@@ -667,6 +667,7 @@ export default class ParserUtils {
             classes: [],
             deaths: {},
             kills: {},
+            round_number: 0,
         };
     }
 

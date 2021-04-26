@@ -72,12 +72,13 @@ export default async function(
             const team = players[teamId] as OutputPlayer[];
             for (const player of team) {
                 let playerStats: PlayerOutputStatsRound[] = [];
-                for (const round of allStats.stats) {
+                for (let i = 0, len = allStats.stats.length; i < len; i++) {
+                    const round = allStats.stats[i];
                     if (!round) continue;
 
                     const foundPlayer = ParserUtils.getPlayerFromTeams(player.steamID, round.teams);
                     if (foundPlayer)
-                        playerStats.push(foundPlayer);
+                        playerStats.push({ ...foundPlayer, round_number: i+1 });
                 }
 
                 playersStats.push({
