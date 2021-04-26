@@ -92,7 +92,7 @@
 
                     $('#pageNum').text(page_num);
 
-                    $('#nextPage').css('display', data.length < 30 ? 'none' : 'block');
+                    $('#nextPage').css('display', data.length < 20 ? 'none' : 'block');
                     $('#nextPage').attr('href', '/logs.html?page=' + (page_num) + 1);
                 }
             );
