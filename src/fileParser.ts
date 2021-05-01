@@ -42,6 +42,7 @@ export default async function(
         // check for duplicate match; just return that URL if so
         if (!reparse) {
             const isDuplicate = await checkHasDuplicate(pool, matchMeta);
+            console.log('isDuplicate', isDuplicate);
             if (isDuplicate) return `${outputRoot}/${matchMeta.logName}`;
         }
 
@@ -152,13 +153,13 @@ async function checkHasDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMeta
                     resolve(false);
 
                 console.log("row is: ", result.rows[0]);
+                console.log("cnt result", result.rows[0].cnt == 0);
 
-                if (result.rows[0].cnt == 0) {
+                if (result.rows[0].cnt == 0)
                     resolve(false);
-                } else {
-                    console.log('resolving with logname: ', matchMeta.logName);
-                    resolve(true);
-                }
+
+                console.log('resolving with logname: ', matchMeta.logName);
+                resolve(true);
             }
         )
     });
