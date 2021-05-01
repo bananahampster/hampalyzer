@@ -41,9 +41,8 @@ export default async function(
 
         // check for duplicate match; just return that URL if so
         if (!reparse) {
-            const duplicateMatchDir = await checkForDuplicate(pool, matchMeta);
-            console.log("duplicateMatchDir: ", duplicateMatchDir);
-            if (duplicateMatchDir) return duplicateMatchDir;
+            const isDuplicate = await checkHasDuplicate(pool, matchMeta);
+            if (isDuplicate) return `${outputRoot}/${matchMeta.logName}`;
         }
 
         // depends on npm "prepare" putting template files in the right place (next to js)
@@ -140,8 +139,8 @@ export default async function(
     } else console.error('no stats found to write!');
 }
 
-async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<string | undefined> {
-    if (!pool) return;
+async function checkHasDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {
+    if (!pool) return false;
 
     return new Promise(function(resolve, reject) {
         pool.query(
@@ -150,15 +149,15 @@ async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMeta
             (error, result) => {
                 if (error)
                     console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
-                    resolve(undefined);
+                    resolve(false);
 
                 console.log("row is: ", result.rows[0]);
 
                 if (result.rows[0].cnt == 0) {
-                    resolve(undefined);
+                    resolve(false);
                 } else {
                     console.log('resolving with logname: ', matchMeta.logName);
-                    resolve(matchMeta.logName);
+                    resolve(true);
                 }
             }
         )
