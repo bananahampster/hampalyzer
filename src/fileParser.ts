@@ -41,9 +41,7 @@ export default async function(
 
         // check for duplicate match; just return that URL if so
         if (!reparse) {
-            const duplicateMatchDir = checkForDuplicate(pool, matchMeta);
-            console.log(`checking for duplicates; found "${duplicateMatchDir}"`);
-            console.log(`tried matching ${matchMeta.logName} / ${matchMeta.date_match} / ${matchMeta.map} / ${matchMeta.server} / ${matchMeta.num_players}`);
+            const duplicateMatchDir = await checkForDuplicate(pool, matchMeta);
             if (duplicateMatchDir) return duplicateMatchDir;
         }
 
