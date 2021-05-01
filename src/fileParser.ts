@@ -10,6 +10,16 @@ import { ParsedStats } from "./parser";
 import ParserUtils from './parserUtils';
 import TemplateUtils from './templateUtils';
 
+interface MatchMetadata {
+    logName: string;
+    logFile_1: string;
+    logFile_2: string | undefined;
+    date_match: Date;
+    map: string | undefined;
+    server: string | undefined;
+    num_players: number | undefined;
+}
+
 
 export default async function(
     allStats: ParsedStats | undefined,
@@ -19,6 +29,22 @@ export default async function(
     ): Promise<string | undefined> {
 
     if (allStats) {
+        const matchMeta: MatchMetadata = {
+            logName: allStats.stats[0]!.parse_name,
+            logFile_1: allStats.stats[0]!.log_name,
+            logFile_2: allStats.stats[1]?.log_name,
+            date_match: allStats.stats[0]!.timestamp,
+            map: allStats.stats[0]!.map,
+            server: allStats.stats[0]!.server,
+            num_players: (allStats.players[1]?.length ?? 0) + (allStats.players[2]?.length ?? 0)
+        };
+
+        // check for duplicate match; just return that URL if so
+        if (!reparse) {
+            const duplicateMatchDir = checkForDuplicate(pool, matchMeta);
+            if (duplicateMatchDir) return duplicateMatchDir;
+        }
+
         // depends on npm "prepare" putting template files in the right place (next to js)
         const templateDir = path.resolve(__dirname, 'templates/');
 
@@ -106,19 +132,31 @@ export default async function(
         });
 
         // if everything is successful up to this point, log into the database
-        const dbSuccess = await recordLog(
-            pool,
-            logName,
-            allStats.stats[0]!.log_name,
-            allStats.stats[1]?.log_name,
-            allStats.stats[0]!.timestamp,
-            allStats.stats[0]!.map,
-            allStats.stats[0]!.server,
-            (allStats.players[1]?.length ?? 0) + (allStats.players[2]?.length ?? 0)
-        );
+        const dbSuccess = await recordLog(pool, matchMeta);
 
         return dbSuccess ? outputDir : undefined;
     } else console.error('no stats found to write!');
+}
+
+async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<string | undefined> {
+    if (!pool) return;
+
+    return new Promise(function(resolve, reject) {
+        pool.query(
+            "SELECT parsedlog FROM logs WHERE parsedLog = $1 AND date_match = $2 AND map = $3 AND server = $4 AND num_players = $5",
+            [matchMeta.logName, matchMeta.date_match, matchMeta.map, matchMeta.server, matchMeta.num_players],
+            (error, result) => {
+                if (error)
+                    console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
+                    resolve(undefined);
+
+                if (result.rowCount === 0)
+                    resolve(undefined);
+                else
+                    resolve(result.rows[0].parsedLog);
+            }
+        )
+    });
 }
 
 async function getLogName(pool: pg.Pool | undefined, parse_name: string, reparse?: boolean): Promise<string> {
@@ -145,22 +183,23 @@ async function getLogName(pool: pg.Pool | undefined, parse_name: string, reparse
     });
 }
 
-async function recordLog(
-    pool: pg.Pool | undefined,
-    logName: string,
-    logFile_1: string,
-    logFile_2: string | undefined,
-    date_match: Date,
-    map: string | undefined,
-    server: string | undefined,
-    num_players: number | undefined): Promise<boolean> {
+async function recordLog(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {
 
     if (!pool) return true;
 
     return new Promise(function(resolve, reject) {
         pool.query(
         "INSERT INTO logs(parsedlog, log_file1, log_file2, date_parsed, date_match, map, server, num_players) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-        [logName, logFile_1, logFile_2, new Date(), date_match, map, server, num_players],
+        [
+            matchMeta.logName,
+            matchMeta.logFile_1,
+            matchMeta.logFile_2,
+            new Date(),
+            matchMeta.date_match,
+            matchMeta.map,
+            matchMeta.server,
+            matchMeta.num_players
+        ],
         (error, result) => {
             if (error) {
                 console.error("Failed pushing new match log entry: " + error);
