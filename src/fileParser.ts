@@ -157,6 +157,7 @@ async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMeta
                 if (result.rows[0].cnt == 0) {
                     resolve(undefined);
                 } else {
+                    console.log('resolving with logname: ', matchMeta.logName);
                     resolve(matchMeta.logName);
                 }
             }
