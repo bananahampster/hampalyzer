@@ -144,17 +144,17 @@ async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMeta
 
     return new Promise(function(resolve, reject) {
         pool.query(
-            "SELECT parsedLog FROM logs WHERE parsedLog = $1 AND map = $2 AND server = $3 AND num_players = $4",
+            "SELECT COUNT(1) as cnt FROM logs WHERE parsedlog = $1 AND map = $2 AND server = $3 AND num_players = $4",
             [matchMeta.logName, matchMeta.map, matchMeta.server, matchMeta.num_players],
             (error, result) => {
                 if (error)
                     console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
                     resolve(undefined);
 
-                if (result.rowCount === 0)
+                if (result.rows[0].cnt == 0)
                     resolve(undefined);
                 else
-                    resolve(result.rows[0].parsedlog);
+                    resolve(matchMeta.logName);
             }
         )
     });
