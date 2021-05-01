@@ -52,6 +52,7 @@ export default async function(
         const playerTemplate = path.join(templateDir, 'template-summary-player.html');
 
         const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
+        matchMeta.logName = logName;
 
         const outputDir = `${outputRoot}/${logName}`;
 
@@ -141,10 +142,16 @@ export default async function(
 async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<string | undefined> {
     if (!pool) return;
 
+    // generate a short-date string from date_match
+    const d = matchMeta.date_match;
+    const dateString = `${d.getFullYear()}-${(String(d.getMonth() + 1)).padStart(2, '0')}-${(String(d.getDate()).padStart(2, '0'))}`;
+
+    console.log(`tried matching ${matchMeta.logName} / ${matchMeta.date_match} (${dateString}) / ${matchMeta.map} / ${matchMeta.server} / ${matchMeta.num_players}`);
+
     return new Promise(function(resolve, reject) {
         pool.query(
-            "SELECT parsedlog FROM logs WHERE parsedLog = $1 AND date_match = $2 AND map = $3 AND server = $4 AND num_players = $5",
-            [matchMeta.logName, matchMeta.date_match, matchMeta.map, matchMeta.server, matchMeta.num_players],
+            "SELECT parsedlog FROM logs WHERE parsedLog = $1 AND date_match >= $2::date AND date_match < ($2::date + '1 day'::interval) AND map = $3 AND server = $4 AND num_players = $5",
+            [matchMeta.logName, dateString, matchMeta.map, matchMeta.server, matchMeta.num_players],
             (error, result) => {
                 if (error)
                     console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
