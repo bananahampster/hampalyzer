@@ -42,6 +42,7 @@ export default async function(
         // check for duplicate match; just return that URL if so
         if (!reparse) {
             const duplicateMatchDir = await checkForDuplicate(pool, matchMeta);
+            console.log("duplicateMatchDir: ", duplicateMatchDir);
             if (duplicateMatchDir) return duplicateMatchDir;
         }
 
@@ -151,10 +152,13 @@ async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMeta
                     console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
                     resolve(undefined);
 
-                if (result.rows[0].cnt == 0)
+                console.log("row is: ", result.rows[0]);
+
+                if (result.rows[0].cnt == 0) {
                     resolve(undefined);
-                else
+                } else {
                     resolve(matchMeta.logName);
+                }
             }
         )
     });
