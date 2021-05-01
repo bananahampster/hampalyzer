@@ -151,16 +151,10 @@ async function checkForDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMeta
                     console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
                     resolve(undefined);
 
-                for (const row in result.rows)
-                    console.log("ROW: ", row);
-
-                if (result.rowCount === 0) {
-                    console.log("no duplicate logs found for ", matchMeta.logName);
+                if (result.rowCount === 0)
                     resolve(undefined);
-                } else {
-                    console.log("found log:", result.rows[0]);
-                    resolve(result.rows[0].parsedLog);
-                }
+                else
+                    resolve(result.rows[0].parsedlog);
             }
         )
     });
