@@ -52,6 +52,7 @@ export enum EventType {
     TeamScore, /* done */
     MetaModMessages,
     EndLog, /* done */
+    PlayerCuredInfection,
 };
 
 export default EventType;

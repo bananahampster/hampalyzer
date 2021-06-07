@@ -302,6 +302,9 @@ export class Event {
                             } else if (eventTextParts[1] === `"Passed_On_Infection"`) {
                                 eventType = EventType.PlayerPassedInfection;
 
+                            } else if (eventTextParts[1] === `"Medic_Cured_Infection"`) {
+                                eventType = EventType.PlayerCuredInfection;
+
                             } else {
                                 console.log("unknown 'triggered' event: " + line);
                                 throw ""; // TODO
