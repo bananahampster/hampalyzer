@@ -305,6 +305,9 @@ export class Event {
                             } else if (eventTextParts[1] === `"Medic_Cured_Infection"`) {
                                 eventType = EventType.PlayerCuredInfection;
 
+                            } else if (eventTextParts[1] === `"Discovered_Spy"`) {
+                                eventType = EventType.PlayerRevealedSpy;
+
                             } else {
                                 console.log("unknown 'triggered' event: " + line);
                                 throw ""; // TODO
@@ -373,6 +376,11 @@ export class Event {
                                 case "Built_Dispenser":
                                     eventType = EventType.PlayerBuiltDispenser;
                                     break;
+                                case "Teleporter_Entrace_Finished":
+                                case "Teleporter_Exit_Finished":
+                                    eventType = EventType.PlayerBuiltTeleporter;
+                                    data.building = Event.parseWeapon(parts[1]);
+                                    break;
                                 case "Dispenser_Destroyed":
                                     eventType = EventType.PlayerDetonatedBuilding;
                                     data.building = Event.parseWeapon("dispenser");
@@ -426,6 +434,9 @@ export class Event {
                                             else
                                                 console.error('unknown player trigger "Red/Blue Capture": ' + eventText);
                                             break;
+                                        case "team":
+                                            if (parts[3] === "spawn") // ksour spawn? ("red team spawn stuff")
+                                                break;
                                         default:
                                             console.error('unknown player trigger Red/Blue: ' + eventText);
                                     }
@@ -740,6 +751,10 @@ export class Event {
             case "building_teleporter":
             case "teleporter":
                 return Weapon.BuildingTeleporter;
+            case "Teleporter_Entrance_Finished":
+                return Weapon.BuildingTeleporterEntrance;
+            case "Teleporter_Exit_Finished":
+                return Weapon.BuildingTeleporterExit;
             case "detpack":
                 return Weapon.Detpack;
             case "empgrenade":

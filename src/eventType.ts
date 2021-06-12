@@ -53,6 +53,7 @@ export enum EventType {
     MetaModMessages,
     EndLog, /* done */
     PlayerCuredInfection,
+    PlayerRevealedSpy,
 };
 
 export default EventType;

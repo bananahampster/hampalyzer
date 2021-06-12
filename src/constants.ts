@@ -188,6 +188,8 @@ export enum Weapon {
     BuildingDispenser,
     BuildingSentryGun,
     BuildingTeleporter,
+    BuildingTeleporterEntrance,
+    BuildingTeleporterExit,
     GreenPipe,
     BluePipe,
     Detpack,
