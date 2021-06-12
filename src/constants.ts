@@ -198,6 +198,7 @@ export enum Weapon {
     Caltrop,
     GasGrenade,
     Knife,
+    Tranquilizer,
     Headshot,
     SniperRifle,
     AutoRifle,

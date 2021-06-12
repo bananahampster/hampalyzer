@@ -773,6 +773,8 @@ export class Event {
                 return Weapon.GasGrenade;
             case "knife":
                 return Weapon.Knife;
+            case "tranq":
+                return Weapon.Tranquilizer;
             case "headshot":
                 return Weapon.Headshot;
             case "sniperrifle":
