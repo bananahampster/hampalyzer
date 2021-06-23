@@ -319,204 +319,212 @@ export class Event {
                     }
                 } else {
                     let parts = eventText.match(lineDataRE) as RegExpMatchArray; // force to never be null (should always find words)
-                    switch (parts[0]) {
-                        case "say_team":
-                        case "say":
-                            // TODO: does say_team always create an extra new-line?
-                            eventType = parts[0] === "say_team" ? EventType.PlayerMM2 : EventType.PlayerMM1;
-                            const firstQuote = eventText.search('"');
-                            let text = eventText.slice(firstQuote + 1);
 
-                            // remove the last quote, if it exists
-                            if (text[text.length - 1] === '"')
-                                text = text.slice(0, text.length - 1).trim();
+                    // should generally never fail here, but it is possible if someone concs after time ends
+                    // for example: "<-1><><Blue>" triggered "Concussion_Grenade" against "hello? A Wheat and Greet pls<27><STEAM_0:0:90069><Red>"
+                    if (!parts) {
+                        console.error("unknown two-player trigger (next line has original log line)");
+                    }
+                    else {
+                        switch (parts[0]) {
+                            case "say_team":
+                            case "say":
+                                // TODO: does say_team always create an extra new-line?
+                                eventType = parts[0] === "say_team" ? EventType.PlayerMM2 : EventType.PlayerMM1;
+                                const firstQuote = eventText.search('"');
+                                let text = eventText.slice(firstQuote + 1);
 
-                            data.value = text;
-                            break;
-                        case "joined":
-                            eventType = EventType.PlayerJoinTeam;
-                            data.team = Event.parseTeam(parts[2]);
-                            break;
-                        case "entered":
-                            eventType = EventType.PlayerJoinServer;
-                            break;
-                        case "changed":
-                            // TOOD: track name changes; for now, just drop the event
-                            if (parts[1] === "name")
+                                // remove the last quote, if it exists
+                                if (text[text.length - 1] === '"')
+                                    text = text.slice(0, text.length - 1).trim();
+
+                                data.value = text;
+                                break;
+                            case "joined":
+                                eventType = EventType.PlayerJoinTeam;
+                                data.team = Event.parseTeam(parts[2]);
+                                break;
+                            case "entered":
+                                eventType = EventType.PlayerJoinServer;
+                                break;
+                            case "changed":
+                                // TOOD: track name changes; for now, just drop the event
+                                if (parts[1] === "name")
+                                    break;
+
+                                eventType = EventType.PlayerChangeRole;
+                                data.class = Event.parseClass(parts[3]);
+                                break;
+                            case "committed": // TODO: sometimes this line has extra data
+                            /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
+                                eventType = EventType.PlayerCommitSuicide;
+                                withWeapon = Event.parseWeapon(parts.slice(3).join(' '));
+                                break;
+                            case "triggered":
+                                switch (parts[1]) {
+                                    case "info_player_teamspawn":
+                                        eventType = EventType.PlayerSpawn;
+                                        break;
+                                    case "Sentry_Built_Level_1":
+                                        eventType = EventType.PlayerBuiltSentryGun;
+                                        break;
+                                    case "Sentry_Upgrade_Level_2":
+                                        eventType = EventType.PlayerUpgradedGun;
+                                        data.level = 2;
+                                        break;
+                                    case "Sentry_Upgrade_Level_3":
+                                        eventType = EventType.PlayerUpgradedGun;
+                                        data.level = 3;
+                                        break;
+                                    case "Sentry_Repair":
+                                        eventType = EventType.PlayerRepairedBuilding;
+                                        data.building = Event.parseWeapon("sentrygun");
+                                        break;
+                                    case "Built_Dispenser":
+                                        eventType = EventType.PlayerBuiltDispenser;
+                                        break;
+                                    case "Teleporter_Entrace_Finished":
+                                    case "Teleporter_Exit_Finished":
+                                        eventType = EventType.PlayerBuiltTeleporter;
+                                        data.building = Event.parseWeapon(parts[1]);
+                                        break;
+                                    case "Dispenser_Destroyed":
+                                        eventType = EventType.PlayerDetonatedBuilding;
+                                        data.building = Event.parseWeapon("dispenser");
+                                        break;
+                                    case "Sentry_Destroyed":
+                                        eventType = EventType.PlayerDetonatedBuilding;
+                                        data.building = Event.parseWeapon("sentrygun");
+                                        break;
+                                    case "Sentry_Dismantle":
+                                        eventType = EventType.PlayerDismantledBuilding;
+                                        data.building = Event.parseWeapon("sentrygun");
+                                        break;
+                                    case "Teleporter_Exit_Destroyed":
+                                    case "Teleporter_Entrance_Destroyed":
+                                        eventType = EventType.PlayerDetonatedBuilding;
+                                        data.building = Event.parseWeapon("teleporter");
+                                    case "Detpack_Set":
+                                        eventType = EventType.PlayerDetpackSet;
+                                        break;
+                                    case "Detpack_Explode":
+                                        eventType = EventType.PlayerDetpackExplode;
+                                        break;
+                                    case "dropitems": // custom event for Inhouse
+                                        eventType = EventType.PlayerThrewFlag;
+                                        break;
+                                    case "goalitem":
+                                        if (parts.length === 2)
+                                            eventType = EventType.PlayerPickedUpFlag;
+                                        else
+                                            console.error('unknown player trigger "goalitem": ' + eventText);
+                                        break;
+                                    case "Red":
+                                    case "Blue":
+                                        switch (parts[2]) {
+                                            case "Flag":
+                                                if (parts[3] === "Plus") // raiden6 c2c entity pickup; skip
+                                                    break;
+                                                eventType = EventType.PlayerPickedUpFlag;
+                                                break;
+                                            case "Cap":
+                                                if (parts[3] === "Point") // monkey_l
+                                                    eventType = EventType.PlayerCapturedFlag;
+                                                else if (parts.length === 3) // waterwar
+                                                    eventType = EventType.PlayerCapturedFlag;
+                                                else
+                                                    console.error('unknown player trigger "Red/Blue Cap": ' + eventText);
+                                                break;
+                                            case "Capture":
+                                                if (parts[3] === "Point") // orbit_l3
+                                                    eventType = EventType.PlayerCapturedFlag;
+                                                else
+                                                    console.error('unknown player trigger "Red/Blue Capture": ' + eventText);
+                                                break;
+                                            case "team":
+                                                if (parts[3] === "spawn") // ksour spawn? ("red team spawn stuff")
+                                                    break;
+                                            default:
+                                                console.error('unknown player trigger Red/Blue: ' + eventText);
+                                        }
+                                        break;
+                                    case "Flag": // cornfield; e.g. "Flag 1", "Flag 2"
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        break;
+                                    case "Capture":
+                                        if (parts[2] = "Point")
+                                            eventType = EventType.PlayerCapturedFlag;
+                                        else
+                                            console.error("unknown player trigger Capture: " + eventText);
+                                        break;
+                                    case "Team":
+                                        if (parts.length !== 4) {
+                                            console.error('unknown player trigger Team: ' + eventText);
+                                            break;
+                                        }
+
+                                        switch (parts[3]) {
+                                            case 'dropoff':
+                                                eventType = EventType.PlayerCapturedFlag;
+                                                break;
+                                            default:
+                                                console.error('unknown player trigger Team (len 3): ' + eventText);
+                                        }
+                                        break;
+                                    case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
+                                    case "t2df":
+                                        if (parts.length === 2)
+                                            eventType = EventType.PlayerCapturedFlag;
+                                        else
+                                            console.error('unknown t1df trigger: ' + eventText);
+                                        break;
+                                    case "blueflag_point": // run (the map) flag capture
+                                    case "blueflag_point2":
+                                    case "redflag_point":
+                                    case "redflag_point2":
+                                        if (parts.length === 2)
+                                            eventType = EventType.PlayerCapturedFlag;
+                                        else
+                                            console.error('unknown "run"-like trigger: ' + eventText);
+                                        break;
+                                    case 'rdet': // oppose2k1 water entrance det opened
+                                    case 'bdet':
+                                    case 'red_det': // 2mesa3 water opened
+                                    case 'blue_det':
+                                        if (parts.length === 2)
+                                            eventType = EventType.PlayerOpenedDetpackEntrance;
+                                        else
+                                            console.error('unknown rdet/bdet trigger: ' + eventText);
+                                        break;
+                                    case 'red_down': // schtop
+                                    case 'blue_down':
+                                        if (parts.length === 2)
+                                            eventType = EventType.PlayerGotSecurity;
+                                        else
+                                            console.error('unknown red_down/blue_down trigger: ' + eventText);
+                                        break;
+                                    case 'red_up': // schtop
+                                    case 'blue_up':
+                                        if (parts.length === 2) {
+                                            eventType = EventType.SecurityUp;
+                                            const team = parts[1] === 'red_up' ? "red" : "blue";
+                                            data.team = Event.parseTeam(team);
+                                        }
+                                        break;
+                                    // ignore these triggers
+                                    case 'red_30': // 30s laser warning on schtop
+                                    case 'blue_30': // 30s laser warning on schtop
+                                    case 'ful': // full concs on oppose2k1
+                                    case 'spawn_pak': // spawn pack on 2mesa3 (?)
+                                    case 'blue_pak8': // spawn/gren pack on 2mesa3 (?)
+                                    case 'func_button': // spawn door on 2mesa3 (either has "1" or "2" following)
+                                        break;
+                                    default:
+                                        console.error(`unknown player trigger: ${parts[1]}: ${eventText}`);
+                                }
                                 break;
 
-                            eventType = EventType.PlayerChangeRole;
-                            data.class = Event.parseClass(parts[3]);
-                            break;
-                        case "committed": // TODO: sometimes this line has extra data
-                        /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
-                            eventType = EventType.PlayerCommitSuicide;
-                            withWeapon = Event.parseWeapon(parts.slice(3).join(' '));
-                            break;
-                        case "triggered":
-                            switch (parts[1]) {
-                                case "info_player_teamspawn":
-                                    eventType = EventType.PlayerSpawn;
-                                    break;
-                                case "Sentry_Built_Level_1":
-                                    eventType = EventType.PlayerBuiltSentryGun;
-                                    break;
-                                case "Sentry_Upgrade_Level_2":
-                                    eventType = EventType.PlayerUpgradedGun;
-                                    data.level = 2;
-                                    break;
-                                case "Sentry_Upgrade_Level_3":
-                                    eventType = EventType.PlayerUpgradedGun;
-                                    data.level = 3;
-                                    break;
-                                case "Sentry_Repair":
-                                    eventType = EventType.PlayerRepairedBuilding;
-                                    data.building = Event.parseWeapon("sentrygun");
-                                    break;
-                                case "Built_Dispenser":
-                                    eventType = EventType.PlayerBuiltDispenser;
-                                    break;
-                                case "Teleporter_Entrace_Finished":
-                                case "Teleporter_Exit_Finished":
-                                    eventType = EventType.PlayerBuiltTeleporter;
-                                    data.building = Event.parseWeapon(parts[1]);
-                                    break;
-                                case "Dispenser_Destroyed":
-                                    eventType = EventType.PlayerDetonatedBuilding;
-                                    data.building = Event.parseWeapon("dispenser");
-                                    break;
-                                case "Sentry_Destroyed":
-                                    eventType = EventType.PlayerDetonatedBuilding;
-                                    data.building = Event.parseWeapon("sentrygun");
-                                    break;
-                                case "Sentry_Dismantle":
-                                    eventType = EventType.PlayerDismantledBuilding;
-                                    data.building = Event.parseWeapon("sentrygun");
-                                    break;
-                                case "Teleporter_Exit_Destroyed":
-                                case "Teleporter_Entrance_Destroyed":
-                                    eventType = EventType.PlayerDetonatedBuilding;
-                                    data.building = Event.parseWeapon("teleporter");
-                                case "Detpack_Set":
-                                    eventType = EventType.PlayerDetpackSet;
-                                    break;
-                                case "Detpack_Explode":
-                                    eventType = EventType.PlayerDetpackExplode;
-                                    break;
-                                case "dropitems": // custom event for Inhouse
-                                    eventType = EventType.PlayerThrewFlag;
-                                    break;
-                                case "goalitem":
-                                    if (parts.length === 2)
-                                        eventType = EventType.PlayerPickedUpFlag;
-                                    else
-                                        console.error('unknown player trigger "goalitem": ' + eventText);
-                                    break;
-                                case "Red":
-                                case "Blue":
-                                    switch (parts[2]) {
-                                        case "Flag":
-                                            if (parts[3] === "Plus") // raiden6 c2c entity pickup; skip
-                                                break;
-                                            eventType = EventType.PlayerPickedUpFlag;
-                                            break;
-                                        case "Cap":
-                                            if (parts[3] === "Point") // monkey_l
-                                                eventType = EventType.PlayerCapturedFlag;
-                                            else if (parts.length === 3) // waterwar
-                                                eventType = EventType.PlayerCapturedFlag;
-                                            else
-                                                console.error('unknown player trigger "Red/Blue Cap": ' + eventText);
-                                            break;
-                                        case "Capture":
-                                            if (parts[3] === "Point") // orbit_l3
-                                                eventType = EventType.PlayerCapturedFlag;
-                                            else
-                                                console.error('unknown player trigger "Red/Blue Capture": ' + eventText);
-                                            break;
-                                        case "team":
-                                            if (parts[3] === "spawn") // ksour spawn? ("red team spawn stuff")
-                                                break;
-                                        default:
-                                            console.error('unknown player trigger Red/Blue: ' + eventText);
-                                    }
-                                    break;
-                                case "Flag": // cornfield; e.g. "Flag 1", "Flag 2"
-                                    eventType = EventType.PlayerPickedUpFlag;
-                                    break;
-                                case "Capture":
-                                    if (parts[2] = "Point")
-                                        eventType = EventType.PlayerCapturedFlag;
-                                    else
-                                        console.error("unknown player trigger Capture: " + eventText);
-                                    break;
-                                case "Team":
-                                    if (parts.length !== 4) {
-                                        console.error('unknown player trigger Team: ' + eventText);
-                                        break;
-                                    }
-
-                                    switch (parts[3]) {
-                                        case 'dropoff':
-                                            eventType = EventType.PlayerCapturedFlag;
-                                            break;
-                                        default:
-                                            console.error('unknown player trigger Team (len 3): ' + eventText);
-                                    }
-                                    break;
-                                case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
-                                case "t2df":
-                                    if (parts.length === 2)
-                                        eventType = EventType.PlayerCapturedFlag;
-                                    else
-                                        console.error('unknown t1df trigger: ' + eventText);
-                                    break;
-                                case "blueflag_point": // run (the map) flag capture
-                                case "blueflag_point2":
-                                case "redflag_point":
-                                case "redflag_point2":
-                                    if (parts.length === 2)
-                                        eventType = EventType.PlayerCapturedFlag;
-                                    else
-                                        console.error('unknown "run"-like trigger: ' + eventText);
-                                    break;
-                                case 'rdet': // oppose2k1 water entrance det opened
-                                case 'bdet':
-                                case 'red_det': // 2mesa3 water opened
-                                case 'blue_det':
-                                    if (parts.length === 2)
-                                        eventType = EventType.PlayerOpenedDetpackEntrance;
-                                    else
-                                        console.error('unknown rdet/bdet trigger: ' + eventText);
-                                    break;
-                                case 'red_down': // schtop
-                                case 'blue_down':
-                                    if (parts.length === 2)
-                                        eventType = EventType.PlayerGotSecurity;
-                                    else
-                                        console.error('unknown red_down/blue_down trigger: ' + eventText);
-                                    break;
-                                case 'red_up': // schtop
-                                case 'blue_up':
-                                    if (parts.length === 2) {
-                                        eventType = EventType.SecurityUp;
-                                        const team = parts[1] === 'red_up' ? "red" : "blue";
-                                        data.team = Event.parseTeam(team);
-                                    }
-                                    break;
-                                // ignore these triggers
-                                case 'red_30': // 30s laser warning on schtop
-                                case 'blue_30': // 30s laser warning on schtop
-                                case 'ful': // full concs on oppose2k1
-                                case 'spawn_pak': // spawn pack on 2mesa3 (?)
-                                case 'blue_pak8': // spawn/gren pack on 2mesa3 (?)
-                                case 'func_button': // spawn door on 2mesa3 (either has "1" or "2" following)
-                                    break;
-                                default:
-                                    console.error(`unknown player trigger: ${parts[1]}: ${eventText}`);
-                            }
-                            break;
-
+                        }
                     }
                 }
             } else {
