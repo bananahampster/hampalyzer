@@ -308,6 +308,9 @@ export class Event {
                             } else if (eventTextParts[1] === `"Discovered_Spy"`) {
                                 eventType = EventType.PlayerRevealedSpy;
 
+                            } else if (eventTextParts[1] === `"Medic_Doused_Fire"`) {
+                                eventType = EventType.PlayerDousedFire;
+
                             } else {
                                 console.log("unknown 'triggered' event: " + line);
                                 throw ""; // TODO

@@ -54,6 +54,7 @@ export enum EventType {
     EndLog, /* done */
     PlayerCuredInfection,
     PlayerRevealedSpy,
+    PlayerDousedFire,
 };
 
 export default EventType;
