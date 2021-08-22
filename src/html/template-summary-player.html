@@ -114,7 +114,15 @@
                         {{#each kills}}
                         <div class="stats-faceted">
                             <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
-                            <div class="stats-facets">
+                            <div class="stats-facets py-3">
+                                <div class="facet-summary pb-2 mb-3">
+                                    {{#each weapon_summary}}
+                                    <div class="facet-weapon px-2">
+                                        <span class="weapon-icon weapon-{{@key}}"></span>
+                                        {{this}}
+                                    </div>
+                                    {{/each}}
+                                </div>
                                 {{#each details}}
                                 <div class="facet-name">{{@key}}</div>
                                 <div class="facet-value">{{this.length}}</div>
@@ -138,6 +146,14 @@
                         <div class="stats-faceted">
                             <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                             <div class="stats-facets">
+                                <div class="facet-summary pb-2 mb-3">
+                                    {{#each weapon_summary}}
+                                    <div class="facet-weapon px-2">
+                                        <span class="weapon-icon weapon-{{@key}}"></span>
+                                        {{this}}
+                                    </div>
+                                    {{/each}}
+                                </div>
                                 {{#each details}}
                                 <div class="facet-name">{{@key}}</div>
                                 <div class="facet-value">{{this.length}}</div>

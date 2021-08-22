@@ -1,7 +1,7 @@
 import PlayerList from "./playerList";
 import { Event, RoundParser } from "./parser";
 import Player from "./player";
-import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStatDetails, EventDescriptor,} from "./constants";
+import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary } from "./constants";
 import EventType from "./eventType";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
@@ -250,6 +250,10 @@ export default class ParserUtils {
 
                 switch (event.eventType) {
                     case EventType.PlayerFraggedPlayer:
+                        // ignore "timer" and other non-weapon kills; usually followed by an infection kill
+                        if (event.withWeapon == Weapon.None)
+                            break;
+
                         // figure out if this was a team-kill/-death
                         if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
                             this.addStat(thisPlayerStats, 'team_kill', event);
@@ -520,8 +524,6 @@ export default class ParserUtils {
                 const playerStats = stats[playerID];
                 for (const stat in playerStats) {
                     const statEvents = playerStats[stat];
-
-                    let outputStat: GenericStat;
                     switch (stat) {
                         /** classes */
                         case 'role':
@@ -705,11 +707,17 @@ export default class ParserUtils {
         const thisStat = this.ensureStat(playerStats, category, item, description);
         thisStat.value = events.length;
         thisStat.events = events;
-        thisStat.details = this.generateStatDetails(category, thisStat);
+
+        const facetedStat = this.generateStatDetails(category, thisStat);
+        if (facetedStat != null) {
+            thisStat.weapon_summary = facetedStat.weapon_summary;
+            thisStat.details = facetedStat.details;
+        }
+
         return thisStat;
     }
 
-    private static generateStatDetails(category: string, stat: GenericStat): FacetedStatDetails | undefined {
+    private static generateStatDetails(category: string, stat: GenericStat): FacetedStat | undefined {
         const events = stat.events;
         if (events == null)
             return;
@@ -718,15 +726,15 @@ export default class ParserUtils {
             case 'kills':
                 switch (stat.title) {
                     case 'kill':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Killed ${e.playerTo?.name} at ${this.getTime(e)}`,
                             true);
                     case 'teamkill':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Team killed ${e.playerTo?.name} at ${this.getTime(e)}`,
                             true);
                     case 'sg':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Killed ${e.playerTo?.name}'s sentry gun at ${this.getTime(e)}`,
                             true);
                     default:
@@ -735,23 +743,23 @@ export default class ParserUtils {
             case 'deaths':
                 switch (stat.title) {
                     case 'death':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Killed by ${e.playerFrom?.name} at ${this.getTime(e)}`);
                     case 'by_team':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Team-killed by ${e.playerFrom?.name} at ${this.getTime(e)}`);
                     case 'by_self':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Suicided at ${this.getTime(e)}`);
                 }
             case 'weaponStats':
                 switch (stat.title) {
                     case 'airshot':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Airshot ${e.playerTo?.name} at ${this.getTime(e)} (${e.data?.value} meters)`,
                             true);
                     case 'airshoted':
-                        return this.genericStatDetails(stat.events!,
+                        return this.generateFacetedStats(stat.events!,
                             (e) => `Airshoted by ${e.playerFrom?.name} at ${this.getTime(e)} (${e.data?.value} meters)`);
                     default:
                         console.log(`generateStatDetails: not implemented: weaponStats > ${stat.title}`);
@@ -761,8 +769,9 @@ export default class ParserUtils {
         }
     }
 
-    private static genericStatDetails(events: Event[], descriptor: EventDescriptor, isByPlayer?: boolean): FacetedStatDetails {
+    private static generateFacetedStats(events: Event[], descriptor: EventDescriptor, isByPlayer?: boolean): FacetedStat {
         const facetedDetails = {};
+        const facetedWeaponCounts: { [key in Weapon]?: number } = {};
         const allDetails = events.map(e => (<StatDetails>{
             description: descriptor(e),
             player: isByPlayer ? e.playerTo : e.playerFrom,
@@ -770,14 +779,29 @@ export default class ParserUtils {
         }));
 
         for (const detail of allDetails) {
+            // per-player
             const otherPlayer = detail.player?.name || "default";
             if (!facetedDetails[otherPlayer])
                 facetedDetails[otherPlayer] = [];
 
             facetedDetails[otherPlayer].push(detail);
+
+            // per-weapon
+            const weapon = detail.weapon || 0;
+            if (!facetedWeaponCounts[weapon])
+                facetedWeaponCounts[weapon] = 0;
+
+            facetedWeaponCounts[weapon]!++;
         }
 
-        return facetedDetails;
+        // finalize per-weapon stats
+        const facetedWeapon: FacetedStatSummary = {};
+        for (const weapon_stat in facetedWeaponCounts) {
+            const weapon_count = facetedWeaponCounts[weapon_stat];
+            facetedWeapon[weapon_stat] = `${weapon_count} (${Math.round(weapon_count / events.length * 100)}%)`;
+        }
+
+        return { details: facetedDetails, weapon_summary: facetedWeapon };
     }
 
     private static getTime(e: Event): string {
@@ -982,8 +1006,6 @@ export default class ParserUtils {
         let lastTimestamp: Date | undefined;
         let lastClass: PlayerClass | undefined;
         for (const roleChangedEvent of roleChangedEvents) {
-            lastClass = roleChangedEvent.data!.class;
-
             // skip the initial role if no timestamp set
             if (lastTimestamp !== undefined && lastClass !== undefined) {
                 // calculate the time for the last class and add entry
@@ -996,6 +1018,7 @@ export default class ParserUtils {
                 });
             }
 
+            lastClass = roleChangedEvent.data!.class;
             lastTimestamp = roleChangedEvent.timestamp;
         }
 

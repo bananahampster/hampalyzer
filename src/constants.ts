@@ -99,14 +99,16 @@ export interface PlayerStats {
     };
 }
 
-export interface GenericStat<T = string, ValueType = number> {
+export interface GenericStat<T = string, ValueType = number> extends FacetedStat {
     title: T;
     value: ValueType;
     description?: string;
     events?: Event[];
-    details?: FacetedStatDetails; // { "hamp": { by_weapon: "nade", description: "killed at 3:30" }, "killed at 3:40" }
 }
 
+export interface FacetedStat { weapon_summary?: FacetedStatSummary, details?: FacetedStatDetails };
+
+export type FacetedStatSummary = { [key in Weapon]?: string }; // { "1": "5 (65%)"" }
 export type FacetedStatDetails = { [key: string]: StatDetails[] };
 export type EventDescriptor = (ev: Event) => string;
 
@@ -187,9 +189,6 @@ export enum Weapon {
     SentryGun,
     BuildingDispenser,
     BuildingSentryGun,
-    BuildingTeleporter,
-    BuildingTeleporterEntrance,
-    BuildingTeleporterExit,
     GreenPipe,
     BluePipe,
     Detpack,
@@ -198,7 +197,6 @@ export enum Weapon {
     Caltrop,
     GasGrenade,
     Knife,
-    Tranquilizer,
     Headshot,
     SniperRifle,
     AutoRifle,
@@ -207,6 +205,10 @@ export enum Weapon {
     Train,
     Lasers,
     Pit,
+    Tranquilizer,
+    BuildingTeleporter,
+    BuildingTeleporterEntrance,
+    BuildingTeleporterExit,
 };
 
 export enum PlayerClass {

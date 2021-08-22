@@ -49,7 +49,8 @@ else {
     else
         // logs = ['logs/L0102102.log', 'logs/L0102104.log'];
         // logs = ['logs/1619406938938-L0425095.log', 'logs/1619406938938-L0425099.log']
-        logs = ['logs/L0611116.log', 'logs/L0611122.log'];
+        // logs = ['logs/JXt9zAen.log', 'logs/GJWd8vi5.log'];
+        logs = ['logs/1629607551662-L0821092.log', 'logs/1629607551665-L0821093.log'];
 
     console.log(`parsing logs ${logs.join(" and ")} ...`);
 
