@@ -454,6 +454,10 @@ export class Event {
                                                 console.error('unknown player trigger Red/Blue: ' + eventText);
                                         }
                                         break;
+                                    case "Red_Flag": // proton_l
+                                    case "Blue_Flag":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        break;
                                     case "Flag": // cornfield; e.g. "Flag 1", "Flag 2"
                                         eventType = EventType.PlayerPickedUpFlag;
                                         break;
