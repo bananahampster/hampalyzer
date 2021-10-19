@@ -102,11 +102,11 @@ export class RoundParser {
     private parseData(): void {
         this.allEvents = this.rawLogData.split("\n");
 
-        for (let event of this.allEvents) {
-            const newEvent = Event.createEvent(event, this.players);
+        this.allEvents.forEach((event, lineNumber) => {
+            const newEvent = Event.createEvent(lineNumber, event, this.players);
             if (newEvent)
                 this.events.push(newEvent);
-        }
+        });
 
         this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
         const scores = ParserUtils.getScore(this.events);
@@ -125,7 +125,7 @@ export class RoundParser {
 
     private trimPrematchEvents(): void {
         const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
-        const matchStartDate = matchStartEvent.timestamp;
+        const matchStartLineNumber = matchStartEvent.lineNumber;
         if (matchStartEvent) {
             const eventsNotToCull = [
                 EventType.MapLoading,
@@ -142,15 +142,15 @@ export class RoundParser {
             for (let i = 0; i < this.events.length; i++) {
                 const e = this.events[i];
                 // also want to cull self-suicides on prematch end
-                if (e.timestamp > matchStartDate) {
-                    e.gametime = (e.timestamp.getTime() - matchStartDate.getTime());
+                if (e.lineNumber > matchStartLineNumber) {
+                    e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                 } else {
                     if (eventsNotToCull.indexOf(e.eventType) === -1) {
                         this.events.splice(i, 1);
                         i--;
                     } else {
                         // will be negative
-                        e.gametime = (e.timestamp.getTime() - matchStartDate.getTime());
+                        e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                     }
                 }
             }
@@ -160,6 +160,7 @@ export class RoundParser {
 
 export interface EventCreationOptions {
     eventType: EventType;
+    lineNumber: number;
     timestamp: Date;
     data?: ExtraData;
     playerFrom?: Player;
@@ -169,6 +170,7 @@ export interface EventCreationOptions {
 
 export class Event {
     public eventType: EventType;
+    public lineNumber: number;
     public timestamp: Date;
     public gametime?: number;
 
@@ -180,6 +182,7 @@ export class Event {
     constructor(options: EventCreationOptions) {
         // required fields
         this.eventType = options.eventType;
+        this.lineNumber = options.lineNumber;
         this.timestamp = options.timestamp;
 
         // optional fields
@@ -189,7 +192,7 @@ export class Event {
         this.withWeapon = options.withWeapon;
     }
 
-    public static createEvent(line: string, playerList: PlayerList): Event | undefined {
+    public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | undefined {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
 
@@ -634,6 +637,7 @@ export class Event {
             if (eventType && timestamp) {
                 return new Event({
                     eventType: eventType,
+                    lineNumber: lineNumber,
                     timestamp: timestamp,
                     data: data,
                     playerFrom: playerFrom,

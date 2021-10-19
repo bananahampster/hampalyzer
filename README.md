@@ -63,7 +63,7 @@ Plan:
 
 You must install Node.js/npm and TypeScript to build this project.  To install TypeScript: `node i -g typescript`.  To get dependencies, make sure to `npm install`.
 
-You can then watch/build the code using `tsc watch`.  You can then launch the project by typing `node dist/index.js`.  Note that currently you must be in the project root for the source to find template files (that'll be fixed shortly so that the distribution is portable).
+You can then watch/build the code using `tsc --watch`.  You can then launch the project by typing `node dist/index.js`.  Note that currently you must be in the project root for the source to find template files (that'll be fixed shortly so that the distribution is portable).
 
 In Visual Studio Code, you can hit Ctrl-Shift-B to watch the code, then F5 to execute/debug the parser.
 
