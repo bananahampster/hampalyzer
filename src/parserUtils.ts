@@ -14,7 +14,7 @@ export default class ParserUtils {
         let teams: TeamComposition = {};
         const teamChangeEvents = events.filter(ev => ev.eventType === EventType.PlayerJoinTeam);
 
-        const playerTeams: { [playerID: string]: { timestamp: number, team: TeamColor }[] } = {};
+        const playerTeams: { [playerID: string]: { lineNumber: number, timestamp: number, team: TeamColor }[] } = {};
         teamChangeEvents.forEach(event => {
             // find the player in the team list; add if it isn't there
             const player = event.playerFrom as Player;
@@ -25,7 +25,7 @@ export default class ParserUtils {
             const team = event.data && event.data.team;
             if (!team) throw "expected team with a 'joined team' event";
 
-            playerRecord.push({ timestamp: event.timestamp.getTime(), team: team });
+            playerRecord.push({ lineNumber: event.lineNumber, timestamp: event.timestamp.getTime(), team: team });
         });
 
         // get the end of the round as a reference
@@ -910,7 +910,7 @@ export default class ParserUtils {
         let flagSequence = flagPickups.concat(
             flagCapture, deaths, team_deaths, self_deaths, flag_thrown,
             flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
-        flagSequence.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+        flagSequence.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
         // accumulator is [boolean, Date], where
         // * boolean is flag state: null = relay, false = dropped, true = carried
@@ -960,7 +960,7 @@ export default class ParserUtils {
 
     private static getPlayerClasses(roleChangedEvents: Event[], matchEnd: Date): string {
         // collect times of classes; rank by most-played to least
-        roleChangedEvents.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+        roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
         let classTimes: Partial<{ [key in PlayerClass]: number}> = {};
 
         let lastClass: PlayerClass | undefined;
@@ -1000,7 +1000,7 @@ export default class ParserUtils {
     }
 
     private static getPlayerRoles(roleChangedEvents: Event[], matchEnd: Date): ClassTime[] {
-        roleChangedEvents.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+        roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
         let classTimes: ClassTime[] = [];
         let lastTimestamp: Date | undefined;
