@@ -178,6 +178,7 @@ export class Event {
     public playerFrom?: Player;
     public playerTo?: Player;
     public withWeapon?: Weapon;
+    public whileConced: boolean;
 
     constructor(options: EventCreationOptions) {
         // required fields
@@ -190,6 +191,7 @@ export class Event {
         this.playerFrom = options.playerFrom;
         this.playerTo = options.playerTo;
         this.withWeapon = options.withWeapon;
+        this.whileConced = false; // Filled in later.
     }
 
     public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | undefined {
@@ -802,6 +804,7 @@ export class Event {
                 return Weapon.AutoRifle;
             case "infection":
                 return Weapon.Infection;
+            case "teledeath": // TODO: is this a spawn telefrag?
             case "teledeath world": // TODO: is this a spawn telefrag?
             case "door world": // TODO: door frag?
             case "world":
