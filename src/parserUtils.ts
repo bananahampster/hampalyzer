@@ -969,6 +969,10 @@ export default class ParserUtils {
     private static calculateAndApplyWhileConcedOnAllEvents(playerEvents: Stats) {
         const concTimeDurationInSeconds = 4;
 
+        if (!playerEvents) {
+            return;
+        }
+
         let concSequence = new Array<Event>()
             .concat(
                 playerEvents['conc'],
@@ -1020,10 +1024,11 @@ export default class ParserUtils {
             concPeriods.push([concStartEvent, concEndTimestamp]);
         }
 
-        let curConcPeriodIndex = 0;
         for (const stat in playerEvents) {
             let statEvents = playerEvents[stat];
             statEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
+
+            let curConcPeriodIndex = 0;
             statEvents.forEach((statEvent) => {
                 // Advance through the array of conc periods until we reach one that ended after this event.
                 while (curConcPeriodIndex < concPeriods.length && statEvent.timestamp > concPeriods[curConcPeriodIndex][1]) {
