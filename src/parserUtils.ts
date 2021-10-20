@@ -991,7 +991,8 @@ export default class ParserUtils {
             if (concSequenceEvent.eventType == EventType.PlayerConced) {
                 if (concStartEvent != null && concSequenceEvent.timestamp < concEndTimestamp) {
                     // The player was conced again while conced; extend the period.
-                    concEndTimestamp.setSeconds(concSequenceEvent.timestamp.getSeconds() + concTimeDurationInSeconds);
+                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
+                    concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + concTimeDurationInSeconds);
                 }
                 else {
                     if (concStartEvent != null) {
@@ -1000,7 +1001,7 @@ export default class ParserUtils {
                     }
                     // Track the new conc period.
                     concStartEvent = concSequenceEvent;
-                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime()); // Clone the start time before modifying.
+                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
                     concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + concTimeDurationInSeconds);
                 }
             }
