@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en">
 
-{{!-- this seems like a gigantic hack, should probably put metadata in top-level object --}} {{#with stats.[0]}}
-
+{{!-- this seems like a gigantic hack, should probably put metadata in top-level object --}}
+{{#with stats.[0]}}
 <head>
     <meta charset="utf-8" />
 
@@ -95,11 +95,15 @@
                             <li><i class="fas fa-lg fa-server" title="Server name + Date"></i>&nbsp; {{server}} on {{date}}</li>
                             <li><i class="fas fa-lg fa-map-marked-alt" title="Map played"></i>&nbsp; {{map}}</li>
                             <li><i class="fas fa-clock" title="Length of match"></i>&nbsp;&nbsp; {{game_time}}m {{#if @root.stats.[1]}}&times; 2{{/if}} <abbr title="server timezone">starting at {{time}}</abbr></li>
-                            <li><i class="fas fa-trophy"></i>&nbsp;&nbsp; Final score: {{~#if @root.stats.[1]}} {{math @root.stats.[0].score.[1] "+" @root.stats.[1].score.[2]}} &ndash; {{math @root.stats.[0].score.[2] "+" @root.stats.[1].score.[1]}} {{else}}
-                                {{@root.stats.[0].score.[1]}} &ndash; {{@root.stats.[0].score.[2]}} {{/if~}}
+                            <li><i class="fas fa-trophy"></i>&nbsp;&nbsp; Final score:
+                                {{~#if @root.stats.[1]}}
+                                {{math @root.stats.[0].score.[1] "+" @root.stats.[1].score.[2]}} &ndash; {{math @root.stats.[0].score.[2] "+" @root.stats.[1].score.[1]}}
+                                {{else}}
+                                {{@root.stats.[0].score.[1]}} &ndash; {{@root.stats.[0].score.[2]}}
+                                {{/if~}}
                             </li>
                         </ul>
-                        {{/with}} {{!-- end giant hack --}}
+{{/with}} {{!-- end giant hack --}}
                     </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group mr-2">
@@ -112,8 +116,8 @@
                     </div>
                 </div>
 
-                {{#each stats}} {{#if @root.stats.[1]}}
-                <h3>Round {{math @index "+" 1}}</h3>{{/if}}
+                {{#each stats}}
+                {{#if @root.stats.[1]}}<h3>Round {{math @index "+" 1}}</h3>{{/if}}
                 <div class="stats-round">
                     <div class="score-bucket">
                         <div class="team1">{{score.[1]}}</div>
@@ -157,7 +161,8 @@
                                     <td>{{objectives.flag_time.value}}</td>
                                     <td>{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
                                 </tr>
-                                {{/each}} {{#with teamStats}}
+                                {{/each}}
+                                {{#with teamStats}}
                                 <tr class="total team{{math @index " + " 1}}">
                                     <td>Total</td>
                                     <td>--</td>
@@ -174,16 +179,20 @@
                                     <td>{{#if flag_time}}{{flag_time}}{{else}}--{{/if}}</td>
                                     <td>{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
                                 </tr>
-                                {{/with}} {{/each}}
+                                {{/with}}
+                                {{/each}}
                             </tbody>
                         </table>
                     </div>
                 </div>
-                {{/each}} {{#if @root.stats.[1]}}
+                {{/each}}
+                
+                {{#if @root.stats.[1]}}
                 <div class="team-comparison my-5">
                     <h3 class="my-3" name="comp">O/D comparison</h3>
                     <div class="team-comp">
-                        {{#with players.[1]}}{{{playerList "A"}}}{{/with}} {{#with players.[2]}}{{{playerList "B"}}}{{/with}}
+                        {{#with players.[1]}}{{{playerList "A"}}}{{/with}}
+                        {{#with players.[2]}}{{{playerList "B"}}}{{/with}}
                     </div>
                     <p class="h4 my-3">Offense</p>
                     <div class="table-responsive">
@@ -207,7 +216,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[1].teamStats}}{{{offenseSummary "A" @root.players.[1]}}}{{/with}} {{#with comparison.[0]}}{{{offenseSummary "Comp"}}}{{/with}} {{#with stats.[1].teams.[1].teamStats}}{{{offenseSummary "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[1].teamStats}}{{{offsenseSummary "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[0]}}{{{offsenseSummary "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[1].teamStats}}{{{offsenseSummary "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>
@@ -228,7 +239,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary "A" @root.players.[1]}}}{{/with}} {{#with comparison.[1]}}{{{defenseSummary "Comp"}}}{{/with}} {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[1]}}{{{defenseSummary "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>
@@ -237,7 +250,8 @@
 
                 <div class="flag-movement my-5">
                     <h3 class="my-3" name="flag">Flag Movement</h3>
-                    <svg id="flag-rd1"></svg> {{#if @root.stats.[1]}}<svg id="flag-rd2"></svg>{{/if}}
+                    <svg id="flag-rd1"></svg>
+                    {{#if @root.stats.[1]}}<svg id="flag-rd2"></svg>{{/if}}
                 </div>
             </main>
         </div>
@@ -252,13 +266,9 @@
     <script type="text/javascript">
         // flag data
 
-        var flagData = {
-            {
-                {
-                    json @root.stats.[0].flagStats
-                }
-            }
-        };
+        var flagData = {{{json @root.stats.[0].flagStats}}};
+
+
     </script>
 </body>
 
