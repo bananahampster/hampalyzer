@@ -117,13 +117,13 @@ export class RoundParser {
         }
 
         // find prematch start and match end; ignore events outside that (except chat/class choice/team join?)
-        this.trimPreAndPostMatchEventsAndSetMatchEndTime();
+        this.trimPreAndPostMatchEvents();
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
     }
 
-    private trimPreAndPostMatchEventsAndSetMatchEndTime() {
+    private trimPreAndPostMatchEvents() {
         const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
         const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events[this.events.length - 1];
 
@@ -154,7 +154,7 @@ export class RoundParser {
                         this.events.splice(i, 1);
                         i--;
                     } else {
-                        // will be negative
+                        // will be negative if a pre-match event
                         e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                     }
                 }
