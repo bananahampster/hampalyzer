@@ -116,16 +116,19 @@ export class RoundParser {
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
-        // find prematch start; ignore events before that (except chat/class choice/team join?)
-        this.trimPrematchEvents();
+        // find prematch start and match end; ignore events outside that (except chat/class choice/team join?)
+        this.trimPreAndPostMatchEventsAndSetMatchEndTime();
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
     }
 
-    private trimPrematchEvents(): void {
+    private trimPreAndPostMatchEventsAndSetMatchEndTime() {
         const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
+        const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events[this.events.length - 1];
+
         const matchStartLineNumber = matchStartEvent.lineNumber;
+        const matchEndLineNumber = matchEndEvent.lineNumber;
         if (matchStartEvent) {
             const eventsNotToCull = [
                 EventType.MapLoading,
@@ -136,13 +139,15 @@ export class RoundParser {
                 EventType.PlayerMM2,
                 EventType.ServerSay,
                 EventType.ServerCvar,
+                EventType.PrematchEnd,
+                EventType.TeamScore
             ];
 
             // iterate through events, but skip culling chat, role, and team messages
             for (let i = 0; i < this.events.length; i++) {
                 const e = this.events[i];
                 // also want to cull self-suicides on prematch end
-                if (e.lineNumber > matchStartLineNumber) {
+                if (e.lineNumber > matchStartLineNumber && e.lineNumber < matchEndLineNumber) {
                     e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                 } else {
                     if (eventsNotToCull.indexOf(e.eventType) === -1) {

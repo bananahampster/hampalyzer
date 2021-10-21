@@ -468,7 +468,6 @@ export default class ParserUtils {
 
         const matchStart = prematchEndEvent && prematchEndEvent.timestamp || firstTimestamp;
         const matchEnd = matchEndEvent && matchEndEvent.timestamp || events[events.length - 1].timestamp;
-
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEnd.valueOf() - matchStart.valueOf());
 
@@ -588,7 +587,7 @@ export default class ParserUtils {
                 }
 
                 // flag statistics (requires holistic view of flag movement)
-                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag);
+                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag, matchEnd);
                 this.ensureStat<string>(poStats, 'objectives', 'flag_time').value = flag_time;
                 this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
                 this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
@@ -893,7 +892,7 @@ export default class ParserUtils {
         return [offenseDiff, defenseDiff];
     }
 
-    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, flagEvents: Stats): [string, number, number] {
+    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, flagEvents: Stats, matchEnd: Date): [string, number, number] {
         // Capture and pickup events are passed in via flagEvents;
         // also use 'team_death'/'death', and 'flag_thrown' events to calculate flag time.
         const deaths = playerEvents['death'];
@@ -912,10 +911,10 @@ export default class ParserUtils {
             flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
         flagSequence.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
-        // accumulator is [boolean, Date], where
+        // accumulator is [boolean, Event], where
         // * boolean is flag state: null = relay, false = dropped, true = carried
-        // * Date is timestamp of current player flag pickup, unset if not carried by this player
-        flagSequence.reduce<[boolean | null, Date | undefined]>((flagStatus, thisEvent) => {
+        // * Event is the event from the flag pickup; unset if not carried by this player
+        let lastFlagSequence = flagSequence.reduce<[boolean | null, Event | undefined]>((flagStatus, thisEvent) => {
             // ignore undefined events (occurs whenever an event category has no items)
             if (thisEvent == null)
                 return flagStatus;
@@ -929,7 +928,11 @@ export default class ParserUtils {
             // the flag was captured; record the time if it was this player and set state to null
             if (eventType === EventType.PlayerCapturedFlag) {
                 if (thisEvent.playerFrom?.matches(thisPlayer)) {
-                    flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.valueOf();
+                    if (!flagStatus[1]!.playerFrom!.matches(thisPlayer)) {
+                        console.error("Flag cap seen by a player (" + thisPlayer.name +") which wasn't carrying the flag"
+                            + " (was carried by " + flagStatus[1]!.playerFrom!.name + ")");
+                    }
+                    flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.timestamp.valueOf();
                 }
                 return [null, undefined];
             }
@@ -941,7 +944,7 @@ export default class ParserUtils {
                     if (flagStatus[0] === null) initialTouches++;
 
                     // record the time the flag was picked up, then continue
-                    return [true, thisEvent.timestamp];
+                    return [true, thisEvent];
                 }
                 // otherwise, mark flag as moved
                 return [false, undefined];
@@ -952,13 +955,18 @@ export default class ParserUtils {
                 return flagStatus;
 
             // otherwise, the flag was dropped; reset flagStatus
-            flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.valueOf();
+            flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.timestamp.valueOf();
 
             if (eventType === EventType.PlayerThrewFlag)
                 flagThrows++;
 
             return [false, undefined];
         }, [null, undefined]);
+
+        if (lastFlagSequence[0]) {
+            // The flag was being held when the game ended.
+            flagTimeMS += (matchEnd.valueOf() - lastFlagSequence[1]!.timestamp.valueOf());
+        }
 
         const flagTime = Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(flagTimeMS);
         const tossPercent = flagCarries > 0 ? Math.round(flagThrows / flagCarries * 100) : 0;
