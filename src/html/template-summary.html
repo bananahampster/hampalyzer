@@ -186,7 +186,7 @@
                     </div>
                 </div>
                 {{/each}}
-                
+
                 {{#if @root.stats.[1]}}
                 <div class="team-comparison my-5">
                     <h3 class="my-3" name="comp">O/D comparison</h3>
@@ -216,9 +216,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[1].teamStats}}{{{offsenseSummary "A" @root.players.[1]}}}{{/with}}
-                                {{#with comparison.[0]}}{{{offsenseSummary "Comp"}}}{{/with}}
-                                {{#with stats.[1].teams.[1].teamStats}}{{{offsenseSummary "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[1].teamStats}}{{{offenseSummary "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[0]}}{{{offenseSummary "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[1].teamStats}}{{{offenseSummary "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>
