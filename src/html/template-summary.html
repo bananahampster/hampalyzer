@@ -10,8 +10,7 @@
 
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
-        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
     <!-- hamp stylin' -->
     <link rel="stylesheet" href="/hamp2.css" />
@@ -76,7 +75,7 @@
                         <span>Team B</span>
                     </h6>
                     <ul class="nav flex-column mb-2">
-                       {{#each @root.players.[2]}}
+                        {{#each @root.players.[2]}}
                         <li class="nav-item">
                             <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
@@ -104,8 +103,7 @@
                                 {{/if~}}
                             </li>
                         </ul>
-{{/with}}
-{{!-- end giant hack --}}
+{{/with}} {{!-- end giant hack --}}
                     </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group mr-2">
@@ -146,12 +144,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#each teams}}
-                                {{#each players}}
+                                {{#each teams}} {{#each players}}
                                 <tr class="team{{team}}">
                                     <td>{{name}}</td>
                                     <td>{{roles}}</td>
-                                    <td>{{kills.kill.value}}</td>
+                                    <td>{{kills.kill.value}} {{#if kills.kill_while_conced}}{{#ifCondition kills.kill_while_conced.value "!=" 0}}({{kills.kill_while_conced.value}}){{/ifCondition}}{{/if}}</td>
                                     <td>{{kills.teamkill.value}}</td>
                                     <td>{{kills.sg.value}}</td>
                                     <td>{{deaths.death.value}}</td>
@@ -160,13 +157,13 @@
                                     <td>{{#if weaponStats.concs}}{{weaponStats.concs.value}}{{else}}--{{/if}}</td>
                                     <td>{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{else}}--{{/if}}</td>
                                     <td>{{#if objectives.flag_touch}}{{objectives.flag_touch.value}} ({{objectives.touches_initial.value}}){{else}}--{{/if}}</td>
-                                    <td>{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}</td>
+                                    <td>{{#if objectives.flag_touch}}{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}{{else}}--{{/if}}</td>
                                     <td>{{objectives.flag_time.value}}</td>
                                     <td>{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
                                 </tr>
                                 {{/each}}
                                 {{#with teamStats}}
-                                <tr class="total team{{math @index "+" 1}}">
+                                <tr class="total team{{math @index " + " 1}}">
                                     <td>Total</td>
                                     <td>--</td>
                                     <td>{{kills}}</td>
@@ -219,9 +216,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[1].teamStats}}{{{offsenseSummary "A" @root.players.[1]}}}{{/with}}
-                                {{#with comparison.[0]}}{{{offsenseSummary "Comp"}}}{{/with}}
-                                {{#with stats.[1].teams.[1].teamStats}}{{{offsenseSummary "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[1].teamStats}}{{{offenseSummary "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[0]}}{{{offenseSummary "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[1].teamStats}}{{{offenseSummary "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>
@@ -261,16 +258,12 @@
     </div>
 
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
-        crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
 
     <script type="text/javascript">
-
         // flag data
 
         var flagData = {{{json @root.stats.[0].flagStats}}};

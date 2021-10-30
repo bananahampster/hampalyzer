@@ -19,6 +19,17 @@ export default class TemplateUtils {
             }[operator];
         });
 
+        Handlebars.registerHelper('ifCondition', function(this: unknown, lvalue, operator, rvalue, options) {
+            switch (operator) {
+                case "==":
+                    return (lvalue == rvalue) ? options.fn(this) : options.inverse(this);
+                case "!=":
+                    return (lvalue != rvalue) ? options.fn(this) : options.inverse(this);
+                default:
+                    return options.inverse(this);
+            }
+        });
+
         // dumping json objects
         Handlebars.registerHelper('json', function(context) {
             return JSON.stringify(context);
@@ -39,7 +50,7 @@ export default class TemplateUtils {
         });
 
         // offense summary
-        Handlebars.registerHelper('offsenseSummary', function(this: OffenseTeamStats, teamId: string, players?: OutputPlayer[]) {
+        Handlebars.registerHelper('offenseSummary', function(this: OffenseTeamStats, teamId: string, players?: OutputPlayer[]) {
             const isComparison = teamId === 'Comp'; // first parameter can sometimes be object??
             return `
                 <tr ${isComparison && 'class="comp"'}>

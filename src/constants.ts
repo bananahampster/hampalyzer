@@ -71,6 +71,7 @@ export interface PlayerOutputStatsRound extends OutputPlayer, PlayerStats {
 export interface PlayerStats {
     kills: { // frags, TK, sg kills
         kill?: GenericStat<'kill'>;
+        kill_while_conced?: GenericStat<'kill_while_conced'>;
         teamkill?: GenericStat<'teamkill'>;
         sg?: GenericStat<'sg'>;
     };
@@ -116,6 +117,7 @@ export interface StatDetails {
     description: string;
     player?: Player;
     weapon?: Weapon;
+    whileConced: boolean;
 }
 
 export interface ClassTime {

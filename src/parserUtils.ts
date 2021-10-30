@@ -468,7 +468,6 @@ export default class ParserUtils {
 
         const matchStart = prematchEndEvent && prematchEndEvent.timestamp || firstTimestamp;
         const matchEnd = matchEndEvent && matchEndEvent.timestamp || events[events.length - 1].timestamp;
-
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEnd.valueOf() - matchStart.valueOf());
 
@@ -522,6 +521,7 @@ export default class ParserUtils {
                 poStats.steamID = playerID;
 
                 const playerStats = stats[playerID];
+                this.calculateAndApplyWhileConcedOnAllEvents(playerStats);
                 for (const stat in playerStats) {
                     const statEvents = playerStats[stat];
                     switch (stat) {
@@ -533,6 +533,7 @@ export default class ParserUtils {
                         /** kills */
                         case 'kill':
                             this.hydrateStat(poStats, 'kills', 'kill', statEvents, "Enemy kills");
+                            this.hydrateStat(poStats, 'kills', 'kill_while_conced', statEvents.filter(ev => ev.whileConced == true), "Enemy kills while conced");
                             break;
                         case 'team_kill':
                             this.hydrateStat(poStats, 'kills', 'teamkill', statEvents, "Team kills");
@@ -586,11 +587,10 @@ export default class ParserUtils {
                 }
 
                 // flag statistics (requires holistic view of flag movement)
-                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag);
+                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag, matchEnd);
                 this.ensureStat<string>(poStats, 'objectives', 'flag_time').value = flag_time;
                 this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
                 this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
-
 
                 teamPlayers.push(poStats);
             }
@@ -729,6 +729,10 @@ export default class ParserUtils {
                         return this.generateFacetedStats(stat.events!,
                             (e) => `Killed ${e.playerTo?.name} at ${this.getTime(e)}`,
                             true);
+                    case 'kill_while_conced':
+                        return this.generateFacetedStats(stat.events!,
+                            (e) => `Killed ${e.playerTo?.name} while conced at ${this.getTime(e)}`,
+                            true);
                     case 'teamkill':
                         return this.generateFacetedStats(stat.events!,
                             (e) => `Team killed ${e.playerTo?.name} at ${this.getTime(e)}`,
@@ -775,7 +779,7 @@ export default class ParserUtils {
         const allDetails = events.map(e => (<StatDetails>{
             description: descriptor(e),
             player: isByPlayer ? e.playerTo : e.playerFrom,
-            weapon: e.withWeapon,
+            weapon: e.withWeapon
         }));
 
         for (const detail of allDetails) {
@@ -888,34 +892,29 @@ export default class ParserUtils {
         return [offenseDiff, defenseDiff];
     }
 
-    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, flagEvents: Stats): [string, number, number] {
-        // use 'flag_pickup', 'flag_capture', 'team_death'/'death', and 'flag_thrown' events to calculate flag time
-        const flagPickups = playerEvents['flag_pickup'];
-        const flagCapture = playerEvents['flag_capture'];
+    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, flagEvents: Stats, matchEnd: Date): [string, number, number] {
+        // Capture and pickup events are passed in via flagEvents;
+        // also use 'team_death'/'death', and 'flag_thrown' events to calculate flag time.
         const deaths = playerEvents['death'];
         const team_deaths = playerEvents['team_death'];
         const self_deaths = playerEvents['suicide'];
         const flag_thrown = playerEvents['flag_throw'];
 
-        // don't bother trying to calculate flag stats if there were no touches
-        if (flagPickups == null || flagPickups.length == 0)
-            return ["0:00", 0, 0];
-
         // combine and sort entries to calculate flag time
-        const flagCarries = flagPickups.length;
+        let flagCarries = 0;
         let initialTouches = 0;
         let flagThrows = 0;
         let flagTimeMS = 0;
 
-        let flagSequence = flagPickups.concat(
-            flagCapture, deaths, team_deaths, self_deaths, flag_thrown,
+        let flagSequence = deaths.concat(
+            team_deaths, self_deaths, flag_thrown,
             flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
         flagSequence.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
-        // accumulator is [boolean, Date], where
+        // accumulator is [boolean, Event], where
         // * boolean is flag state: null = relay, false = dropped, true = carried
-        // * Date is timestamp of current player flag pickup, unset if not carried by this player
-        flagSequence.reduce<[boolean | null, Date | undefined]>((flagStatus, thisEvent) => {
+        // * Event is the event from the flag pickup; unset if not carried by this player
+        let lastFlagSequence = flagSequence.reduce<[boolean | null, Event | undefined]>((flagStatus, thisEvent) => {
             // ignore undefined events (occurs whenever an event category has no items)
             if (thisEvent == null)
                 return flagStatus;
@@ -923,17 +922,29 @@ export default class ParserUtils {
             const eventType = thisEvent.eventType;
 
             // if the flag returned, set state to null
-            if (eventType === EventType.FlagReturn || eventType === EventType.PlayerCapturedFlag)
+            if (eventType === EventType.FlagReturn) {
                 return [null, undefined];
-
+            }
+            // the flag was captured; record the time if it was this player and set state to null
+            if (eventType === EventType.PlayerCapturedFlag) {
+                if (thisEvent.playerFrom?.matches(thisPlayer)) {
+                    if (!flagStatus[1]!.playerFrom!.matches(thisPlayer)) {
+                        console.error("Flag cap seen by a player (" + thisPlayer.name +") which wasn't carrying the flag"
+                            + " (was carried by " + flagStatus[1]!.playerFrom!.name + ")");
+                    }
+                    flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.timestamp.valueOf();
+                }
+                return [null, undefined];
+            }
             if (eventType === EventType.PlayerPickedUpFlag) {
                 // did this player pick up the flag?
                 if (thisEvent.playerFrom?.matches(thisPlayer)) {
+                    flagCarries++;
                     // is this an initial touch?
                     if (flagStatus[0] === null) initialTouches++;
 
                     // record the time the flag was picked up, then continue
-                    return [true, thisEvent.timestamp];
+                    return [true, thisEvent];
                 }
                 // otherwise, mark flag as moved
                 return [false, undefined];
@@ -944,7 +955,7 @@ export default class ParserUtils {
                 return flagStatus;
 
             // otherwise, the flag was dropped; reset flagStatus
-            flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.valueOf();
+            flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.timestamp.valueOf();
 
             if (eventType === EventType.PlayerThrewFlag)
                 flagThrows++;
@@ -952,10 +963,94 @@ export default class ParserUtils {
             return [false, undefined];
         }, [null, undefined]);
 
+        if (lastFlagSequence[0]) {
+            // The flag was being held when the game ended.
+            flagTimeMS += (matchEnd.valueOf() - lastFlagSequence[1]!.timestamp.valueOf());
+        }
+
         const flagTime = Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(flagTimeMS);
-        const tossPercent = Math.round(flagThrows / flagCarries * 100);
+        const tossPercent = flagCarries > 0 ? Math.round(flagThrows / flagCarries * 100) : 0;
 
         return [flagTime, tossPercent, initialTouches];
+    }
+
+    private static calculateAndApplyWhileConcedOnAllEvents(playerEvents: Stats) {
+        const concTimeDurationInSeconds = 4;
+
+        if (!playerEvents) {
+            return;
+        }
+
+        let concSequence = new Array<Event>()
+            .concat(
+                playerEvents['conc'],
+                playerEvents['conc_jump'],
+                playerEvents['team_concee'],
+                playerEvents['concee'],
+                playerEvents['death'],
+                playerEvents['team_death'],
+                playerEvents['suicide'])
+            .filter(event => event != undefined && event !== null)
+            .sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
+
+        // Build a list of periods that the player was conced, as determined by the first conc event for the period
+        // and the end time for when the player was no longer conced.
+        let concPeriods = new Array<[Event, Date]>(); 
+        let concStartEvent: Event | null = null;
+        let concEndTimestamp = new Date(0);
+        for (let curConcEventIndex = 0; curConcEventIndex < concSequence.length; curConcEventIndex++) {
+            const concSequenceEvent = concSequence[curConcEventIndex];
+            if (concSequenceEvent.eventType == EventType.PlayerConced) {
+                if (concStartEvent != null && concSequenceEvent.timestamp < concEndTimestamp) {
+                    // The player was conced again while conced; extend the period.
+                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
+                    concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + concTimeDurationInSeconds);
+                }
+                else {
+                    if (concStartEvent != null) {
+                        // Record the previous, now-ended conc.
+                        concPeriods.push([concStartEvent, concEndTimestamp]);
+                    }
+                    // Track the new conc period.
+                    concStartEvent = concSequenceEvent;
+                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
+                    concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + concTimeDurationInSeconds);
+                }
+            }
+            else { // Death event.
+                if (concStartEvent != null) {
+                    if (concSequenceEvent.timestamp < concEndTimestamp) {
+                        concEndTimestamp = concSequenceEvent.timestamp; // The death marks the end of the conc period.
+                    }
+                    concPeriods.push([concStartEvent, concEndTimestamp]);
+                }
+                concStartEvent = null;
+                concEndTimestamp = new Date(0);
+            }
+        }
+        if (concStartEvent != null) {
+            concPeriods.push([concStartEvent, concEndTimestamp]);
+        }
+
+        for (const stat in playerEvents) {
+            let statEvents = playerEvents[stat];
+            statEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
+
+            let curConcPeriodIndex = 0;
+            statEvents.forEach((statEvent) => {
+                // Advance through the array of conc periods until we reach one that ended after this event.
+                while (curConcPeriodIndex < concPeriods.length && statEvent.timestamp > concPeriods[curConcPeriodIndex][1]) {
+                    curConcPeriodIndex++;
+                }
+                // Check if the event fell within the period.
+                if (curConcPeriodIndex < concPeriods.length) {
+                    if (statEvent.lineNumber > concPeriods[curConcPeriodIndex][0].lineNumber
+                        && statEvent.timestamp < concPeriods[curConcPeriodIndex][1]) {
+                        statEvent.whileConced = true;
+                    }
+                }
+            });
+        }
     }
 
     private static getPlayerClasses(roleChangedEvents: Event[], matchEnd: Date): string {

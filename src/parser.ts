@@ -116,16 +116,19 @@ export class RoundParser {
             console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
-        // find prematch start; ignore events before that (except chat/class choice/team join?)
-        this.trimPrematchEvents();
+        // find prematch start and match end; ignore events outside that (except chat/class choice/team join?)
+        this.trimPreAndPostMatchEvents();
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
     }
 
-    private trimPrematchEvents(): void {
+    private trimPreAndPostMatchEvents() {
         const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
+        const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events[this.events.length - 1];
+
         const matchStartLineNumber = matchStartEvent.lineNumber;
+        const matchEndLineNumber = matchEndEvent.lineNumber;
         if (matchStartEvent) {
             const eventsNotToCull = [
                 EventType.MapLoading,
@@ -136,20 +139,22 @@ export class RoundParser {
                 EventType.PlayerMM2,
                 EventType.ServerSay,
                 EventType.ServerCvar,
+                EventType.PrematchEnd,
+                EventType.TeamScore
             ];
 
             // iterate through events, but skip culling chat, role, and team messages
             for (let i = 0; i < this.events.length; i++) {
                 const e = this.events[i];
                 // also want to cull self-suicides on prematch end
-                if (e.lineNumber > matchStartLineNumber) {
+                if (e.lineNumber > matchStartLineNumber && e.lineNumber < matchEndLineNumber) {
                     e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                 } else {
                     if (eventsNotToCull.indexOf(e.eventType) === -1) {
                         this.events.splice(i, 1);
                         i--;
                     } else {
-                        // will be negative
+                        // will be negative if a pre-match event
                         e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                     }
                 }
@@ -178,6 +183,7 @@ export class Event {
     public playerFrom?: Player;
     public playerTo?: Player;
     public withWeapon?: Weapon;
+    public whileConced: boolean;
 
     constructor(options: EventCreationOptions) {
         // required fields
@@ -190,6 +196,7 @@ export class Event {
         this.playerFrom = options.playerFrom;
         this.playerTo = options.playerTo;
         this.withWeapon = options.withWeapon;
+        this.whileConced = false; // Filled in later.
     }
 
     public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | undefined {
@@ -453,6 +460,10 @@ export class Event {
                                             default:
                                                 console.error('unknown player trigger Red/Blue: ' + eventText);
                                         }
+                                        break;
+                                    case "Red_Flag": // proton_l
+                                    case "Blue_Flag":
+                                        eventType = EventType.PlayerPickedUpFlag;
                                         break;
                                     case "Flag": // cornfield; e.g. "Flag 1", "Flag 2"
                                         eventType = EventType.PlayerPickedUpFlag;
@@ -798,6 +809,7 @@ export class Event {
                 return Weapon.AutoRifle;
             case "infection":
                 return Weapon.Infection;
+            case "teledeath": // TODO: is this a spawn telefrag?
             case "teledeath world": // TODO: is this a spawn telefrag?
             case "door world": // TODO: door frag?
             case "world":
