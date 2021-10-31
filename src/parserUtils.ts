@@ -620,6 +620,7 @@ export default class ParserUtils {
 
             stats.kills += this.getSummarizedStat(player, 'kills', 'kill');
             stats.team_kills += this.getSummarizedStat(player, 'kills', 'teamkill');
+            stats.conc_kills += this.getSummarizedStat(player, 'kills', 'kill_while_conced');
 
             stats.deaths += this.getSummarizedStat(player, 'deaths', 'death')
                 + this.getSummarizedStat(player, 'deaths', 'by_team')
@@ -826,6 +827,7 @@ export default class ParserUtils {
             frags: 0,
             kills: 0,
             team_kills: 0,
+            conc_kills: 0,
             deaths: 0,
             d_enemy: 0,
             d_self: 0,
@@ -864,6 +866,7 @@ export default class ParserUtils {
             kills: offenseTeams[0].kills - offenseTeams[1].kills,
             sg_kills: offenseTeams[0].sg_kills - offenseTeams[1].sg_kills,
             team_kills: offenseTeams[0].team_kills - offenseTeams[1].team_kills,
+            conc_kills: offenseTeams[0].conc_kills - offenseTeams[1].conc_kills,
             deaths: offenseTeams[0].deaths - offenseTeams[1].deaths,
             d_enemy: offenseTeams[0].d_enemy - offenseTeams[1].d_enemy,
             d_self: offenseTeams[0].d_self - offenseTeams[1].d_self,
@@ -882,6 +885,7 @@ export default class ParserUtils {
             frags: defenseTeams[1].frags - defenseTeams[0].frags,
             kills: defenseTeams[1].kills - defenseTeams[0].kills,
             team_kills: defenseTeams[1].team_kills - defenseTeams[0].team_kills,
+            conc_kills: defenseTeams[1].conc_kills - defenseTeams[0].conc_kills,
             deaths: defenseTeams[1].deaths - defenseTeams[0].deaths,
             d_enemy: defenseTeams[1].d_enemy - defenseTeams[0].d_enemy,
             d_self: defenseTeams[1].d_self - defenseTeams[0].d_self,

@@ -132,6 +132,7 @@ export interface ITeamStats {
     frags: number;
     kills: number;
     team_kills: number;
+    conc_kills: number;
     deaths: number;
     d_enemy: number;
     d_self: number;
