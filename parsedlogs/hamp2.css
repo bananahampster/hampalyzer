@@ -198,56 +198,57 @@ table tr.total {
     border-bottom: 2px solid #333;
 }
 
+.stats {
+    --padding-between-sections: 15px;
+}
+
 .stats td:first-child, .stats th:first-child,
 .stats td:nth-child(2), .stats th:nth-child(2) {
     text-align: left;
 }
 
 /** tks */
-.stats td:nth-child(4), .stats th:nth-child(4),
-.stats td:nth-child(7), .stats th:nth-child(7),
-.stats td:nth-child(8), .stats th:nth-child(8),
-.stats td:nth-child(16), .stats th:nth-child(16),
-.stats td:nth-child(19), .stats th:nth-child(19),
-.stats td:nth-child(20), .stats th:nth-child(20) {
+.stats td.team-kills, .stats th.team-kills,
+.stats td.suicides, .stats th.suicides,
+.stats td.team-deaths, .stats th.team-deaths {
     color: rgb(255, 125, 138);
     text-shadow: 2px 2px 4px #333;
 }
 
 /** minus sign prepend */
-.stats td:nth-child(4)::before, .stats th:nth-child(4)::before,
-.stats td:nth-child(16)::before, .stats th:nth-child(16)::before  {
+.stats td.team-kills::before, .stats th.team-kills::before {
     content: "\2212";
 }
 
-.stats td:nth-child(5), .stats th:nth-child(5),
-.stats td:nth-child(17), .stats th:nth-child(17) {
+.stats td.conc-kills {
+    font-style: italic;
+}
+
+.stats td.sentry-kills, .stats th.sentry-kills {
     color: rgb(18, 194, 221);
     text-shadow: 2px 2px 4px #333;
 }
 
-.stats td:nth-child(5)::before, .stats th:nth-child(5)::before,
-.stats td:nth-child(7)::before, .stats th:nth-child(7)::before,
-.stats td:nth-child(8)::before, .stats th:nth-child(8)::before,
-.stats td:nth-child(17)::before, .stats th:nth-child(17)::before,
-.stats td:nth-child(19)::before, .stats th:nth-child(19)::before,
-.stats td:nth-child(20)::before, .stats th:nth-child(20)::before {
+.stats td.sentry-kills:not(.no-kills)::before, .stats th.sentry-kills::before,
+.stats td.suicides::before, .stats th.suicides::before,
+.stats td.team-deaths::before, .stats th.team-deaths::before {
     content: "+";
 }
 
-.stats td:nth-child(2), .stats th:nth-child(2),
-.stats td:nth-child(5), .stats th:nth-child(5),
-.stats td:nth-child(8), .stats th:nth-child(8),
-.stats td:nth-child(14), .stats th:nth-child(14),
-.stats td:nth-child(17), .stats th:nth-child(17),
-.stats td:nth-child(20), .stats th:nth-child(20),
+.stats td.roles, .stats th.roles,
+.stats td.sentry-kills, .stats th.sentry-kills,
+.stats td.team-deaths, .stats th.team-deaths,
 .summary td:nth-child(1), .summary th:nth-child(1),
 .summary-offense td:nth-child(5), .summary-offense th:nth-child(5),
 .summary-offense td:nth-child(9), .summary-offense th:nth-child(9),
 .summary-defense td:nth-child(4), .summary-defense th:nth-child(4),
 .summary-defense td:nth-child(8), .summary-defense th:nth-child(8) {
     border-right: 1px solid #333;
-    padding-right: 15px;
+    padding-right: var(--padding-between-sections);
+}
+
+.stats td.objectives, .stats th.objectives {
+    padding-right: var(--padding-between-sections);
 }
 
 .stats td:nth-child(0), .stats th:nth-child(0),
@@ -306,54 +307,54 @@ table tr.total {
 
 /** player stats styles */
 
-.player-name {
+#player-details .player-name {
     font-weight: 700;
 }
 
-.player-stats {
+#player-details .player-stats {
     display: grid;
     grid-template-columns: 3rem 1fr 1fr;
     row-gap: 15px;
     column-gap: 40px;
 }
 
-.player-stats.player-stats-num1 {
+#player-details .player-stats.player-stats-num1 {
     grid-template-columns: 3rem 1fr;
 }
 
-.player-stats .emoji {
+#player-details .player-stats .emoji {
     font-size: 2rem;
 }
 
-.player-stats .round-title {
+#player-details .player-stats .round-title {
     font-size: 1.5rem;
     font-weight: 700;
     align-self: end;
 }
 
-.player-stats .classes > div {
+#player-details .player-stats .classes > div {
     padding-right: 10px;
     align-items: center;
     justify-content: flex-end;
 }
 
-.stats-facets {
+#player-details .stats-facets {
     display: grid;
     grid-template-columns: auto auto auto;
     column-gap: 15px;
     row-gap: 5px;
 }
 
-.stats-faceted {
+#player-details .stats-faceted {
     padding-top: 10px;
 }
 
-.facet-value {
+#player-details .facet-value {
     font-weight: 700;
     justify-self: end;
 }
 
-.facet-summary {
+#player-details .facet-summary {
     grid-column: 1 / span 3;
     display: flex;
     flex-wrap: wrap;

@@ -127,57 +127,61 @@
                         <table class="table table-borderless table-hover table-sm stats">
                             <thead>
                                 <tr>
-                                    <th>Player</th>
-                                    <th>Class</th>
-                                    <th>Kills</th>
-                                    <th><abbr title="Team-Kills">TK</abbr></th>
-                                    <th><abbr title="Sentry Gun Kills">SG</abbr></th>
-                                    <th>Deaths</th>
-                                    <th><abbr title="Suicides">Sui</abbr></th>
-                                    <th><abbr title="Team-Deaths">TD</abbr></th>
-                                    <th><abbr title="Concussion Grenades Used">Concs</abbr></th>
-                                    <th><abbr title="Captured Flags/Goals">Caps</abbr></th>
-                                    <th><abbr title="Flag/Goal Touches">Touch</abbr></th>
-                                    <th><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
-                                    <th>Flag Time</th>
-                                    <th><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
+                                    <th class="player-name">Player</th>
+                                    <th class="roles">Class</th>
+                                    <th class="kills">Kills</th>
+                                    <th class="team-kills"><abbr title="Team-Kills">TK</abbr></th>
+                                    <th class="conc-kills"><abbr title="Conc-Kills">CK</abbr></th>
+                                    <th class="sentry-kills"><abbr title="Sentry Gun Kills">SG</abbr></th>
+                                    <th class="deaths">Deaths</th>
+                                    <th class="suicides"><abbr title="Suicides">Sui</abbr></th>
+                                    <th class="team-deaths"><abbr title="Team-Deaths">TD</abbr></th>
+                                    <th class="concs"><abbr title="Concussion Grenades Used">Concs</abbr></th>
+                                    <th class="flag-captures"><abbr title="Captured Flags/Goals">Caps</abbr></th>
+                                    <th class="flag-touches"><abbr title="Flag/Goal Touches">Touch</abbr></th>
+                                    <th class="flag-toss-percentage"><abbr title="% of Flag Carries Ended in Tosses">Toss %</abbr></th>
+                                    <th class="flag-time">Flag Time</th>
+                                    <th class="objectives"><abbr title="Objectives (e.g., button) &mdash; not supported on all maps">Obj</abbr></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#each teams}} {{#each players}}
+                                {{#each teams}}
+                                {{#each players}}
                                 <tr class="team{{team}}">
-                                    <td>{{name}}</td>
-                                    <td>{{roles}}</td>
-                                    <td>{{kills.kill.value}} {{#if kills.kill_while_conced}}{{#ifCondition kills.kill_while_conced.value "!=" 0}}({{kills.kill_while_conced.value}}){{/ifCondition}}{{/if}}</td>
-                                    <td>{{kills.teamkill.value}}</td>
-                                    <td>{{kills.sg.value}}</td>
-                                    <td>{{deaths.death.value}}</td>
-                                    <td>{{deaths.by_self.value}}</td>
-                                    <td>{{deaths.by_team.value}}</td>
-                                    <td>{{#if weaponStats.concs}}{{weaponStats.concs.value}}{{else}}--{{/if}}</td>
-                                    <td>{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{else}}--{{/if}}</td>
-                                    <td>{{#if objectives.flag_touch}}{{objectives.flag_touch.value}} ({{objectives.touches_initial.value}}){{else}}--{{/if}}</td>
-                                    <td>{{#if objectives.flag_touch}}{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}{{else}}--{{/if}}</td>
-                                    <td>{{objectives.flag_time.value}}</td>
-                                    <td>{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
+                                    <td class="player-name">{{name}}</td>
+                                    <td class="roles">{{roles}}</td>
+                                    <td class="kills">{{#if kills.kill}}{{kills.kill.value}}{{else}}0{{/if}}</td>
+                                    <td class="team-kills">{{#if kills.teamkill}}{{kills.teamkill.value}}{{else}}0{{/if}}</td>
+                                    <td class="conc-kills">{{#if kills.kill_while_conced}}{{kills.kill_while_conced.value}}{{else}}0{{/if}}</td>
+                                    <td class="sentry-kills{{#if kills.sg}}{{else}} no-kills{{/if}}">{{#if kills.sg}}{{kills.sg.value}}{{else}}--{{/if}}</td>
+                                    <td class="deaths">{{deaths.death.value}}</td>
+                                    <td class="suicides">{{deaths.by_self.value}}</td>
+                                    <td class="team-deaths">{{deaths.by_team.value}}</td>
+                                    <td class="concs">{{#if weaponStats.concs}}{{weaponStats.concs.value}}{{else}}--{{/if}}</td>
+                                    <td class="flag-captures">{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{else}}--{{/if}}</td>
+                                    <td class="flag-touches">{{#if objectives.flag_touch}}{{objectives.flag_touch.value}} ({{objectives.touches_initial.value}}){{else}}--{{/if}}</td>
+                                    <td class="flag-toss-percentage">{{#if objectives.flag_touch}}{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}{{else}}--{{/if}}</td>
+                                    <td class="flag-time">{{objectives.flag_time.value}}</td>
+                                    <td class="objectives">{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
                                 </tr>
                                 {{/each}}
                                 {{#with teamStats}}
-                                <tr class="total team{{math @index " + " 1}}">
-                                    <td>Total</td>
-                                    <td>--</td>
-                                    <td>{{kills}}</td>
-                                    <td>{{team_kills}}</td>
-                                    <td>{{#if sg_kills}}{{sg_kills}}{{/if}}</td>
-                                    <td>{{deaths}}</td>
-                                    <td>{{d_self}}</td>
-                                    <td>{{d_team}}</td>
-                                    <td>{{#if concs}}{{concs}}{{else}}--{{/if}}</td>
-                                    <td>{{#if caps}}{{caps}}{{else}}--{{/if}}</td>
-                                    <td>{{#if touches}}{{touches}} ({{touches_initial}}){{else}}--{{/if}}</td>
-                                    <td>{{#if toss_percent}}{{toss_percent}}%{{else}}--{{/if}}</td>
-                                    <td>{{#if flag_time}}{{flag_time}}{{else}}--{{/if}}</td>
-                                    <td>{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
+                                <tr class="total team{{math @index "+" 1}}">
+                                    <td class="total">Total</td>
+                                    <td class="roles">--</td>
+                                    <td class="kills">{{kills}}</td>
+                                    <td class="team-kills">{{team_kills}}</td>
+                                    <td class="conc-kills">{{conc_kills}}</td>
+                                    <td class="sentry-kills{{#if sg_kills}}{{else}} no-kills{{/if}}">{{#if sg_kills}}{{sg_kills}}{{/if}}</td>
+                                    <td class="deaths">{{deaths}}</td>
+                                    <td class="suicides">{{d_self}}</td>
+                                    <td class="team-deaths">{{d_team}}</td>
+                                    <td class="concs">{{#if concs}}{{concs}}{{else}}--{{/if}}</td>
+                                    <td class="flag-captures">{{#if caps}}{{caps}}{{else}}--{{/if}}</td>
+                                    <td class="flag-touches">{{#if touches}}{{touches}} ({{touches_initial}}){{else}}--{{/if}}</td>
+                                    <td class="flag-toss-percentage">{{#if toss_percent}}{{toss_percent}}%{{else}}--{{/if}}</td>
+                                    <td class="flag-time">{{#if flag_time}}{{flag_time}}{{else}}--{{/if}}</td>
+                                    <td class="objectives">{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
                                 </tr>
                                 {{/with}}
                                 {{/each}}
