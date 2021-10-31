@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'fs';
+import { copyFile, readFile, writeFile, mkdir } from 'fs';
 
 import * as Handlebars from 'handlebars';
 import pg = require('pg');
@@ -51,6 +51,7 @@ export default async function(
 
         const templateFile = path.join(templateDir, 'template-summary.html');
         const playerTemplate = path.join(templateDir, 'template-summary-player.html');
+        const cssFile = path.join(templateDir, 'hamp2.css');
 
         const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
         matchMeta.logName = logName;
@@ -66,6 +67,12 @@ export default async function(
             how_dropped: 0,
             timestamp: "LOLZ"
         }];
+
+        // the CSS file should stay in versioned with the output
+        copyFile(cssFile, `${outputDir}/hamp2.css`, (error) => {
+            if (error) console.error(`failed to copy CSS file: ${error}`);
+            console.log(`copied CSS file`);
+        });
 
         readFile(templateFile, 'utf-8', (error, source) => {
             TemplateUtils.registerHelpers();
