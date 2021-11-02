@@ -995,6 +995,7 @@ export default class ParserUtils {
 
                 classTimes.push({
                     class: lastClass,
+                    classAsString: PlayerClass.outputClass(lastClass),
                     time,
                     startLineNumber: lastChangeEvent.lineNumber,
                     endLineNumber: (roleChangedEvent.lineNumber - 1)
@@ -1013,6 +1014,7 @@ export default class ParserUtils {
 
             classTimes.push({
                 class: lastClass,
+                classAsString: PlayerClass.outputClass(lastClass),
                 time,
                 startLineNumber: lastChangeEvent.lineNumber,
                 endLineNumber: null
