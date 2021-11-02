@@ -121,8 +121,10 @@ export interface StatDetails {
 }
 
 export interface ClassTime {
-    class: string,
+    class: PlayerClass;
     time: string;
+    startLineNumber: number;
+    endLineNumber: number | null;
 }
 
 export type TeamStats = OffenseTeamStats | DefenseTeamStats | OtherTeamStats;
