@@ -122,6 +122,7 @@ export interface StatDetails {
 
 export interface ClassTime {
     class: PlayerClass;
+    classAsString: string;
     time: string;
     startLineNumber: number;
     endLineNumber: number | null;
