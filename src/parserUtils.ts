@@ -1032,13 +1032,6 @@ export default class ParserUtils {
                     && statEvent.lineNumber > classTimes[curClassIndex].endLineNumber!) {
                     curClassIndex++;
                 }
-                if (statEvent.lineNumber == 1002) {
-                    console.log(player.name + ": line 1002; curClassIndex " + curClassIndex + "; classTimes.length " + classTimes.length);
-                    console.log(player);
-                    console.log(statEvent.playerFrom);
-                    console.log(statEvent.playerTo);
-                    console.log(player == statEvent.playerTo);
-                }
                 if (player == statEvent.playerFrom) {
                     statEvent.playerFromClass = classTimes[curClassIndex].class;
                 }
