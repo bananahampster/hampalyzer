@@ -1034,11 +1034,13 @@ export default class ParserUtils {
                     && statEvent.lineNumber > classTimes[curClassIndex].endLineNumber!) {
                     curClassIndex++;
                 }
-                if (player == statEvent.playerFrom) {
-                    statEvent.playerFromClass = classTimes[curClassIndex].class;
-                }
-                if (player == statEvent.playerTo) {
-                    statEvent.playerToClass = classTimes[curClassIndex].class;
+                if (curClassIndex < classTimes.length) {
+                    if (player == statEvent.playerFrom) {
+                        statEvent.playerFromClass = classTimes[curClassIndex].class;
+                    }
+                    if (player == statEvent.playerTo) {
+                        statEvent.playerToClass = classTimes[curClassIndex].class;
+                    }
                 }
             });
         }
