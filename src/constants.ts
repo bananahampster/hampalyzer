@@ -140,7 +140,7 @@ export interface ITeamStats {
 }
 
 export interface OffenseTeamStats extends ITeamStats {
-    teamRole: TeamRole.Offsense;
+    teamRole: TeamRole.Offense;
     team: number;
     sg_kills: number;
     concs: number;
@@ -167,7 +167,7 @@ export type TeamStatsComparison = [OffenseTeamStats, DefenseTeamStats];
 export const enum TeamRole {
     Comparison = -2,
     Unknown = -1,
-    Offsense = 0,
+    Offense = 0,
     Defense = 1,
 }
 

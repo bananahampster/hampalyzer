@@ -33,7 +33,7 @@ jobs:
           export HAMPALYZER_DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }}
           source ~/.nvm/nvm.sh
           cd ~/hampalyzer
-          git reset --hard master
+          git reset --hard origin/master
           git pull origin master
           npm install
           tsc

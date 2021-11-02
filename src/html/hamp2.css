@@ -298,11 +298,11 @@ table tr.total {
 }
 
 .table a {
-    color: #66b0ff;
+    color: inherit;
 }
 
 .table a:hover {
-    color: #3395ff;
+    color: inherit;
 }
 
 /** player stats styles */
@@ -365,7 +365,7 @@ table tr.total {
 /** weapon styles **/
 
 .weapon-icon {
-    background: url('assets/img/tfc_dmsg_transparent.png');
+    background: url('/assets/img/tfc_dmsg_transparent.png');
     display: inline-block;
     width: 60px;
     height: 16px;

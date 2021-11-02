@@ -519,6 +519,7 @@ export default class ParserUtils {
                 let thisPlayer = players.getPlayer(playerID) as Player;
                 poStats.name = thisPlayer.name;
                 poStats.steamID = playerID;
+                poStats.id = thisPlayer.steamID.split(":")[2];
 
                 const playerStats = stats[playerID];
                 this.calculateAndApplyWhileConcedOnAllEvents(playerStats);
@@ -611,7 +612,7 @@ export default class ParserUtils {
     private static generateOutputTeamStatsDetail(teamPlayers: PlayerOutputStatsRound[], team: number) {
         // TODO: do some logic based on the plurarity of medics on a team?
         // for now, assume team 1 (blue) is always offense
-        const teamRole: TeamRole = team === 1 ? TeamRole.Offsense : team === 2 ? TeamRole.Defense : TeamRole.Unknown;
+        const teamRole: TeamRole = team === 1 ? TeamRole.Offense : team === 2 ? TeamRole.Defense : TeamRole.Unknown;
 
         let stats =  teamPlayers.reduce((stats, player) => {
             stats.frags += this.getSummarizedStat(player, 'kills', 'kill')
@@ -631,7 +632,7 @@ export default class ParserUtils {
             stats.d_team += this.getSummarizedStat(player, 'deaths', 'by_team');
 
             switch (stats.teamRole) {
-                case TeamRole.Offsense:
+                case TeamRole.Offense:
                     stats.sg_kills += this.getSummarizedStat(player, 'kills', 'sg');
                     stats.concs += this.getSummarizedStat(player, 'weaponStats', 'concs');
                     stats.caps += this.getSummarizedStat(player, 'objectives', 'flag_capture');
@@ -655,7 +656,7 @@ export default class ParserUtils {
         }, this.blankTeamStats(teamRole));
 
         // do some clean-up (average instead of sum for toss)
-        if (stats.teamRole === TeamRole.Offsense) {
+        if (stats.teamRole === TeamRole.Offense) {
             stats.toss_percent = Math.round(stats.toss_percent / stats.touches);
         }
 
@@ -835,7 +836,7 @@ export default class ParserUtils {
         } as TeamStats;
 
         switch (blankStats.teamRole) {
-            case TeamRole.Offsense:
+            case TeamRole.Offense:
                 blankStats.sg_kills = 0;
                 blankStats.concs = 0;
                 blankStats.caps = 0;
@@ -861,7 +862,7 @@ export default class ParserUtils {
 
         const offenseDiff: OffenseTeamStats = {
             team: 0,
-            teamRole: TeamRole.Offsense,
+            teamRole: TeamRole.Offense,
             frags: offenseTeams[0].frags - offenseTeams[1].frags,
             kills: offenseTeams[0].kills - offenseTeams[1].kills,
             sg_kills: offenseTeams[0].sg_kills - offenseTeams[1].sg_kills,
@@ -999,7 +1000,7 @@ export default class ParserUtils {
 
         // Build a list of periods that the player was conced, as determined by the first conc event for the period
         // and the end time for when the player was no longer conced.
-        let concPeriods = new Array<[Event, Date]>(); 
+        let concPeriods = new Array<[Event, Date]>();
         let concStartEvent: Event | null = null;
         let concEndTimestamp = new Date(0);
         for (let curConcEventIndex = 0; curConcEventIndex < concSequence.length; curConcEventIndex++) {
