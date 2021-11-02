@@ -169,7 +169,9 @@ export interface EventCreationOptions {
     timestamp: Date;
     data?: ExtraData;
     playerFrom?: Player;
+    playerFromClass?: PlayerClass;
     playerTo?: Player;
+    playerToClass?: PlayerClass;
     withWeapon?: Weapon;
 }
 
@@ -181,7 +183,9 @@ export class Event {
 
     public data?: ExtraData;
     public playerFrom?: Player;
+    public playerFromClass?: PlayerClass;
     public playerTo?: Player;
+    public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
     public whileConced: boolean;
 
@@ -194,7 +198,9 @@ export class Event {
         // optional fields
         this.data = options.data;
         this.playerFrom = options.playerFrom;
+        this.playerFromClass = options.playerFromClass;
         this.playerTo = options.playerTo;
+        this.playerToClass = options.playerToClass;
         this.withWeapon = options.withWeapon;
         this.whileConced = false; // Filled in later.
     }

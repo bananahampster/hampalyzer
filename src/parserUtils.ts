@@ -522,14 +522,14 @@ export default class ParserUtils {
                 poStats.id = thisPlayer.steamID.split(":")[2];
 
                 const playerStats = stats[playerID];
-                this.calculateAndApplyWhileConcedOnAllEvents(playerStats);
+                poStats.classes = this.calculateAndApplyPlayerClassOnAllEvents(thisPlayer, playerStats, matchEnd);
+                this.calculateAndApplyWhileConcedOnAllEvents(thisPlayer, playerStats);
                 for (const stat in playerStats) {
                     const statEvents = playerStats[stat];
                     switch (stat) {
                         /** classes */
                         case 'role':
-                            poStats.classes = this.getPlayerRoles(statEvents, matchEnd);
-                            poStats.roles = this.getPlayerClasses(statEvents, matchEnd); // TODO: merge these two implementations
+                            poStats.roles = this.getPlayerClasses(statEvents, matchEnd); // TODO: Merge with applyPlayerRoleOnAllEvents
                             break;
                         /** kills */
                         case 'kill':
@@ -979,9 +979,77 @@ export default class ParserUtils {
         return [flagTime, tossPercent, initialTouches];
     }
 
-    private static calculateAndApplyWhileConcedOnAllEvents(playerEvents: Stats) {
-        const concTimeDurationInSeconds = 4;
+    private static calculateAndApplyPlayerClassOnAllEvents(player: Player, playerEvents: Stats, matchEnd: Date) {
+        let roleChangedEvents = playerEvents['role'];
+        roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
+        let classTimes: ClassTime[] = [];
+        let lastChangeEvent: Event | undefined;
+        let lastClass: PlayerClass | undefined;
+        for (const roleChangedEvent of roleChangedEvents) {
+            // skip the initial role if no timestamp set
+            if (lastChangeEvent !== undefined && lastClass !== undefined) {
+                // calculate the time for the last class and add entry
+                const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
+                    .format(roleChangedEvent.timestamp.valueOf() - lastChangeEvent.timestamp.valueOf());
+
+                classTimes.push({
+                    class: lastClass,
+                    time,
+                    startLineNumber: lastChangeEvent.lineNumber,
+                    endLineNumber: (roleChangedEvent.lineNumber - 1)
+                });
+            }
+
+            lastClass = roleChangedEvent.data!.class;
+            lastChangeEvent = roleChangedEvent;
+        }
+
+        // make sure to record the last class picked
+        if (lastClass && lastChangeEvent) {
+            // calculate the time for the last class and add entry
+            const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
+                .format(matchEnd.valueOf() - lastChangeEvent.timestamp.valueOf());
+
+            classTimes.push({
+                class: lastClass,
+                time,
+                startLineNumber: lastChangeEvent.lineNumber,
+                endLineNumber: null
+            });
+        }
+
+        // apply the class on all of the player's events
+        for (const stat in playerEvents) {
+            let statEvents = playerEvents[stat];
+            statEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
+
+            let curClassIndex = 0;
+            statEvents.forEach((statEvent) => {
+                // Advance through the array of class choices until we reach the one that started prior to this event.
+                while (curClassIndex < classTimes.length
+                    && classTimes[curClassIndex].endLineNumber != null
+                    && statEvent.lineNumber > classTimes[curClassIndex].endLineNumber!) {
+                    curClassIndex++;
+                }
+                if (player == statEvent.playerFrom) {
+                    statEvent.playerFromClass = classTimes[curClassIndex].class;
+                }
+                if (player == statEvent.playerTo) {
+                    statEvent.playerToClass = classTimes[curClassIndex].class;
+                }
+            });
+        }
+
+        return classTimes;
+    }
+
+    private static getConcTimeEffectDurationInSeconds(playerClass: PlayerClass | undefined) {
+        const concTimeDurationInSeconds = 8;
+        return playerClass != PlayerClass.Medic ? concTimeDurationInSeconds : (concTimeDurationInSeconds / 2);
+    }
+
+    private static calculateAndApplyWhileConcedOnAllEvents(player: Player, playerEvents: Stats) {
         if (!playerEvents) {
             return;
         }
@@ -1006,20 +1074,22 @@ export default class ParserUtils {
         for (let curConcEventIndex = 0; curConcEventIndex < concSequence.length; curConcEventIndex++) {
             const concSequenceEvent = concSequence[curConcEventIndex];
             if (concSequenceEvent.eventType == EventType.PlayerConced) {
-                if (concStartEvent != null && concSequenceEvent.timestamp < concEndTimestamp) {
-                    // The player was conced again while conced; extend the period.
-                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
-                    concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + concTimeDurationInSeconds);
-                }
-                else {
-                    if (concStartEvent != null) {
-                        // Record the previous, now-ended conc.
-                        concPeriods.push([concStartEvent, concEndTimestamp]);
+                if (concSequenceEvent.playerTo == player) {
+                    if (concStartEvent != null && concSequenceEvent.timestamp < concEndTimestamp) {
+                        // The player was conced again while conced; extend the period.
+                        concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
+                        concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + ParserUtils.getConcTimeEffectDurationInSeconds(concSequenceEvent.playerToClass));
                     }
-                    // Track the new conc period.
-                    concStartEvent = concSequenceEvent;
-                    concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
-                    concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + concTimeDurationInSeconds);
+                    else {
+                        if (concStartEvent != null) {
+                            // Record the previous, now-ended conc.
+                            concPeriods.push([concStartEvent, concEndTimestamp]);
+                        }
+                        // Track the new conc period.
+                        concStartEvent = concSequenceEvent;
+                        concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
+                        concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + ParserUtils.getConcTimeEffectDurationInSeconds(concSequenceEvent.playerToClass));
+                    }
                 }
             }
             else { // Death event.
@@ -1097,43 +1167,5 @@ export default class ParserUtils {
 
         // print classes
         return rankedList.map(role => PlayerClass[role.role]).join(', ');
-    }
-
-    private static getPlayerRoles(roleChangedEvents: Event[], matchEnd: Date): ClassTime[] {
-        roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-
-        let classTimes: ClassTime[] = [];
-        let lastTimestamp: Date | undefined;
-        let lastClass: PlayerClass | undefined;
-        for (const roleChangedEvent of roleChangedEvents) {
-            // skip the initial role if no timestamp set
-            if (lastTimestamp !== undefined && lastClass !== undefined) {
-                // calculate the time for the last class and add entry
-                const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
-                    .format(roleChangedEvent.timestamp.valueOf() - lastTimestamp.valueOf());
-
-                classTimes.push({
-                    class: PlayerClass.outputClass(lastClass),
-                    time,
-                });
-            }
-
-            lastClass = roleChangedEvent.data!.class;
-            lastTimestamp = roleChangedEvent.timestamp;
-        }
-
-        // make sure to record the last class picked
-        if (lastClass && lastTimestamp) {
-            // calculate the time for the last class and add entry
-            const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
-                .format(matchEnd.valueOf() - lastTimestamp.valueOf());
-
-            classTimes.push({
-                class: PlayerClass.outputClass(lastClass),
-                time,
-            });
-        }
-
-        return classTimes;
     }
 }
