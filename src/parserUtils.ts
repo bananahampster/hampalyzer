@@ -980,10 +980,14 @@ export default class ParserUtils {
     }
 
     private static calculateAndApplyPlayerClassOnAllEvents(player: Player, playerEvents: Stats, matchEnd: Date) {
+        let classTimes: ClassTime[] = [];
+
         let roleChangedEvents = playerEvents['role'];
+        if (!roleChangedEvents) {
+            return classTimes;
+        }
         roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
-        let classTimes: ClassTime[] = [];
         let lastChangeEvent: Event | undefined;
         let lastClass: PlayerClass | undefined;
         for (const roleChangedEvent of roleChangedEvents) {
