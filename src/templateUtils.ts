@@ -1,4 +1,4 @@
-import Handlebars from 'handlebars';
+import * as Handlebars from 'handlebars';
 import { OffenseTeamStats, DefenseTeamStats, OutputPlayer } from './constants';
 import { isNumber } from 'util';
 
@@ -54,21 +54,20 @@ export default class TemplateUtils {
             const isComparison = teamId === 'Comp'; // first parameter can sometimes be object??
             return `
                 <tr ${isComparison && 'class="comp"'}>
-                    <td class="team">${TemplateUtils.getTeamName(teamId, players)}</td>
-                    ${TemplateUtils.getRow(this.frags, isComparison, "kills-total")}
-                    ${TemplateUtils.getRow(this.kills, isComparison, "kills")}
-                    ${TemplateUtils.getRow(this.team_kills, isComparison, "team-kills")}
-                    ${TemplateUtils.getRow(this.conc_kills, isComparison, "conc-kills")}
-                    ${TemplateUtils.getRow(this.sg_kills, isComparison, "sentry-kills")}
-                    ${TemplateUtils.getRow(this.deaths, isComparison, "deaths-total")}
-                    ${TemplateUtils.getRow(this.d_enemy, isComparison, "deaths")}
-                    ${TemplateUtils.getRow(this.d_self, isComparison, "suicides")}
-                    ${TemplateUtils.getRow(this.d_team, isComparison, "team-deaths")}
-                    ${TemplateUtils.getRow(this.concs, isComparison, "concs")}
-                    ${TemplateUtils.getRow(this.caps, isComparison, "flag-captures")}
-                    ${TemplateUtils.getRow(this.touches, isComparison, "flag-touches")}
-                    ${TemplateUtils.getRow(this.toss_percent, isComparison, "flag-toss-percentage")}
-                    ${TemplateUtils.getRow(this.flag_time, isComparison, "flag-time")}
+                    <td>${TemplateUtils.getTeamName(teamId, players)}</td>
+                    ${TemplateUtils.getRow(this.frags, isComparison)}
+                    ${TemplateUtils.getRow(this.kills, isComparison)}
+                    ${TemplateUtils.getRow(this.team_kills, isComparison)}
+                    ${TemplateUtils.getRow(this.sg_kills, isComparison)}
+                    ${TemplateUtils.getRow(this.deaths, isComparison)}
+                    ${TemplateUtils.getRow(this.d_enemy, isComparison)}
+                    ${TemplateUtils.getRow(this.d_self, isComparison)}
+                    ${TemplateUtils.getRow(this.d_team, isComparison)}
+                    ${TemplateUtils.getRow(this.concs, isComparison)}
+                    ${TemplateUtils.getRow(this.caps, isComparison)}
+                    ${TemplateUtils.getRow(this.touches, isComparison)}
+                    ${TemplateUtils.getRow(this.toss_percent, isComparison)}
+                    ${TemplateUtils.getRow(this.flag_time, isComparison)}
                 </tr>`;
         });
 
@@ -76,16 +75,15 @@ export default class TemplateUtils {
             const isComparison = teamId === 'Comp'; // first parameter can sometimes be object??
             return `
                 <tr ${isComparison && 'class="comp"'}>
-                    <td class="team">${TemplateUtils.getTeamName(teamId, players)}</td>
-                    ${TemplateUtils.getRow(this.frags, isComparison, "kills-total")}
-                    ${TemplateUtils.getRow(this.kills, isComparison, "kills")}
-                    ${TemplateUtils.getRow(this.team_kills, isComparison, "team-kills")}
-                    ${TemplateUtils.getRow(this.conc_kills, isComparison, "conc-kills")}
-                    ${TemplateUtils.getRow(this.deaths, isComparison, "deaths-total")}
-                    ${TemplateUtils.getRow(this.d_enemy, isComparison, "deaths")}
-                    ${TemplateUtils.getRow(this.d_self, isComparison, "suicides")}
-                    ${TemplateUtils.getRow(this.d_team, isComparison, "team-deaths")}
-                    ${TemplateUtils.getRow(this.airshots, isComparison, "airshots")}
+                    <td>${TemplateUtils.getTeamName(teamId, players)}</td>
+                    ${TemplateUtils.getRow(this.frags, isComparison)}
+                    ${TemplateUtils.getRow(this.kills, isComparison)}
+                    ${TemplateUtils.getRow(this.team_kills, isComparison)}
+                    ${TemplateUtils.getRow(this.deaths, isComparison)}
+                    ${TemplateUtils.getRow(this.d_enemy, isComparison)}
+                    ${TemplateUtils.getRow(this.d_self, isComparison)}
+                    ${TemplateUtils.getRow(this.d_team, isComparison)}
+                    ${TemplateUtils.getRow(this.airshots, isComparison)}
                 </tr>`;
         });
     }
@@ -107,23 +105,22 @@ export default class TemplateUtils {
         return toReturn;
     }
 
-    static getRow(value: number | string, isComparison: boolean, cssClassName: string | undefined): string {
-        const baseClassAttributeValue = cssClassName ? `${cssClassName} ` : "";
+    static getRow(value: number | string, isComparison: boolean): string {
         if (!isComparison || value === 0)
-            return `<td class="${baseClassAttributeValue}">${value}</td>`;
+            return `<td>${value}</td>`;
         if (typeof value === 'number') {
             if (value > 0)
-                return `<td class="${baseClassAttributeValue}up icon">${value}</td>`;
+                return `<td class="up icon">${value}</td>`;
             else // if (value < 0)
-                return `<td class="${baseClassAttributeValue}down icon">${Math.abs(value)}</td>`;
+                return `<td class="down icon">${Math.abs(value)}</td>`;
         } else {
             // if first character is "-", consider it 'negative'
             if (value.charAt(0) === "-")
-                return `<td class="${baseClassAttributeValue}down icon">${value.slice(1)}</td>`;
+                return `<td class="down icon">${value.slice(1)}</td>`;
             else if (!isNaN(parseInt(value.charAt(0))))
-                return `<td class="${baseClassAttributeValue}up icon">${value}</td>`;
+                return `<td class="up icon">${value}</td>`;
             else
-                return `<td class="${baseClassAttributeValue}">${value}</td>`;
+                return `<td>${value}</td>`;
         }
     }
 }

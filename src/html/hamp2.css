@@ -1,7 +1,5 @@
 body {
     font-size: .875rem;
-    --team-a-color: rgba(175, 141, 195, 0.65);
-    --team-b-color: rgba(127, 191, 123, 0.65);
 }
 
 .sidebar {
@@ -60,11 +58,11 @@ body {
 }
 
 .sidebar .icon.icon-team-a {
-    background-color: var(--team-a-color);
+    background-color: rgba(175, 141, 195, 0.65);
 }
 
 .sidebar .icon.icon-team-b {
-    background-color: var(--team-b-color);
+    background-color: rgba(127, 191, 123, 0.65);
 }
 
 /** main styles */
@@ -90,11 +88,11 @@ body {
 }
 
 .team-comp > :nth-child(1) {
-    background-color: var(--team-a-color);
+    background-color: rgba(175, 141, 195, 0.65);
 }
 
 .team-comp > :nth-child(2) {
-    background-color: var(--team-b-color);
+    background-color: rgba(127, 191, 123, 0.65);
 }
 
 .stats-round {
@@ -156,7 +154,7 @@ table tr.total {
 }
 
 .summary > :not(thead) tr:nth-child(1) {
-    background-color: var(--team-a-color);
+    background-color: rgba(175, 141, 195, 0.65);
 }
 
 .summary tr.comp td.up {
@@ -164,7 +162,7 @@ table tr.total {
 }
 
 .summary tr:nth-child(3) {
-    background-color: var(--team-b-color);
+    background-color: rgba(127, 191, 123, 0.65);
 }
 
 .summary tr.comp td.down {
@@ -200,7 +198,7 @@ table tr.total {
     border-bottom: 2px solid #333;
 }
 
-.stats, .summary-offense, .summary-defense {
+.stats {
     --padding-between-sections: 15px;
 }
 
@@ -238,21 +236,28 @@ table tr.total {
 }
 
 .stats td.roles, .stats th.roles,
-td.sentry-kills, th.sentry-kills,
-td.team-deaths, th.team-deaths,
-.summary td.team, .summary th.team,
-.summary-defense td.conc-kills, .summary-defense th.conc-kills {
+.stats td.sentry-kills, .stats th.sentry-kills,
+.stats td.team-deaths, .stats th.team-deaths,
+.summary td:nth-child(1), .summary th:nth-child(1),
+.summary-offense td:nth-child(5), .summary-offense th:nth-child(5),
+.summary-offense td:nth-child(9), .summary-offense th:nth-child(9),
+.summary-defense td:nth-child(4), .summary-defense th:nth-child(4),
+.summary-defense td:nth-child(8), .summary-defense th:nth-child(8) {
     border-right: 1px solid #333;
     padding-right: var(--padding-between-sections);
 }
 
-.stats td.objectives, .stats th.objectives,
-.summary-offense td.flag-time, .summary-offense th.flag-time,
-.summary-defense td.airshots, .summary-defense th.airshots {
+.stats td.objectives, .stats th.objectives {
     padding-right: var(--padding-between-sections);
 }
 
-
+.stats td:nth-child(0), .stats th:nth-child(0),
+.stats td:nth-child(6), .stats th:nth-child(6),
+.stats td:nth-child(9), .stats th:nth-child(9),
+.stats td:nth-child(13), .stats th:nth-child(13),
+.stats td:nth-child(18), .stats th:nth-child(18),
+.stats td:nth-child(21), .stats th:nth-child(21)
+.summary td:nth-child(2), .summary th:nth-child(2),
 .summary-offense td:nth-child(6), .summary-offense th:nth-child(6),
 .summary-offense td:nth-child(10), .summary-offense th:nth-child(10),
 .summary-defense td:nth-child(5), .summary-defense th:nth-child(5),

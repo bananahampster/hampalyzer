@@ -13,23 +13,15 @@ export interface OutputStats {
     game_time: string;
     score: TeamScore;
     teams: TeamsOutputStatsDetailed;
-    scoring_activity?: ScoringActivity;
+    flagStats?: FlagStats;
 }
 
 // expected to be ordered by timestamp ascending
-export type TeamFlagMovements = {
-    [team in TeamColor]?: FlagMovement[];
- };
-
-export interface ScoringActivity {
-    flag_movements: TeamFlagMovements;
-    game_time_as_seconds: number;
-}
+export type FlagStats = FlagMovement[];
 
 export interface FlagMovement {
     player: string; // steamID
-    game_time_as_seconds: number,
-    current_score: number,
+    timestamp: string; // ?
     how_dropped: FlagDrop;
 }
 
@@ -296,8 +288,5 @@ export namespace TeamColor {
                 console.warn("unknown team received by `parseTeamColor`; assigning to spectator")
                 return TeamColor.Spectator
         }
-    }
-    export function toString(teamColor: TeamColor): string {
-        return (TeamColor as any)[teamColor];
     }
 }
