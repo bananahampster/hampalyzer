@@ -1,9 +1,9 @@
 import * as fs from 'fs';
-import EventType from './eventType';
-import Player from './player';
-import PlayerList from './playerList';
-import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants';
-import ParserUtils, { TeamComposition } from './parserUtils';
+import EventType from './eventType.js';
+import Player from './player.js';
+import PlayerList from './playerList.js';
+import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import ParserUtils, { TeamComposition } from './parserUtils.js';
 
 type RoundStats = (OutputStats | undefined)[];
 export interface ParsedStats {
@@ -109,7 +109,7 @@ export class RoundParser {
         });
 
         this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
-        const scores = ParserUtils.getScore(this.events);
+        const [scores, flagMovements] = ParserUtils.getScoreAndFlagMovements(this.events);
         for (const team in this.teamComp) {
             const teamPlayers = this.teamComp[team];
             const score = scores[team];
@@ -146,16 +146,14 @@ export class RoundParser {
             // iterate through events, but skip culling chat, role, and team messages
             for (let i = 0; i < this.events.length; i++) {
                 const e = this.events[i];
-                // also want to cull self-suicides on prematch end
-                if (e.lineNumber > matchStartLineNumber && e.lineNumber < matchEndLineNumber) {
-                    e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
-                } else {
+
+                // Will be negative if a pre-match event (see eventsNotToCull).
+                e.gameTimeAsSeconds = Math.round((e.timestamp.getTime() - matchStartEvent.timestamp.getTime()) / 1000);
+
+                if (e.lineNumber < matchStartLineNumber || e.lineNumber > matchEndLineNumber) {
                     if (eventsNotToCull.indexOf(e.eventType) === -1) {
                         this.events.splice(i, 1);
                         i--;
-                    } else {
-                        // will be negative if a pre-match event
-                        e.gametime = (e.timestamp.getTime() - matchStartEvent.timestamp.getTime());
                     }
                 }
             }
@@ -179,7 +177,7 @@ export class Event {
     public eventType: EventType;
     public lineNumber: number;
     public timestamp: Date;
-    public gametime?: number;
+    public gameTimeAsSeconds?: number;
 
     public data?: ExtraData;
     public playerFrom?: Player;
@@ -470,6 +468,10 @@ export class Event {
                                     case "Red_Flag": // proton_l
                                     case "Blue_Flag":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        break;
+                                    case "Red_Cap": // proton_l
+                                    case "Blue_Cap":
+                                        eventType = EventType.PlayerCapturedFlag;
                                         break;
                                     case "Flag": // cornfield; e.g. "Flag 1", "Flag 2"
                                         eventType = EventType.PlayerPickedUpFlag;

@@ -1,5 +1,5 @@
-import Player from './player';
-import { TeamColor } from './constants';
+import Player from './player.js';
+import { TeamColor } from './constants.js';
 
 class PlayerList {
     private _players: Player[];
