@@ -1,9 +1,10 @@
-import { Parser } from './parser.js';
-import fileParser from './fileParser.js';
-import App from './App.js';
+import app from './App';
+import { Parser } from './parser';
+import fileParser from './fileParser';
+import App from './App';
 
 import { existsSync } from 'fs';
-import * as path from 'path';
+import path = require('path');
 
 const port = process.env.PORT || 3000;
 

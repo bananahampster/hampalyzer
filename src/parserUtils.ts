@@ -1,8 +1,8 @@
-import PlayerList from "./playerList.js";
-import { Event, RoundParser } from "./parser.js";
-import Player from "./player.js";
-import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop } from "./constants.js";
-import EventType from "./eventType.js";
+import PlayerList from "./playerList";
+import { Event, RoundParser } from "./parser";
+import Player from "./player";
+import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary } from "./constants";
+import EventType from "./eventType";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 export type TeamScore = { [team in TeamColor]?: number; };
@@ -124,71 +124,33 @@ export default class ParserUtils {
         return arr.length;
     }
 
-    public static getScoreAndFlagMovements(events: Event[], teams?: TeamComposition): [TeamScore, TeamFlagMovements] {
+    public static getScore(events: Event[], teams?: TeamComposition): TeamScore {
         const teamScoreEvents = events.filter(ev => ev.eventType === EventType.TeamScore);
         let scores: TeamScore = {};
-        let flagMovements: TeamFlagMovements = {};
 
-        let needToComputeTeamScore = true;
         teamScoreEvents.forEach(event => {
             const team = event.data && event.data.team;
             const score = event.data && event.data.value;
             if (!team) throw "expected team with a teamScore event";
             if (!score) throw "expected value with a teamScore event";
             scores[team] = Number(score);
-            needToComputeTeamScore = false;
         });
 
-        if (teams) {
-            const flagCapEvents = events.filter(ev => ev.eventType === EventType.PlayerCapturedFlag);
-            let pointsPerCap = 10;
-            if (!needToComputeTeamScore) { // TODO: add map-specific logic for c2c bonuses, e.g. raiden
-                const firstTeamFlagCapEvents = events.filter(ev => {
-                    return ev.eventType === EventType.PlayerCapturedFlag
-                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
-                });
-                pointsPerCap = scores[1] ?
-                    (firstTeamFlagCapEvents.length > 0 ?
-                        (scores[1] / firstTeamFlagCapEvents.length) : pointsPerCap)
-                    : pointsPerCap;
-                if (pointsPerCap != 10) {
-                    console.warn(`Points per cap is ${pointsPerCap}`);
-                }
-            }
+        // maybe the server crashed before finishing the log?  fallback to counting caps
+        if (Object.keys(scores).length === 0 && teams) {
+            console.warn("Can't find ending score, manually counting caps...");
 
-            if (needToComputeTeamScore) { // maybe the server crashed before finishing the log?
-                console.warn("Can't find ending score, manually counting caps...");
-            }
-            let runningScore: TeamScore = {};
+            const flagCapEvents = events.filter(ev => ev.eventType === EventType.PlayerCapturedFlag);
             flagCapEvents.forEach(event => {
                 const player = event.playerFrom!;
                 const team = ParserUtils.getTeamForPlayer(player, teams);
 
-                if (!flagMovements[team]) {
-                    const teamFlagStats: FlagMovement[] = [];
-                    flagMovements[team] = teamFlagStats;
-                    runningScore[team] = 0;
-                }
-                if (!runningScore[team]) {
-                    runningScore[team] = 0;
-                }
-                runningScore[team] += pointsPerCap;
-                const flagMovement: FlagMovement = {
-                    game_time_as_seconds: event.gameTimeAsSeconds!,
-                    player: player.name,
-                    current_score: runningScore[team],
-                    how_dropped: FlagDrop.Captured,
-
-                }
-                flagMovements[team].push(flagMovement);
-
-                if (needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
-                    scores[team] = runningScore[team];
-                }
+                let teamScore = scores[team] || 0;
+                scores[team] = teamScore + 10;
             });
         }
 
-        return [scores, flagMovements];
+        return scores;
     }
 
     public static getPlayerStats(events: Event[], teams: TeamComposition): PlayersStats {
@@ -501,14 +463,16 @@ export default class ParserUtils {
         const parse_name = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
 
         // game time (should we calculate this somewhere else?)
-        const matchStartEvent = events.find(event => event.eventType === EventType.PrematchEnd) || events[0];
-        const matchEndEvent = events.find(event => event.eventType === EventType.TeamScore) || events[events.length - 1];
+        const prematchEndEvent = events.find(event => event.eventType === EventType.PrematchEnd);
+        const matchEndEvent = events.find(event => event.eventType === EventType.TeamScore);
 
+        const matchStart = prematchEndEvent && prematchEndEvent.timestamp || firstTimestamp;
+        const matchEnd = matchEndEvent && matchEndEvent.timestamp || events[events.length - 1].timestamp;
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
-            .format(matchEndEvent.timestamp.valueOf() - matchStartEvent.timestamp.valueOf());
+            .format(matchEnd.valueOf() - matchStart.valueOf());
 
-        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEndEvent.timestamp);
-        const [score, flagMovements] = this.getScoreAndFlagMovements(events, teamComp);
+        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEnd);
+        const score = this.getScore(events, teamComp);
 
         return {
             parse_name,
@@ -521,10 +485,6 @@ export default class ParserUtils {
             server,
             teams,
             score,
-            scoring_activity: {
-                flag_movements: flagMovements,
-                game_time_as_seconds: matchEndEvent.gameTimeAsSeconds ? matchEndEvent.gameTimeAsSeconds : 0
-            }
         };
     }
 
@@ -628,7 +588,7 @@ export default class ParserUtils {
                 }
 
                 // flag statistics (requires holistic view of flag movement)
-                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, teams, stats.flag, matchEnd);
+                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, stats.flag, matchEnd);
                 this.ensureStat<string>(poStats, 'objectives', 'flag_time').value = flag_time;
                 this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
                 this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
@@ -851,7 +811,7 @@ export default class ParserUtils {
     }
 
     private static getTime(e: Event): string {
-        return Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(e.gameTimeAsSeconds! * 1000);
+        return Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(e.gametime);
     }
 
     private static getSummarizedStat(playerStats: PlayerOutputStatsRound, category: string, item: string): number {
@@ -937,7 +897,7 @@ export default class ParserUtils {
         return [offenseDiff, defenseDiff];
     }
 
-    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, teams: TeamComposition, flagEvents: Stats, matchEnd: Date): [string, number, number] {
+    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, flagEvents: Stats, matchEnd: Date): [string, number, number] {
         // Capture and pickup events are passed in via flagEvents;
         // also use 'team_death'/'death', and 'flag_thrown' events to calculate flag time.
         const deaths = playerEvents['death'];
@@ -970,16 +930,8 @@ export default class ParserUtils {
             if (eventType === EventType.FlagReturn) {
                 return [null, undefined];
             }
-            
-            if ((eventType === EventType.PlayerCapturedFlag || eventType === EventType.PlayerPickedUpFlag)
-                && !this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
-                // this is a flag event associated with the other team; ignore it
-                return flagStatus;
-            }
-
             // the flag was captured; record the time if it was this player and set state to null
             if (eventType === EventType.PlayerCapturedFlag) {
-
                 if (thisEvent.playerFrom?.matches(thisPlayer)) {
                     if (!flagStatus[1]!.playerFrom!.matches(thisPlayer)) {
                         console.error("Flag cap seen by a player (" + thisPlayer.name +") which wasn't carrying the flag"

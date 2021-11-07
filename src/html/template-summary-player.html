@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
 
-    <title>Hampalyzer TFC Stats: {{name}} statistics on {{map}} at {{server}} ({{date}}, {{time}})</title>
+    <title>Hampalyzer TFC Stats: {{player}} statistics on {{map}} at {{server}} ({{date}}, {{time}})</title>
 
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 
@@ -37,7 +37,7 @@
                             <span>Overall statistics</span>
                         </h6>
                         <li class="nav-item">
-                            <a class="nav-link" href="index.html">
+                            <a class="nav-link active" href="index.html">
                                 Stats by round
                             </a>
                         </li>
@@ -60,7 +60,7 @@
                     <ul class="nav flex-column mb-2">
                         {{#each @root.players.[1]}}
                         <li class="nav-item">
-                            <a class="nav-link{{#ifCondition id '==' ../id}} active{{/ifCondition}}" href="p{{id}}.html">
+                            <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
                             </a>
                         </li>
@@ -74,7 +74,7 @@
                     <ul class="nav flex-column mb-2">
                        {{#each @root.players.[2]}}
                         <li class="nav-item">
-                            <a class="nav-link{{#ifCondition id '==' ../id}} active{{/ifCondition}}" href="p{{id}}.html">
+                            <a class="nav-link" href="p{{id}}.html">
                                 {{name}}
                             </a>
                         </li>
