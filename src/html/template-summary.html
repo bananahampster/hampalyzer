@@ -158,7 +158,7 @@
                                     <td class="suicides">{{deaths.by_self.value}}</td>
                                     <td class="team-deaths">{{deaths.by_team.value}}</td>
                                     <td class="concs">{{#if weaponStats.concs}}{{weaponStats.concs.value}}{{else}}--{{/if}}</td>
-                                    <td class="flag-captures">{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{else}}--{{/if}}</td>
+                                    <td class="flag-captures">{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{#if ../teamStats.caps_bonus}} ({{objectives.flag_capture_bonus.value}}){{/if}}{{else}}--{{/if}}</td>
                                     <td class="flag-touches">{{#if objectives.flag_touch}}{{objectives.flag_touch.value}} ({{objectives.touches_initial.value}}){{else}}--{{/if}}</td>
                                     <td class="flag-toss-percentage">{{#if objectives.flag_touch}}{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}{{else}}--{{/if}}</td>
                                     <td class="flag-time">{{objectives.flag_time.value}}</td>
@@ -177,7 +177,7 @@
                                     <td class="suicides">{{d_self}}</td>
                                     <td class="team-deaths">{{d_team}}</td>
                                     <td class="concs">{{#if concs}}{{concs}}{{else}}--{{/if}}</td>
-                                    <td class="flag-captures">{{#if caps}}{{caps}}{{else}}--{{/if}}</td>
+                                    <td class="flag-captures">{{#if caps}}{{caps}}{{#if caps_bonus}} ({{caps_bonus}}){{/if}}{{else}}--{{/if}}</td>
                                     <td class="flag-touches">{{#if touches}}{{touches}} ({{touches_initial}}){{else}}--{{/if}}</td>
                                     <td class="flag-toss-percentage">{{#if toss_percent}}{{toss_percent}}%{{else}}--{{/if}}</td>
                                     <td class="flag-time">{{#if flag_time}}{{flag_time}}{{else}}--{{/if}}</td>
