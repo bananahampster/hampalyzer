@@ -1,12 +1,12 @@
 import express from 'express';
-import * as cors from 'cors';
+import cors from 'cors';
 import multer from 'multer';
 
 import fileParser from './fileParser.js';
 import { Parser } from './parser.js';
-import * as path from 'path';
+import path from 'path';
 
-import * as pg from 'pg';
+import pg from 'pg';
 
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
