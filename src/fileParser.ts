@@ -1,14 +1,15 @@
 import { copyFile, readFile, writeFile, mkdir } from 'fs';
 
-import * as Handlebars from 'handlebars';
-import pg = require('pg');
+import Handlebars from 'handlebars';
+import * as pg from 'pg';
 
-let path = require('path');
+import * as path from 'path';
 
-import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats } from './constants';
-import { ParsedStats } from "./parser";
-import ParserUtils from './parserUtils';
-import TemplateUtils from './templateUtils';
+import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats } from './constants.js';
+import { ParsedStats } from "./parser.js";
+import ParserUtils from './parserUtils.js';
+import TemplateUtils from './templateUtils.js';
+import FlagPaceChart from './flagPace.js';
 
 interface MatchMetadata {
     logName: string;
@@ -47,11 +48,11 @@ export default async function(
         }
 
         // depends on npm "prepare" putting template files in the right place (next to js)
-        const templateDir = path.resolve(__dirname, 'templates/');
-
-        const templateFile = path.join(templateDir, 'template-summary.html');
-        const playerTemplate = path.join(templateDir, 'template-summary-player.html');
-        const cssFile = path.join(templateDir, 'hamp2.css');
+        const templateDir = new URL('./templates/', import.meta.url);
+        const templateFile = new URL('./template-summary.html', templateDir);
+        const flagPaceTemplate = new URL('./template-flag-pace.html', templateDir);
+        const playerTemplate = new URL('./template-summary-player.html', templateDir);
+        const cssFile = new URL('./hamp2.css', templateDir);
 
         const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
         matchMeta.logName = logName;
@@ -60,13 +61,6 @@ export default async function(
 
         // ensure directory exists; create if it doesn't
         mkdir(outputDir, { mode: 0o775, recursive: true, }, err => { if (err && err.code !== "EEXIST") throw err; });
-
-        // TODO: actually fill in flagStats
-        allStats.stats[0]!.flagStats = [{
-            player: "hampisthebest",
-            how_dropped: 0,
-            timestamp: "LOLZ"
-        }];
 
         // the CSS file should stay in versioned with the output
         copyFile(cssFile, `${outputDir}/hamp2.css`, (error) => {
@@ -86,7 +80,6 @@ export default async function(
                 console.log(`saved file ${summaryOutput}`);
             });
         });
-
         // TODO: logic for generating player pages
         // * collect each player (allStats.players[team][index])
         // * for each player, collect their stats from available rounds and combine into
@@ -123,6 +116,33 @@ export default async function(
                 });
             }
         });
+
+        await readFile(flagPaceTemplate, 'utf-8', (error, source) => {
+            (async (source) => {
+                TemplateUtils.registerHelpers();
+                const template = Handlebars.compile(source);
+                
+                let flagPaceChartMarkup = "";
+                const flagPaceOutput = `${outputDir}/flag-pace.html`;
+
+                allStats.stats.forEach
+                if (allStats.stats.length > 0) {
+                    let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
+                    flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();
+                }
+
+                const html = template({
+                    ...matchMetadata,
+                    chartMarkup: flagPaceChartMarkup
+                });
+
+                writeFile(flagPaceOutput, html, err => {
+                    if (err) console.error(`failed to write output: ${err}`);
+                    console.log(`saved file ${flagPaceOutput}`);
+                });
+            })(source);
+        });
+
 
         // generate page for every player
         readFile(playerTemplate, 'utf-8', (error, source) => {
