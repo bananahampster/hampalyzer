@@ -42,8 +42,10 @@ export enum EventType {
     PlayerDetonatedBuilding, /* done (no teleporter) */
     PlayerDismantledBuilding, /* done (only sentrygun) */
     PlayerPickedUpFlag, /* TODO: will be very map-specific */
+    PlayerPickedUpBonusFlag, /* TODO: will be very map-specific */
     PlayerThrewFlag,
     PlayerCapturedFlag, /* TODO: will be very map-specific */
+    PlayerCapturedBonusFlag, /* TODO: will be very map-specific */
     PlayerGotSecurity, /* TODO: will be very map-specific */
     PlayerOpenedDetpackEntrance, /* TODO: will be very map-specific */
     PlayerHeal, /* done */

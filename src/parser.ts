@@ -440,9 +440,10 @@ export class Event {
                                     case "Blue":
                                         switch (parts[2]) {
                                             case "Flag":
-                                                if (parts[3] === "Plus") // raiden6 c2c entity pickup; skip
-                                                    break;
-                                                eventType = EventType.PlayerPickedUpFlag;
+                                                if (parts[3] === "Plus") // raiden6 c2c entity pickup
+                                                    eventType = EventType.PlayerPickedUpBonusFlag;
+                                                else
+                                                    eventType = EventType.PlayerPickedUpFlag;
                                                 break;
                                             case "Cap":
                                                 if (parts[3] === "Point") // monkey_l

@@ -92,6 +92,7 @@ export interface PlayerStats {
         touches_initial?: GenericStat<'touches_initial'>;
         flag_touch?: GenericStat<'flag_touch'>;
         flag_capture?: GenericStat<'flag_capture'>;
+        flag_capture_bonus?: GenericStat<'flag_capture_bonus'>;
         flag_time?: GenericStat<'flag_time', string>;
         toss_percent?: GenericStat<'toss_percent'>;
         button?:  GenericStat<'button'>;
@@ -156,6 +157,7 @@ export interface OffenseTeamStats extends ITeamStats {
     sg_kills: number;
     concs: number;
     caps: number;
+    caps_bonus: number;
     touches: number;
     touches_initial: number;
     toss_percent: number;
