@@ -120,7 +120,7 @@ export default class FlagPaceChart {
         const svg = body.append("svg")
             .attr("width", chartDimensions.width)
             .attr("height", chartDimensions.height)
-            .attr("viewBox", `"0", "0", ${chartDimensions.width}, ${chartDimensions.height}`)
+            .attr("viewBox", `0, 0, ${chartDimensions.width}, ${chartDimensions.height}`)
             .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
 
         svg.append("g")
