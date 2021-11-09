@@ -939,6 +939,7 @@ export default class ParserUtils {
             d_team: offenseTeams[0].d_team - offenseTeams[1].d_team,
             concs: offenseTeams[0].concs - offenseTeams[1].concs,
             caps: offenseTeams[0].caps - offenseTeams[1].caps,
+            caps_bonus: offenseTeams[0].caps_bonus - offenseTeams[1].caps_bonus,
             touches: offenseTeams[0].touches - offenseTeams[1].touches,
             touches_initial: offenseTeams[0].touches_initial - offenseTeams[1].touches_initial,
             toss_percent: offenseTeams[0].toss_percent - offenseTeams[1].toss_percent,

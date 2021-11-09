@@ -50,7 +50,6 @@ export default async function(
         // depends on npm "prepare" putting template files in the right place (next to js)
         const templateDir = new URL('./templates/', import.meta.url);
         const templateFile = new URL('./template-summary.html', templateDir);
-        const flagPaceTemplate = new URL('./template-flag-pace.html', templateDir);
         const playerTemplate = new URL('./template-summary-player.html', templateDir);
         const cssFile = new URL('./hamp2.css', templateDir);
 
@@ -68,17 +67,30 @@ export default async function(
             console.log(`copied CSS file`);
         });
 
-        readFile(templateFile, 'utf-8', (error, source) => {
-            TemplateUtils.registerHelpers();
-            const template = Handlebars.compile(source);
-            const html = template(allStats);
+        await readFile(templateFile, 'utf-8', (error, source) => {
+            (async (source) => {
+                TemplateUtils.registerHelpers();
+                const template = Handlebars.compile(source);
+                
+                let flagPaceChartMarkup = "";
+                const summaryOutput = `${outputDir}/index.html`;
 
-            const summaryOutput = `${outputDir}/index.html`;
+                allStats.stats.forEach
+                if (allStats.stats.length > 0) {
+                    let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
+                    flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();
+                }
 
-            writeFile(summaryOutput, html, err => {
-                if (err) console.error(`failed to write output: ${err}`);
-                console.log(`saved file ${summaryOutput}`);
-            });
+                const html = template({
+                    ...allStats,
+                    chartMarkup: flagPaceChartMarkup
+                });
+
+                writeFile(summaryOutput, html, err => {
+                    if (err) console.error(`failed to write output: ${err}`);
+                    console.log(`saved file ${summaryOutput}`);
+                });
+            })(source);
         });
         // TODO: logic for generating player pages
         // * collect each player (allStats.players[team][index])
@@ -116,33 +128,6 @@ export default async function(
                 });
             }
         });
-
-        await readFile(flagPaceTemplate, 'utf-8', (error, source) => {
-            (async (source) => {
-                TemplateUtils.registerHelpers();
-                const template = Handlebars.compile(source);
-                
-                let flagPaceChartMarkup = "";
-                const flagPaceOutput = `${outputDir}/flag-pace.html`;
-
-                allStats.stats.forEach
-                if (allStats.stats.length > 0) {
-                    let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
-                    flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();
-                }
-
-                const html = template({
-                    ...matchMetadata,
-                    chartMarkup: flagPaceChartMarkup
-                });
-
-                writeFile(flagPaceOutput, html, err => {
-                    if (err) console.error(`failed to write output: ${err}`);
-                    console.log(`saved file ${flagPaceOutput}`);
-                });
-            })(source);
-        });
-
 
         // generate page for every player
         readFile(playerTemplate, 'utf-8', (error, source) => {
