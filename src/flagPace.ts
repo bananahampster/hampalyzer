@@ -73,7 +73,7 @@ export default class FlagPaceChart {
         const strokeLinejoin = "round";
         const strokeWidth = 5;
         const strokeOpacity = 1;
-        const curve = d3.curveStep;
+        const curve = d3.curveStepAfter;
         const mixBlendMode = "lighten";
 
         const chartDimensions = {
