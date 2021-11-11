@@ -1,3 +1,9 @@
+
+html {
+    --navbar-height: 48px;
+    scroll-padding-top: var(--navbar-height);
+}
+
 body {
     font-size: .875rem;
     --team-a-color: rgba(175, 141, 195, 0.65);
@@ -10,7 +16,7 @@ body {
     bottom: 0;
     left: 0;
     z-index: 100; /* behind navbar */
-    padding: 48px 0 0; /* navbar height */
+    padding: var(--navbar-height) 0 0; /* navbar height */
     box-shadow: inset -1px 0 0 rgba(222, 226, 230, 0.65);
 
     color: #e6e6e6;
@@ -19,7 +25,7 @@ body {
 .sidebar-sticky {
     position: relative;
     top: 0;
-    height: calc(100vh - 48px);
+    height: calc(100vh - var(--navbar-height));
     padding-top: .5rem;
     overflow-x: hidden;
     overflow-y: auto;
