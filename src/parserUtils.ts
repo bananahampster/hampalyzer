@@ -112,6 +112,71 @@ export default class ParserUtils {
         return teamComp;
     }
 
+    // assuming just teams 1 + 2
+    public static setGameAwards(teamComp: TeamComposition<OutputPlayer>, stats: (OutputStats | undefined)[]): void {
+        let mvpPoints: { [player_key: string]: number } = {};
+
+        [1, 2].forEach(team => {
+            for (const player of teamComp[team])
+                mvpPoints[player.id] = 0;
+        });
+
+        for (const roundStats of stats) {
+            [1, 2].forEach(teamID => {
+                if (!roundStats) return;
+
+                const team: TeamOutputStatsDetailed = roundStats.teams[teamID];
+                for (const player of team.players) {
+                    let points = 0;
+                    if (player.kills.kill)
+                        points += 0.7 * player.kills.kill.value;
+                    if (player.kills.sg)
+                        points += 2.8 * player.kills.sg.value;
+                    if (player.objectives?.flag_touch)
+                        points += 1.4 * player.objectives.flag_touch.value;
+                    if (player.objectives?.touches_initial)
+                        points += 2.2 * player.objectives.touches_initial.value;
+                    if (player.kills.teamkill)
+                        points -= player.kills.teamkill.value;
+                    if (player.objectives?.flag_capture_bonus)
+                        points += 5 * player.objectives.flag_capture_bonus.value;
+
+                    // :-*
+                    if (player.id === "5622")
+                        points /= 2;
+
+                    if (mvpPoints[player.id] != null)
+                        mvpPoints[player.id] += points;
+                }
+            });
+        }
+
+        // who has the most points?
+        let topPlayer: string = '';
+        let topScore = 0;
+        for (const player of Object.keys(mvpPoints)) {
+            const playerPoints = mvpPoints[player];
+            if (playerPoints > topScore) {
+                topPlayer = player;
+                topScore = playerPoints;
+            }
+        }
+
+        for (const roundStats of stats) {
+            [1, 2].forEach(teamID => {
+                if (!roundStats) return;
+
+                const team: TeamOutputStatsDetailed = roundStats.teams[teamID];
+                for (const player of team.players) {
+                    if (player.id === topPlayer) {
+                        player.is_mvp = true;
+                        break;
+                    }
+                }
+            });
+        }
+    }
+
     public static teamCompToOutput(teamComp: TeamComposition): TeamComposition<OutputPlayer> {
         return {
             '1': teamComp[1]?.map(player => player.dumpOutput()),
@@ -999,7 +1064,7 @@ export default class ParserUtils {
                 bonusActive = false;
                 return [null, undefined];
             }
-            
+
             if ((eventType === EventType.PlayerCapturedFlag || eventType === EventType.PlayerPickedUpFlag)
                 && !this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
                 // this is a flag event associated with the other team; ignore it

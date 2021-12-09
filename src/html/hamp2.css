@@ -209,6 +209,10 @@ table tr.total {
     --padding-between-sections: 15px;
 }
 
+.stats span.mvp {
+    color: yellow;
+}
+
 .stats td:first-child, .stats th:first-child,
 .stats td:nth-child(2), .stats th:nth-child(2) {
     text-align: left;

@@ -38,6 +38,9 @@ export class Parser {
                     teamComp = ParserUtils.generateTeamComposition(this.rounds) || teamComp;
                 }
 
+                // calculate game-wide rankings (like MVP?); this'll side-effect stats
+                ParserUtils.setGameAwards(teamComp, stats);
+
                 return <ParsedStats> {
                     players: teamComp,
                     stats,
