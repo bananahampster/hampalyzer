@@ -74,6 +74,7 @@ export interface PlayerOutputStatsRound extends OutputPlayer, PlayerStats {
     classes: ClassTime[];
     roles: string;
     round_number: number; // optional; 1-indexed
+    is_mvp?: boolean;
 }
 
 export interface PlayerStats {
