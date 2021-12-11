@@ -141,10 +141,6 @@ export default class ParserUtils {
                     if (player.objectives?.flag_capture_bonus)
                         points += 5 * player.objectives.flag_capture_bonus.value;
 
-                    // :-*
-                    if (player.id === "5622")
-                        points /= 2;
-
                     if (mvpPoints[player.id] != null)
                         mvpPoints[player.id] += points;
                 }
