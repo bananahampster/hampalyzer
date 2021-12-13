@@ -49,7 +49,7 @@ export enum EventType {
     PlayerGotSecurity, /* TODO: will be very map-specific */
     PlayerOpenedDetpackEntrance, /* TODO: will be very map-specific */
     PlayerHeal, /* done */
-    FlagReturn, /* done, not verified */
+    FlagReturn, /* done */
     SecurityUp, /* done */
     TeamScore, /* done */
     MetaModMessages,

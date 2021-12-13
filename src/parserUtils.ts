@@ -1044,6 +1044,7 @@ export default class ParserUtils {
             flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
         flagSequence.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
 
+        const thisPlayerTeam = ParserUtils.getTeamForPlayer(thisPlayer, teams);
         // accumulator is [boolean, Event], where
         // * boolean is flag state: null = relay, false = dropped, true = carried
         // * Event is the event from the flag pickup; unset if not carried by this player
@@ -1056,13 +1057,12 @@ export default class ParserUtils {
             const eventType = thisEvent.eventType;
 
             // if the flag returned, set state to null
-            if (eventType === EventType.FlagReturn) {
+            if (eventType === EventType.FlagReturn && (!thisEvent.data || (thisEvent.data.team == thisPlayerTeam))) {
                 bonusActive = false;
                 return [null, undefined];
             }
 
-            if ((eventType === EventType.PlayerCapturedFlag || eventType === EventType.PlayerPickedUpFlag)
-                && !this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
+            if (!this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
                 // this is a flag event associated with the other team; ignore it
                 return flagStatus;
             }
