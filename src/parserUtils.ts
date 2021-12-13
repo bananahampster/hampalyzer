@@ -1056,10 +1056,18 @@ export default class ParserUtils {
 
             const eventType = thisEvent.eventType;
 
-            // if the flag returned, set state to null
-            if (eventType === EventType.FlagReturn && (!thisEvent.data || (thisEvent.data.team == thisPlayerTeam))) {
-                bonusActive = false;
-                return [null, undefined];
+            if (eventType === EventType.FlagReturn) {
+                // TODO: if there are more than two color teams, any flag return will be treated identically;
+                // more state would need to be tracked about the state of each individual flag to handle it.
+                if (!thisEvent.data || (thisEvent.data.team != thisPlayerTeam)) {
+                    // if the flag returned, set state to null
+                    bonusActive = false;
+                    return [null, undefined];
+                }
+                else {
+                    // this player's team flag returned (not the one they're trying to capture); ignore it
+                    return flagStatus;
+                }
             }
 
             if (!this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {

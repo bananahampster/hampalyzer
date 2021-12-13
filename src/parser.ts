@@ -625,8 +625,10 @@ export class Event {
                                 break;
                             case "Red":
                             case "Blue":
-                                if (parts.slice(3).join(' ') === "Flag Returned Message")
+                                if (parts.slice(3).join(' ') === "Flag Returned Message") {
                                     eventType = EventType.FlagReturn;
+                                    data.team = Event.parseTeam(parts[2]);
+                                }
                                 else
                                     console.log('unknown World "Red/Blue ..." trigger: ' + lineData);
                                 break;
