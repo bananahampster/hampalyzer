@@ -30,7 +30,7 @@ class App {
     private pool: pg.Pool;
     private readonly PAGE_SIZE: number = 20;
 
-    constructor(private webserverRoot = "", private outputRoot = "parsedlogs") {
+    constructor(private webserverRoot = "", private outputRoot = "parsedlogs", reparse = false) {
         this.express = express();
         this.mountRoutes();
 
@@ -42,6 +42,14 @@ class App {
             database: 'hampalyzer',
             port: 5432,
         });
+    }
+
+    public async reparseAllLogs(): Promise<void> {
+        const success = await this.reparseLogs();
+        if (!success) {
+            console.error("failed to reprase all logs; there may be a corresponding error above.");
+            return process.exit(-10);
+        }
     }
 
     private mountRoutes(): void {
@@ -115,29 +123,33 @@ class App {
      * Fails if any previous log fails to parse.
      **/
     private async reparseLogs(): Promise<boolean> {
-        const allPromises: Promise<string | undefined>[] = [];
-        this.pool.query(
-            'SELECT * FROM logs WHERE id > 42', // before 42, wrong log filenames
-            (error, result) => {
-                if (error) {
-                    console.error("crtical error: failed to connect to DB to reparse logs: " + error.message);
+        let result;
+        try {
+            result = await this.pool.query('SELECT log_file1, log_file2 FROM logs WHERE id > 42'); // before 42, wrong log filenames
+            // for (const game of result.rows) {
+            for (let i = 0, len = result.rows.length; i < len; i++) {
+                const game = result.rows[i];
+
+                const filenames: string[] = [];
+                filenames.push(game.log_file1);
+                if (game.log_file2 != null && game.log_file2 != "") {
+                    filenames.push(game.log_file2);
                 }
 
-                for (const game of result.rows) {
-                    const filenames: string[] = [];
-                    filenames.push(game.log_file1);
-                    if (game.log_file2 != null && game.log_file2 != "") {
-                        filenames.push(game.log_file2);
-                    }
+                console.warn(`${i} / ${len} (${Math.round(i / len * 1000) / 10}%) reparsing: ${filenames.join(" +  ")}`);
 
-                    allPromises.push(this.parseLogs(filenames, true /* reparse */));
+                const parsedLog = await this.parseLogs(filenames, true /* reparse */);
+                if (!parsedLog) {
+                    console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
+                    return false;
                 }
             }
-        );
+        } catch (error: any) {
+            console.error("crtical error: failed to connect to DB to reparse logs: " + error?.message);
+        }
 
-        // ensure that all passed
-        const results = await Promise.all(allPromises);
-        return !results.some(result => result == null);
+        // at least some logs must have been reparsed
+        return result && result.rows.length !== 0;
     }
 
     private parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {

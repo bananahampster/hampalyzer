@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 // example of invocating a webserver/API
 
 // either call to start a server or parse a log or two
-// node index.js server [outputDir="parsedLogs"] [webserverRoot=""]
+// node index.js server [outputDir="parsedLogs"] [webserverRoot=""] [--reparse]
 // node index.js [logFile1.log [logFile2.log]]
 
 const programArgs = process.argv.slice(2);
@@ -23,14 +23,21 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
     if (programArgs[2])
         webserverRoot = programArgs[2];
 
+    let reparse = programArgs[3].toLocaleLowerCase() === '--reparse';
+
     const outputDir = path.join(programArgs[2] || "", outputRoot);
     if (!existsSync(outputDir))
         throw `unable to bind to output directory: ${outputDir}`;
 
-    const app = new App(webserverRoot, outputRoot).express;
+    const appClass = new App(webserverRoot, outputRoot);
+    const app = appClass.express;
 
-    app.listen(port, err => {
+    app.listen(port, async err => {
         if (err) return console.log(err);
+
+        if (reparse)
+            await appClass.reparseAllLogs();
+
         return console.log(`server is listening on ${port}.`);
     });
 }

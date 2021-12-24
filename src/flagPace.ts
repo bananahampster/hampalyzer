@@ -14,7 +14,7 @@ export default class FlagPaceChart {
     {
         this.data = FlagPaceChart.flagCapsToScoreUpdates(roundsScoringActivity);
     }
-    
+
     private static flagCapsToScoreUpdates(roundsScoringActivity: ScoringActivity[]): ScoreUpdate[] {
         let scoreUpdates: ScoreUpdate[] = [];
 
@@ -52,12 +52,17 @@ export default class FlagPaceChart {
         });
         return scoreUpdates;
     }
-    
-    public async getSvgMarkup() {
+
+    public async getSvgMarkup(): Promise<string> {
         // Copyright 2021 Observable, Inc.
         // Released under the ISC license.
         // https://observablehq.com/@d3/multi-line-chart
         // https://observablehq.com/@d3/inline-labels
+
+        // hamp: it's possible to not have any flag movements when you get to the point: abort if so
+        if (this.data == null || this.data.length === 0)
+            return "";
+
         const document = new jsdom.JSDOM().window.document;
 
         const d3 = await import("d3");
@@ -108,7 +113,7 @@ export default class FlagPaceChart {
                 return "";
              });
         const yAxis = d3.axisLeft(yScale).ticks(chartDimensions.height / 60);
-        
+
         const line = d3.line<any>()
             .defined((i) => D[i])
             .curve(curve)

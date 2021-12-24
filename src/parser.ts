@@ -513,6 +513,30 @@ export class Event {
                                     case "Team 3 dropoff":
                                     case "Team 4 dropoff":
                                         eventType = EventType.PlayerCapturedFlag;
+                                    case "Flag1": // asti_r flags
+                                    case "Flag2":
+                                    case "Flag3":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        break;
+                                    case "Capture":
+                                        if (nonPlayerDataParts[2] = "Point")
+                                            eventType = EventType.PlayerCapturedFlag;
+                                        else
+                                            console.error("unknown player trigger Capture: " + lineData);
+                                        break;
+                                    case "Team":
+                                        if (nonPlayerDataParts.length !== 4) {
+                                            console.error('unknown player trigger Team: ' + lineData);
+                                            break;
+                                        }
+
+                                        switch (nonPlayerDataParts[3]) {
+                                            case 'dropoff':
+                                                eventType = EventType.PlayerCapturedFlag;
+                                                break;
+                                            default:
+                                                console.error('unknown player trigger Team (len 3): ' + lineData);
+                                        }
                                         break;
                                     case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
                                     case "t2df":
