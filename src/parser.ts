@@ -230,7 +230,7 @@ export class Event {
             let lineQuoteRE = /(?<=\")[^\"]*(?=\")|[^\" ]+/ig;
 
             // try to match player names
-            let playerRE = /"([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[a-z]*>"/ig
+            let playerRE = /"([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[_#0-9a-z]*>"/ig
             const lineDataParts = lineData.split(playerRE);
 
             // short-circuit HLTV/Metamod for now (TODO)
@@ -328,6 +328,9 @@ export class Event {
                             } else if (eventTextParts[1] === `"Medic_Doused_Fire"`) {
                                 eventType = EventType.PlayerDousedFire;
 
+                            } else if (eventTextParts[1] === `"Medic_Cured_Hallucinations"`) {
+                                eventType = EventType.PlayerCuredHallucinations;
+
                             } else {
                                 console.log("unknown 'triggered' event: " + line);
                                 throw ""; // TODO
@@ -404,6 +407,7 @@ export class Event {
                                         eventType = EventType.PlayerBuiltDispenser;
                                         break;
                                     case "Teleporter_Entrace_Finished":
+                                    case "Teleporter_Entrance_Finished":
                                     case "Teleporter_Exit_Finished":
                                         eventType = EventType.PlayerBuiltTeleporter;
                                         data.building = Event.parseWeapon(parts[1]);
@@ -714,13 +718,16 @@ export class Event {
         }
     }
 
+    // TODO: should make this try to guess teams; apparently maps like baconbowl can customize these
     public static parseTeam(team: string): TeamColor {
         team = team.trim().toLowerCase();
 
         switch (team) {
             case "blue":
+            case "dustbowl_team1": // baconbowl
                 return TeamColor.Blue;
             case "red":
+            case "dustbowl_team2": // baconbowl
                 return TeamColor.Red;
             case "yellow":
                 return TeamColor.Yellow;
@@ -837,6 +844,8 @@ export class Event {
             case "trigger_hurt world": // TODO: this could be a trigger at the bottom of a pit (shutdown) or world (orbit), how can we distinguish with fall damage?
             case "the red team's lasers world": // orbit_l3
             case "the blue team's lasers world": // orbit_l3
+            case "env_beam world": // stormz2
+            case "rock_laser_kill world": // baconbowl
                 return Weapon.Lasers;
             case "train":
             case "train world":

@@ -49,7 +49,11 @@ else {
         // logs = ['logs/L0102102.log', 'logs/L0102104.log'];
         // logs = ['logs/1619406938938-L0425095.log', 'logs/1619406938938-L0425099.log']
         // logs = ['logs/JXt9zAen.log', 'logs/GJWd8vi5.log'];
-        logs = ['logs/1629607551662-L0821092.log', 'logs/1629607551665-L0821093.log'];
+        // logs = ['logs/1629607551662-L0821092.log', 'logs/1629607551665-L0821093.log'];
+        // logs = ['logs/1640841656584-L1230036.log', 'logs/1640841656591-L1230037.log']; // stormz2
+        // logs = ['logs/hellotnsbaconbowlr1.log', 'logs/hellotnsbaconbowlr2.log']; // baconbowl
+        // logs = ['logs/hellothxtorch2r1.log', 'logs/hellothxtorch2r2.log']; // torch2
+        logs = ['logs/schtopr1.log', 'logs/schtopr2.log']; // incomplete
 
     console.log(`parsing logs ${logs.join(" and ")} ...`);
 

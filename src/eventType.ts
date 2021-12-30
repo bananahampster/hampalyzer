@@ -57,6 +57,7 @@ export enum EventType {
     PlayerCuredInfection,
     PlayerRevealedSpy,
     PlayerDousedFire,
+    PlayerCuredHallucinations,
 };
 
 export default EventType;
