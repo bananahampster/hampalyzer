@@ -1,9 +1,7 @@
-import { copyFile, readFile, writeFile, mkdir } from 'fs';
+import { copyFile, readFileSync, writeFile, mkdir } from 'fs';
 
 import Handlebars from 'handlebars';
 import * as pg from 'pg';
-
-import * as path from 'path';
 
 import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats } from './constants.js';
 import { ParsedStats } from "./parser.js";
@@ -21,10 +19,15 @@ interface MatchMetadata {
     num_players: number | undefined;
 }
 
+export interface HampalyzerTemplates {
+    summary: HandlebarsTemplateDelegate<any>;
+    player: HandlebarsTemplateDelegate<any>;
+}
 
 export default async function(
     allStats: ParsedStats | undefined,
     outputRoot: string = 'parsedlogs',
+    templates?: HampalyzerTemplates,
     pool?: pg.Pool,
     reparse?: boolean,
     ): Promise<string | undefined> {
@@ -40,18 +43,27 @@ export default async function(
             num_players: (allStats.players[1]?.length ?? 0) + (allStats.players[2]?.length ?? 0)
         };
 
+        // depends on npm "prepare" putting template files in the right place (next to js)
+        const templateDir = new URL('./templates/', import.meta.url);
+        const templateFile = new URL('./template-summary.html', templateDir);
+        const playerTemplate = new URL('./template-summary-player.html', templateDir);
+        const cssFile = new URL('./hamp2.css', templateDir);
+
+        // if no pre-parsed templates were provided, get them from well-known places and compile
+        if (!templates) {
+            TemplateUtils.registerHelpers();
+            templates = {
+                summary: Handlebars.compile(readFileSync(templateFile, 'utf-8')),
+                player:  Handlebars.compile(readFileSync(playerTemplate, 'utf-8')),
+            }
+        }
+
         // check for duplicate match; just return that URL if so
         if (!reparse) {
             const isDuplicate = await checkHasDuplicate(pool, matchMeta);
             console.log('isDuplicate', isDuplicate);
             if (isDuplicate) return `${outputRoot}/${matchMeta.logName}`;
         }
-
-        // depends on npm "prepare" putting template files in the right place (next to js)
-        const templateDir = new URL('./templates/', import.meta.url);
-        const templateFile = new URL('./template-summary.html', templateDir);
-        const playerTemplate = new URL('./template-summary-player.html', templateDir);
-        const cssFile = new URL('./hamp2.css', templateDir);
 
         const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
         matchMeta.logName = logName;
@@ -67,30 +79,25 @@ export default async function(
             console.log(`copied CSS file`);
         });
 
-        await readFile(templateFile, 'utf-8', (error, source) => {
-            (async (source) => {
-                TemplateUtils.registerHelpers();
-                const template = Handlebars.compile(source);
+        // generate the summary output
+        let flagPaceChartMarkup = "";
+        const summaryOutput = `${outputDir}/index.html`;
 
-                let flagPaceChartMarkup = "";
-                const summaryOutput = `${outputDir}/index.html`;
+        if (allStats.stats.length > 0) {
+            let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
+            flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();
+        }
 
-                if (allStats.stats.length > 0) {
-                    let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
-                    flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();
-                }
-
-                const html = template({
-                    ...allStats,
-                    chartMarkup: flagPaceChartMarkup
-                });
-
-                writeFile(summaryOutput, html, err => {
-                    if (err) console.error(`failed to write output: ${err}`);
-                    console.log(`saved file ${summaryOutput}`);
-                });
-            })(source);
+        const html = templates.summary({
+            ...allStats,
+            chartMarkup: flagPaceChartMarkup
         });
+
+        writeFile(summaryOutput, html, err => {
+            if (err) console.error(`failed to write output: ${err}`);
+            console.log(`saved file ${summaryOutput}`);
+        });
+
         // TODO: logic for generating player pages
         // * collect each player (allStats.players[team][index])
         // * for each player, collect their stats from available rounds and combine into
@@ -130,20 +137,15 @@ export default async function(
         });
 
         // generate page for every player
-        readFile(playerTemplate, 'utf-8', (error, source) => {
-            TemplateUtils.registerHelpers();
-            const playerHtml = Handlebars.compile(source);
+        for (const playerStats of playersStats) {
+            const html = templates.player(playerStats);
+            const playerOutput = `${outputDir}/p${playerStats.id}.html`;
 
-            for (const playerStats of playersStats) {
-                const html = playerHtml(playerStats);
-                const playerOutput = `${outputDir}/p${playerStats.id}.html`;
-
-                writeFile(playerOutput, html, err => {
-                    if (err) console.error(`failed to write output: ${err}`);
-                    console.log(`saved file ${playerOutput}`);
-                });
-            }
-        });
+            writeFile(playerOutput, html, err => {
+                if (err) console.error(`failed to write output: ${err}`);
+                console.log(`saved file ${playerOutput}`);
+            });
+        }
 
         // skip publishing to DB if this is a reparsed log
         let dbSuccess = false;
@@ -208,7 +210,6 @@ async function getLogName(pool: pg.Pool | undefined, parse_name: string, reparse
 }
 
 async function recordLog(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {
-
     if (!pool) return true;
 
     return new Promise(function(resolve, reject) {

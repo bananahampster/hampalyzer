@@ -1,12 +1,15 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
+import Handlebars from 'handlebars';
 import multer from 'multer';
+import pg from 'pg';
 
-import fileParser from './fileParser.js';
-import { Parser } from './parser.js';
+import { readFileSync } from 'fs';
 import path from 'path';
 
-import pg from 'pg';
+import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
+import { Parser } from './parser.js';
+import TemplateUtils from './templateUtils.js';
 
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
@@ -28,6 +31,7 @@ let upload = multer({
 class App {
     public express: express.Express;
     private pool: pg.Pool;
+    private templates: HampalyzerTemplates;
     private readonly PAGE_SIZE: number = 20;
 
     constructor(private webserverRoot = "", private outputRoot = "parsedlogs", reparse = false) {
@@ -42,6 +46,17 @@ class App {
             database: 'hampalyzer',
             port: 5432,
         });
+
+        // initialize the handlebars templates to be used globally
+        const templateDir = new URL('./templates/', import.meta.url);
+        const templateFile = new URL('./template-summary.html', templateDir);
+        const playerTemplate = new URL('./template-summary-player.html', templateDir);
+
+        TemplateUtils.registerHelpers();
+        this.templates = {
+            summary: Handlebars.compile(readFileSync(templateFile, 'utf-8')),
+            player:  Handlebars.compile(readFileSync(playerTemplate, 'utf-8')),
+        };
     }
 
     public async reparseAllLogs(): Promise<void> {
@@ -136,7 +151,7 @@ class App {
                     filenames.push(game.log_file2);
                 }
 
-                console.warn(`${i} / ${len} (${Math.round(i / len * 1000) / 10}%) reparsing: ${filenames.join(" +  ")}`);
+                console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" +  ")}`);
 
                 const parsedLog = await this.parseLogs(filenames, true /* reparse */);
                 if (!parsedLog) {
@@ -153,10 +168,10 @@ class App {
     }
 
     private parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
-        let parser = new Parser(...filenames)
+        const parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.pool, reparse));
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse));
     }
 }
 
