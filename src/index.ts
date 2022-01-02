@@ -53,7 +53,8 @@ else {
         // logs = ['logs/1640841656584-L1230036.log', 'logs/1640841656591-L1230037.log']; // stormz2
         // logs = ['logs/hellotnsbaconbowlr1.log', 'logs/hellotnsbaconbowlr2.log']; // baconbowl
         // logs = ['logs/hellothxtorch2r1.log', 'logs/hellothxtorch2r2.log']; // torch2
-        logs = ['logs/schtopr1.log', 'logs/schtopr2.log']; // incomplete
+        // logs = ['logs/schtopr1.log', 'logs/schtopr2.log']; // incomplete
+        logs = ['logs/1641109721918-L0102072.log', 'logs/1641109721922-L0102073.log']; // siden
 
     console.log(`parsing logs ${logs.join(" and ")} ...`);
 
