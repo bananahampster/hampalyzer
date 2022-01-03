@@ -298,6 +298,10 @@ export class Event {
                                 eventType = EventType.PlayerRepairedBuilding;
                                 data.building = Event.parseWeapon("sentrygun");
 
+                            } else if (eventTextParts[1] === `"Teleporter_Entrance_Repaired"` || eventTextParts[1] === `"Teleporter_Exit_Repaired"`) {
+                                eventType = EventType.PlayerRepairedBuilding;
+                                data.building = Event.parseWeapon("teleporter");
+
                             } else if (eventTextParts[1] === `"Detpack_Disarmed"`) {
                                 eventType = EventType.PlayerDetpackDisarm;
 
