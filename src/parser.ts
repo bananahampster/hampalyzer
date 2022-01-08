@@ -670,7 +670,7 @@ export class Event {
                 }
             }
             catch (error) {
-                console.error('Failed to parse line: ' + lineData);
+                console.error(`\n\nFailed to parse line number ${lineNumber}: ${lineData}`);
                 throw error;
             }
 
