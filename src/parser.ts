@@ -805,6 +805,7 @@ export class Event {
                 return Weapon.BuildingDispenser;
             case "building_sentrygun":
             case "sentrygun":
+            case "sentrygun world":
                 return Weapon.BuildingSentryGun;
             case "building_teleporter":
             case "teleporter":

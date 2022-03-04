@@ -7,3 +7,5 @@ parsedlogs/
 !parsedlogs/assets/
 uploads/
 secrets.txt
+backup/
+*.heapsnapshot
