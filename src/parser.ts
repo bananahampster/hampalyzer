@@ -564,6 +564,31 @@ export class Event {
                                         default:
                                             console.error(`unknown player trigger: ${parts[1]}: ${eventText}`);
                                     }
+                                    case 'damage': {
+                                        // Damage summary from the custom server plugin.
+                                        let damageSummaryRE = /^\[SUMMARY\] "([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[_#0-9a-z]*>" damage summary: enemy - ([0-9]+), team - ([0-9]+)/ig
+                                        const lineDataParts = lineData.split(damageSummaryRE);
+
+                                        if (lineDataParts.length >= 4) {
+                                            const playerName = lineDataParts[1];
+                                            const playerID = -1; // No playerID in current format.
+                                            const playerSteamID = lineDataParts[3];
+
+                                            playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
+
+                                            if (!playerFrom) {
+                                                console.error("Damage summary for non-existent player.");
+                                                throw "";
+                                            }
+                                            eventType = EventType.PlayerDamageSummary;
+                                            data.value =  lineDataParts[4]; // enemy damage
+                                            data.secondaryValue = lineDataParts[5]; // team damage
+                                            break;
+                                        }
+                                        else {
+                                            console.error("Invalid player damage summary");
+                                        }
+                                    }
                                     break;
 
                             }
@@ -666,34 +691,6 @@ export class Event {
                             data.team = Event.parseTeam(parts[1])
                             data.value = parts[3];
                             break;
-                        case "Damage":
-                            // Ignore output from custom server plugin that records damage throughout the log.
-                            return;
-                        case "SUMMARY":
-                            // Damage summary from the custom server plugin.
-                            let damageSummaryRE = /^\[SUMMARY\] "([^"]*)<STEAM_([0-9:]+)><[_#0-9a-z]*>" damage summary: enemy - ([0-9]+), team - ([0-9]+)/ig
-                            const lineDataParts = lineData.split(damageSummaryRE);
-
-                            if (lineDataParts.length >= 4) {
-                                const playerName = lineDataParts[1];
-                                const playerID = -1; // No playerID in current format.
-                                const playerSteamID = lineDataParts[2];
-
-                                playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
-
-                                if (!playerFrom) {
-                                    console.error("Damage summary for non-existent player.");
-                                    throw "";
-                                }
-                                eventType = EventType.PlayerDamageSummary;
-                                data.value =  lineDataParts[3]; // enemy damage
-                                data.secondaryValue = lineDataParts[4]; // team damage
-                                break;
-                            }
-                            else {
-                                console.error("Invalid player damage summary");
-                                throw "";
-                            }
                         default:
                             console.error('unknown non-player log message: ' + lineData);
                     }
