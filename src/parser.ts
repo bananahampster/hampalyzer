@@ -674,8 +674,6 @@ export class Event {
                             let damageSummaryRE = /^\[SUMMARY\] "([^"]*)<STEAM_([0-9:]+)><[_#0-9a-z]*>" damage summary: enemy - ([0-9]+), team - ([0-9]+)/ig
                             const lineDataParts = lineData.split(damageSummaryRE);
 
-                            // Wrap in a try/catch so we can log the line number for a failed parse.
-                            // if there is a player match, we'll have multiple parts
                             if (lineDataParts.length >= 4) {
                                 const playerName = lineDataParts[1];
                                 const playerID = -1; // No playerID in current format.

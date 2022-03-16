@@ -220,6 +220,7 @@ table tr.total {
 
 /** tks */
 .stats td.team-kills, .stats th.team-kills,
+.stats td.damage-team, .stats th.damage-team,
 .stats td.suicides, .stats th.suicides,
 .stats td.team-deaths, .stats th.team-deaths {
     color: rgb(255, 125, 138);
@@ -227,7 +228,8 @@ table tr.total {
 }
 
 /** minus sign prepend */
-.stats td.team-kills::before, .stats th.team-kills::before {
+.stats td.team-kills::before, .stats th.team-kills::before,
+.stats td.damage-team::before, .stats th.damage-team::before {
     content: "\2212";
 }
 
