@@ -570,16 +570,6 @@ export class Event {
                                         const lineDataParts = lineData.split(damageSummaryRE);
 
                                         if (lineDataParts.length >= 4) {
-                                            const playerName = lineDataParts[1];
-                                            const playerID = -1; // No playerID in current format.
-                                            const playerSteamID = lineDataParts[3];
-
-                                            playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
-
-                                            if (!playerFrom) {
-                                                console.error("Damage summary for non-existent player.");
-                                                throw "";
-                                            }
                                             eventType = EventType.PlayerDamageSummary;
                                             data.value =  lineDataParts[4]; // enemy damage
                                             data.secondaryValue = lineDataParts[5]; // team damage
