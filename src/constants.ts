@@ -14,6 +14,7 @@ export interface OutputStats {
     score: TeamScore;
     teams: TeamsOutputStatsDetailed;
     scoring_activity?: ScoringActivity;
+    damage_stats_exist: boolean;
 }
 
 // expected to be ordered by timestamp ascending
@@ -150,6 +151,8 @@ export interface ITeamStats {
     d_enemy: number;
     d_self: number;
     d_team: number;
+    damage_enemy: number;
+    damage_team: number;
 }
 
 export interface OffenseTeamStats extends ITeamStats {

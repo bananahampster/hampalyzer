@@ -248,6 +248,7 @@ table tr.total {
 
 .stats td.roles, .stats th.roles,
 td.sentry-kills, th.sentry-kills,
+td.damage-team, th.damage-team,
 td.team-deaths, th.team-deaths,
 .summary td.team, .summary th.team,
 .summary-defense td.conc-kills, .summary-defense th.conc-kills {

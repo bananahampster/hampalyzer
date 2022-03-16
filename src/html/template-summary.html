@@ -133,6 +133,8 @@
                                         <th class="team-kills"><abbr title="Team-Kills">TK</abbr></th>
                                         <th class="conc-kills"><abbr title="Conc-Kills">CK</abbr></th>
                                         <th class="sentry-kills"><abbr title="Sentry Gun Kills">SG</abbr></th>
+                                        {{#if damage_stats_exist}}<th class="damage-enemy"><abbr title="Enemy Damage">Dmg</abbr></th>{{/if}}
+                                        {{#if damage_stats_exist}}<th class="damage-team"><abbr title="Team Damage">TDmg</abbr></th>{{/if}}
                                         <th class="deaths">Deaths</th>
                                         <th class="suicides"><abbr title="Suicides">Sui</abbr></th>
                                         <th class="team-deaths"><abbr title="Team-Deaths">TD</abbr></th>
@@ -157,6 +159,8 @@
                                         <td class="team-kills">{{#if kills.teamkill}}{{kills.teamkill.value}}{{else}}0{{/if}}</td>
                                         <td class="conc-kills">{{#if kills.kill_while_conced}}{{kills.kill_while_conced.value}}{{else}}0{{/if}}</td>
                                         <td class="sentry-kills{{#if kills.sg}}{{else}} no-kills{{/if}}">{{#if kills.sg}}{{kills.sg.value}}{{else}}--{{/if}}</td>
+                                        {{#if ../../damage_stats_exist}}<td class="damage-enemy">{{damageStats.enemy.value}}</td>{{/if}}
+                                        {{#if ../../damage_stats_exist}}<td class="damage-team">{{damageStats.team.value}}</td>{{/if}}
                                         <td class="deaths">{{deaths.death.value}}</td>
                                         <td class="suicides">{{deaths.by_self.value}}</td>
                                         <td class="team-deaths">{{deaths.by_team.value}}</td>
@@ -176,6 +180,8 @@
                                         <td class="team-kills">{{team_kills}}</td>
                                         <td class="conc-kills">{{conc_kills}}</td>
                                         <td class="sentry-kills{{#if sg_kills}}{{else}} no-kills{{/if}}">{{#if sg_kills}}{{sg_kills}}{{/if}}</td>
+                                        {{#if ../../damage_stats_exist}}<td class="damage-enemy">{{damage_enemy}}</td>{{/if}}
+                                        {{#if ../../damage_stats_exist}}<td class="damage-team">{{damage_team}}</td>{{/if}}
                                         <td class="deaths">{{d_enemy}}</td>
                                         <td class="suicides">{{d_self}}</td>
                                         <td class="team-deaths">{{d_team}}</td>

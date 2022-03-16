@@ -357,6 +357,9 @@ export default class ParserUtils {
                     case EventType.SecurityUp:
                         // dunno what to do with this event
                         break;
+                    case EventType.PlayerDamageSummary:
+                        this.addStat(thisPlayerStats, 'damage_summary', event);
+                        break;
                     default:
                         console.log(`didn't log event id ${event.eventType} for ${thisPlayer.name}.`)
                 }
@@ -589,6 +592,16 @@ export default class ParserUtils {
         const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEndEvent.timestamp);
         const [score, flagMovements] = this.getScoreAndFlagMovements(events, teamComp);
 
+        let damageStatsExist = false;
+        for (const teamId in teams) {
+            const team = teams[teamId] as TeamOutputStatsDetailed;
+            if ((team.teamStats?.damage_enemy && team.teamStats?.damage_enemy > 0)
+                || (team.teamStats?.damage_team && team.teamStats?.damage_team > 0)) {
+                damageStatsExist = true;
+                break;
+            }
+        }
+
         return {
             parse_name,
             log_name: logfile,
@@ -603,7 +616,8 @@ export default class ParserUtils {
             scoring_activity: {
                 flag_movements: flagMovements,
                 game_time_as_seconds: matchEndEvent.gameTimeAsSeconds ? matchEndEvent.gameTimeAsSeconds : 0
-            }
+            },
+            damage_stats_exist: damageStatsExist
         };
     }
 
@@ -711,10 +725,18 @@ export default class ParserUtils {
                 this.ensureStat<string>(poStats, 'objectives', 'flag_time').value = flag_time;
                 this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
                 this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
+
                 if (playerStats['flag_capture']) {
                     // calculatePlayerFlagStats (called above) updates PlayerCapturedFlag to PlayerCapturedBonusFlag if it involved a cap with a bonus.
                     const capsWithBonus = playerStats['flag_capture'].filter(ev => ev.eventType == EventType.PlayerCapturedBonusFlag);
                     this.hydrateStat(poStats, 'objectives', 'flag_capture_bonus', capsWithBonus, "Flag captures with bonus");
+                }
+                
+                // Damage summary; only available on servers with custom mod.
+                const damageSummary = this.getPlayerDamageSummary(thisPlayer, playerStats);
+                if (damageSummary) {
+                    this.ensureStat(poStats, 'damageStats', 'enemy').value = damageSummary[0];
+                    this.ensureStat(poStats, 'damageStats', 'team').value = damageSummary[1];
                 }
 
                 teamPlayers.push(poStats);
@@ -754,6 +776,8 @@ export default class ParserUtils {
             stats.d_enemy += this.getSummarizedStat(player, 'deaths', 'death');
             stats.d_self += this.getSummarizedStat(player, 'deaths', 'by_self');
             stats.d_team += this.getSummarizedStat(player, 'deaths', 'by_team');
+            stats.damage_enemy += this.getSummarizedStat(player, 'damageStats', 'enemy');
+            stats.damage_team += this.getSummarizedStat(player, 'damageStats', 'team');
 
             switch (stats.teamRole) {
                 case TeamRole.Offense:
@@ -958,6 +982,8 @@ export default class ParserUtils {
             d_enemy: 0,
             d_self: 0,
             d_team: 0,
+            damage_enemy: 0,
+            damage_team: 0
         } as TeamStats;
 
         switch (blankStats.teamRole) {
@@ -998,6 +1024,8 @@ export default class ParserUtils {
             d_enemy: offenseTeams[0].d_enemy - offenseTeams[1].d_enemy,
             d_self: offenseTeams[0].d_self - offenseTeams[1].d_self,
             d_team: offenseTeams[0].d_team - offenseTeams[1].d_team,
+            damage_enemy: offenseTeams[0].damage_enemy - offenseTeams[1].damage_enemy,
+            damage_team: offenseTeams[0].damage_team - offenseTeams[1].damage_team,
             concs: offenseTeams[0].concs - offenseTeams[1].concs,
             caps: offenseTeams[0].caps - offenseTeams[1].caps,
             caps_bonus: offenseTeams[0].caps_bonus - offenseTeams[1].caps_bonus,
@@ -1018,6 +1046,8 @@ export default class ParserUtils {
             d_enemy: defenseTeams[1].d_enemy - defenseTeams[0].d_enemy,
             d_self: defenseTeams[1].d_self - defenseTeams[0].d_self,
             d_team: defenseTeams[1].d_team - defenseTeams[0].d_team,
+            damage_enemy: defenseTeams[1].damage_enemy - defenseTeams[0].damage_enemy,
+            damage_team: defenseTeams[1].damage_team - defenseTeams[0].damage_team,
             airshots: defenseTeams[1].airshots - defenseTeams[0].airshots,
         };
 
@@ -1138,6 +1168,17 @@ export default class ParserUtils {
         const tossPercent = flagCarries > 0 ? Math.round(flagThrows / flagCarries * 100) : 0;
 
         return [flagTime, tossPercent, initialTouches];
+    }
+
+    private static getPlayerDamageSummary(thisPlayer: Player, playerEvents: Stats): [number, number] | undefined {
+        const damage_summaries = playerEvents['damage_summary'];
+
+        // If multiple exist, use the last one.
+        if (damage_summaries && damage_summaries.length > 0) {
+            const damage_summary = damage_summaries[damage_summaries.length - 1];
+            return [Number(damage_summary.data?.value), Number(damage_summary.data?.secondaryValue)];
+        }
+        return;
     }
 
     private static calculateAndApplyPlayerClassOnAllEvents(player: Player, playerEvents: Stats, matchEnd: Date) {

@@ -342,6 +342,9 @@ export class Event {
                                     throw ""; // TODO
                                 }
                                 break;
+                            case "damaged": // For servers with custom damage stats mod.
+                                eventType = EventType.PlayerDamage;
+                                break;
                             default:
                                 console.log("Unknown multi-player event: " + line);
                                 throw ""; // TODO
@@ -572,7 +575,6 @@ export class Event {
                     // if no matches, must be a malformed line (crashed server?)
                     if (!parts || parts.length === 0)
                         return;
-
                     switch (parts[0]) {
                         case "Log":
                             if (parts[2] === "started")
@@ -664,6 +666,36 @@ export class Event {
                             data.team = Event.parseTeam(parts[1])
                             data.value = parts[3];
                             break;
+                        case "Damage":
+                            // Ignore output from custom server plugin that records damage throughout the log.
+                            return;
+                        case "SUMMARY":
+                            // Damage summary from the custom server plugin.
+                            let damageSummaryRE = /^\[SUMMARY\] "([^"]*)<STEAM_([0-9:]+)><[_#0-9a-z]*>" damage summary: enemy - ([0-9]+), team - ([0-9]+)/ig
+                            const lineDataParts = lineData.split(damageSummaryRE);
+
+                            // Wrap in a try/catch so we can log the line number for a failed parse.
+                            // if there is a player match, we'll have multiple parts
+                            if (lineDataParts.length >= 4) {
+                                const playerName = lineDataParts[1];
+                                const playerID = -1; // No playerID in current format.
+                                const playerSteamID = lineDataParts[2];
+
+                                playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
+
+                                if (!playerFrom) {
+                                    console.error("Damage summary for non-existent player.");
+                                    throw "";
+                                }
+                                eventType = EventType.PlayerDamageSummary;
+                                data.value =  lineDataParts[3]; // enemy damage
+                                data.secondaryValue = lineDataParts[4]; // team damage
+                                break;
+                            }
+                            else {
+                                console.error("Invalid player damage summary");
+                                throw "";
+                            }
                         default:
                             console.error('unknown non-player log message: ' + lineData);
                     }
@@ -881,6 +913,7 @@ interface ExtraData {
     level?: number;
     key?: string;
     value?: string;
+    secondaryValue?: string;
 }
 
 export default Parser;
