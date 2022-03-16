@@ -219,6 +219,8 @@
                                     <th class="team-kills"><abbr title="Team kills">TK</abbr></th>
                                     <th class="conc-kills"><abbr title="Conc kills">CK</abbr></th>
                                     <th class="sentry-kills"><abbr title="Sentry gun kills">SG</abbr></th>
+                                    {{#if @root.stats.[0].damage_stats_exist}}<th class="damage-enemy"><abbr title="Enemy Damage">Dmg</abbr></th>{{/if}}
+                                    {{#if @root.stats.[0].damage_stats_exist}}<th class="damage-team"><abbr title="Team Damage">TDmg</abbr></th>{{/if}}
                                     <th class="deaths-total"><abbr title="Enemy + Self + Team">Deaths</abbr></th>
                                     <th class="deaths"><abbr title="Deaths by enemy">Enemy</abbr></th>
                                     <th class="suicides"><abbr title="Deaths by suicide">Self</abbr></th>
@@ -231,9 +233,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[1].teamStats}}{{{offenseSummary "A" @root.players.[1]}}}{{/with}}
-                                {{#with comparison.[0]}}{{{offenseSummary "Comp"}}}{{/with}}
-                                {{#with stats.[1].teams.[1].teamStats}}{{{offenseSummary "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[1].teamStats}}{{{offenseSummary @root.stats.[0].damage_stats_exist "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[0]}}{{{offenseSummary @root.stats.[0].damage_stats_exist "Comp" }}}{{/with}}
+                                {{#with stats.[1].teams.[1].teamStats}}{{{offenseSummary @root.stats.[0].damage_stats_exist "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>
@@ -247,6 +249,8 @@
                                     <th class="kills">Kills</th>
                                     <th class="team-kills"><abbr title="Team-Kills">TK</abbr></th>
                                     <th class="conc-kills"><abbr title="Conc kills">CK</abbr></th>
+                                    {{#if @root.stats.[0].damage_stats_exist}}<th class="damage-enemy"><abbr title="Enemy Damage">Dmg</abbr></th>{{/if}}
+                                    {{#if @root.stats.[0].damage_stats_exist}}<th class="damage-team"><abbr title="Team Damage">TDmg</abbr></th>{{/if}}
                                     <th class="deaths-total"><abbr title="Enemy + Self + Team">Deaths</abbr></th>
                                     <th class="deaths"><abbr title="Enemy death">Enemy</abbr></th>
                                     <th class="suicides"><abbr title="Suicides">Self</abbr></th>
@@ -255,9 +259,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary "A" @root.players.[1]}}}{{/with}}
-                                {{#with comparison.[1]}}{{{defenseSummary "Comp"}}}{{/with}}
-                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary @root.stats.[0].damage_stats_exist "A" @root.players.[1]}}}{{/with}}
+                                {{#with comparison.[1]}}{{{defenseSummary @root.stats.[0].damage_stats_exist "Comp"}}}{{/with}}
+                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary @root.stats.[0].damage_stats_exist "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>

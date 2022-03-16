@@ -50,7 +50,7 @@ export default class TemplateUtils {
         });
 
         // offense summary
-        Handlebars.registerHelper('offenseSummary', function(this: OffenseTeamStats, teamId: string, players?: OutputPlayer[]) {
+        Handlebars.registerHelper('offenseSummary', function(this: OffenseTeamStats, damageStatsExist: boolean, teamId: string, players?: OutputPlayer[]) {
             const isComparison = teamId === 'Comp'; // first parameter can sometimes be object??
             return `
                 <tr ${isComparison && 'class="comp"'}>
@@ -59,7 +59,10 @@ export default class TemplateUtils {
                     ${TemplateUtils.getRow(this.kills, isComparison, "kills")}
                     ${TemplateUtils.getRow(this.team_kills, isComparison, "team-kills")}
                     ${TemplateUtils.getRow(this.conc_kills, isComparison, "conc-kills")}
-                    ${TemplateUtils.getRow(this.sg_kills, isComparison, "sentry-kills")}
+                    ${TemplateUtils.getRow(this.sg_kills, isComparison, "sentry-kills")}` +
+                    (damageStatsExist ? `
+                    ${TemplateUtils.getRow(this.damage_enemy, isComparison, "damage-enemy")}
+                    ${TemplateUtils.getRow(this.damage_team, isComparison, "damage-team")}` : "") + `
                     ${TemplateUtils.getRow(this.deaths, isComparison, "deaths-total")}
                     ${TemplateUtils.getRow(this.d_enemy, isComparison, "deaths")}
                     ${TemplateUtils.getRow(this.d_self, isComparison, "suicides")}
@@ -72,7 +75,7 @@ export default class TemplateUtils {
                 </tr>`;
         });
 
-        Handlebars.registerHelper('defenseSummary', function(this: DefenseTeamStats, teamId: string, players?: OutputPlayer[]) {
+        Handlebars.registerHelper('defenseSummary', function(this: DefenseTeamStats, damageStatsExist: boolean, teamId: string, players?: OutputPlayer[]) {
             const isComparison = teamId === 'Comp'; // first parameter can sometimes be object??
             return `
                 <tr ${isComparison && 'class="comp"'}>
@@ -80,7 +83,10 @@ export default class TemplateUtils {
                     ${TemplateUtils.getRow(this.frags, isComparison, "kills-total")}
                     ${TemplateUtils.getRow(this.kills, isComparison, "kills")}
                     ${TemplateUtils.getRow(this.team_kills, isComparison, "team-kills")}
-                    ${TemplateUtils.getRow(this.conc_kills, isComparison, "conc-kills")}
+                    ${TemplateUtils.getRow(this.conc_kills, isComparison, "conc-kills")}` +
+                    (damageStatsExist ? `
+                    ${TemplateUtils.getRow(this.damage_enemy, isComparison, "damage-enemy")}
+                    ${TemplateUtils.getRow(this.damage_team, isComparison, "damage-team")}` : "") + `
                     ${TemplateUtils.getRow(this.deaths, isComparison, "deaths-total")}
                     ${TemplateUtils.getRow(this.d_enemy, isComparison, "deaths")}
                     ${TemplateUtils.getRow(this.d_self, isComparison, "suicides")}
