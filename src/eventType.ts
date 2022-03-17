@@ -59,7 +59,6 @@ export enum EventType {
     PlayerDousedFire,
     PlayerCuredHallucinations,
     PlayerDamage, /* custom server mod */
-    PlayerDamageSummary, /* custom server mod */
 };
 
 export default EventType;

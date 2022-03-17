@@ -344,6 +344,9 @@ export class Event {
                                 break;
                             case "damaged": // For servers with custom damage stats mod.
                                 eventType = EventType.PlayerDamage;
+
+                                // withText contains "for <number>"; extract the number.
+                                data.value = withText.split(" ")[1];
                                 break;
                             default:
                                 console.log("Unknown multi-player event: " + line);
@@ -563,21 +566,6 @@ export class Event {
                                             break;
                                         default:
                                             console.error(`unknown player trigger: ${parts[1]}: ${eventText}`);
-                                    }
-                                    case 'damage': {
-                                        // Damage summary from the custom server plugin.
-                                        let damageSummaryRE = /^\[SUMMARY\] "([^"]*)<([0-9]+)><STEAM_([0-9:]+)><[_#0-9a-z]*>" damage summary: enemy - ([0-9]+), team - ([0-9]+)/ig
-                                        const lineDataParts = lineData.split(damageSummaryRE);
-
-                                        if (lineDataParts.length >= 4) {
-                                            eventType = EventType.PlayerDamageSummary;
-                                            data.value =  lineDataParts[4]; // enemy damage
-                                            data.secondaryValue = lineDataParts[5]; // team damage
-                                            break;
-                                        }
-                                        else {
-                                            console.error("Invalid player damage summary");
-                                        }
                                     }
                                     break;
 

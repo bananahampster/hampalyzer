@@ -159,8 +159,8 @@
                                         <td class="team-kills">{{#if kills.teamkill}}{{kills.teamkill.value}}{{else}}0{{/if}}</td>
                                         <td class="conc-kills">{{#if kills.kill_while_conced}}{{kills.kill_while_conced.value}}{{else}}0{{/if}}</td>
                                         <td class="sentry-kills{{#if kills.sg}}{{else}} no-kills{{/if}}">{{#if kills.sg}}{{kills.sg.value}}{{else}}--{{/if}}</td>
-                                        {{#if ../../damage_stats_exist}}<td class="damage-enemy">{{damageStats.enemy.value}}</td>{{/if}}
-                                        {{#if ../../damage_stats_exist}}<td class="damage-team">{{damageStats.team.value}}</td>{{/if}}
+                                        {{#if ../../damage_stats_exist}}<td class="damage-enemy">{{damage.to_enemies.value}}</td>{{/if}}
+                                        {{#if ../../damage_stats_exist}}<td class="damage-team">{{damage.to_team.value}}</td>{{/if}}
                                         <td class="deaths">{{deaths.death.value}}</td>
                                         <td class="suicides">{{deaths.by_self.value}}</td>
                                         <td class="team-deaths">{{deaths.by_team.value}}</td>
