@@ -886,7 +886,6 @@ interface ExtraData {
     level?: number;
     key?: string;
     value?: string;
-    secondaryValue?: string;
 }
 
 export default Parser;
