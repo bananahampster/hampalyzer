@@ -75,7 +75,6 @@ export default async function(
                 let flagPaceChartMarkup = "";
                 const summaryOutput = `${outputDir}/index.html`;
 
-                allStats.stats.forEach
                 if (allStats.stats.length > 0) {
                     let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
                     flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();

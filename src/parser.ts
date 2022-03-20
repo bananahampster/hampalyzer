@@ -353,6 +353,11 @@ export class Event {
                                 throw ""; // TODO
                         }
                     } else {
+                        // Ignore custom damage events for world damage which is in the form of 'server_name<0><><>" damaged "player<id><STEAM_'.
+                        if (lineData.indexOf("<0><><>\" damaged \"") > -1) {
+                            return;
+                        }
+
                         let parts = eventText.match(lineDataRE) as RegExpMatchArray; // force to never be null (should always find words)
 
                         // should generally never fail here, but it is possible if someone concs after time ends

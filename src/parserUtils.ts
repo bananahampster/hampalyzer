@@ -1131,7 +1131,8 @@ export default class ParserUtils {
                 }
             }
 
-            if (!this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
+            if (thisEvent.eventType != EventType.PlayerFraggedPlayer && thisEvent.eventType != EventType.PlayerCommitSuicide
+                && !this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
                 // this is a flag event associated with the other team; ignore it
                 return flagStatus;
             }
