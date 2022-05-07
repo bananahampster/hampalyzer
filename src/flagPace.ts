@@ -58,7 +58,6 @@ export default class FlagPaceChart {
         // Released under the ISC license.
         // https://observablehq.com/@d3/multi-line-chart
         // https://observablehq.com/@d3/inline-labels
-
         const document = new jsdom.JSDOM().window.document;
 
         const d3 = await import("d3");
