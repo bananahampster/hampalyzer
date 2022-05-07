@@ -299,7 +299,7 @@ export class Event {
                                     withWeapon = nonPlayerDataParts[1].indexOf('gl') === 0 ? Weapon.BluePipe : Weapon.Rocket;
                                     // Example: player_from triggered "airshot_rpg" against player_to from a distance of 2 meters
                                     // Non-player indices:      0           1          2                3  4     5    6  7 8
-                                    data.value = nonPlayerDataParts[2].split(" ")[7];
+                                    data.value = nonPlayerDataParts[7];
 
                                 } else if (nonPlayerDataParts[1] === "Concussion_Grenade") {
                                     eventType = EventType.PlayerConced;
