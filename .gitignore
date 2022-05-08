@@ -9,3 +9,4 @@ uploads/
 secrets.txt
 backup/
 *.heapsnapshot
+.vscode/
