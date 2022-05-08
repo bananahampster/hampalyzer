@@ -246,6 +246,10 @@ export class Event {
             if (lineData.indexOf('<HLTV><>') !== -1 || lineData.indexOf('[META]') !== -1)
                 return;
 
+            // Ignore custom damage events for world damage which is in the form of 'server_name<0><><>" damaged "player<id><STEAM_'.
+            if (lineData.indexOf("<0><><>\" damaged \"") > -1)
+                return;
+
             // Split the line context into three objects: the player the event originated from, the player it impacted (if any),
             // and the other strings in the line.
             const lineDataParts = this.explodeLine(lineData);
@@ -376,11 +380,6 @@ export class Event {
                                 throw ""; // TODO
                         }
                     } else {
-                        // Ignore custom damage events for world damage which is in the form of 'server_name<0><><>" damaged "player<id><STEAM_'.
-                        if (lineData.indexOf("<0><><>\" damaged \"") > -1) {
-                            return;
-                        }
-
                         switch (nonPlayerDataParts[0]) {
                             case "say_team":
                             case "say":
