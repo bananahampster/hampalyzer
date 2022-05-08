@@ -170,8 +170,10 @@ export interface EventCreationOptions {
     timestamp: Date;
     data?: ExtraData;
     playerFrom?: Player;
+    playerFromTeam?: TeamColor;
     playerFromClass?: PlayerClass;
     playerTo?: Player;
+    playerToTeam?: TeamColor;
     playerToClass?: PlayerClass;
     withWeapon?: Weapon;
 }
@@ -232,7 +234,9 @@ export class Event {
         let data: ExtraData = {};
         let withWeapon: Weapon | undefined;
         let playerFrom: Player | undefined;
+        let playerFromTeam: TeamColor | undefined;
         let playerTo: Player | undefined;
+        let playerToTeam: TeamColor | undefined;
 
         // a valid log line must start with 'L'
         if (line[0] === 'L') {
@@ -279,6 +283,7 @@ export class Event {
                     const playerName = fromPlayerDataParts[1];
                     const playerID = Number(fromPlayerDataParts[2]);
                     const playerSteamID = fromPlayerDataParts[3];
+                    playerFromTeam = fromPlayerDataParts[4] !== "" ? this.parseTeam(fromPlayerDataParts[4]) : undefined;
 
                     playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
 
@@ -286,6 +291,7 @@ export class Event {
                         const otherPlayerName = otherPlayerDataParts[1];
                         const otherPlayerID = Number(otherPlayerDataParts[2]);
                         const otherPlayerSteamID = otherPlayerDataParts[3];
+                        playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
 
                         playerTo = playerList.getPlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
                         // do a switch based on the statement
@@ -371,9 +377,11 @@ export class Event {
                                 }
                                 break;
                             case "damaged": // For servers with custom damage stats mod.
-                                eventType = EventType.PlayerDamage;
-
-                                data.value = nonPlayerDataParts[2]; // damaged for <value>
+                                const damageAsNumber = Number(nonPlayerDataParts[2]); // damaged for <value>
+                                if (damageAsNumber < 10000) { // Pregame end shows large self-damage values.
+                                    eventType = EventType.PlayerDamage;
+                                    data.value = nonPlayerDataParts[2];
+                                }
                                 break;
                             default:
                                 console.log("Unknown multi-player event: " + line);
@@ -676,7 +684,9 @@ export class Event {
                     timestamp: timestamp,
                     data: data,
                     playerFrom: playerFrom,
+                    playerFromTeam: playerFromTeam,
                     playerTo: playerTo,
+                    playerToTeam: playerToTeam,
                     withWeapon: withWeapon,
                 });
             }
@@ -744,7 +754,7 @@ export class Event {
             case "spectator":
                 return TeamColor.Spectator;
             default:
-                throw "undefined team: " + team;
+                throw "unknown team: " + team;
         }
     }
 
@@ -872,7 +882,7 @@ export class Event {
     }
 }
 
-interface ExtraData {
+export interface ExtraData {
     class?: PlayerClass;
     team?: TeamColor;
     building?: Weapon;

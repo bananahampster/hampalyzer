@@ -1,5 +1,5 @@
 import { TeamScore, TeamComposition } from "./parserUtils";
-import { Event } from './parser';
+import { Event } from "./parser";
 import Player from "./player";
 
 export interface OutputStats {
@@ -90,6 +90,13 @@ export interface PlayerStats {
         by_team?: GenericStat<'by_team'>;
         by_self?: GenericStat<'by_self'>;
     };
+    damage?: {
+        damager: GenericStat<'damager'>;
+        damagee: GenericStat<'damagee'>;
+        team_damager: GenericStat<'team_damager'>;
+        team_damagee: GenericStat<'team_damagee'>;
+        self_damage: GenericStat<'self_damage'>;
+    }
     objectives?: { // flag touch, throw, capture, initial, security, detpak entrance opened, etc.
         touches_initial?: GenericStat<'touches_initial'>;
         flag_touch?: GenericStat<'flag_touch'>;
@@ -119,6 +126,7 @@ export interface GenericStat<T = string, ValueType = number> extends FacetedStat
 }
 
 export interface FacetedStat { weapon_summary?: FacetedStatSummary, details?: FacetedStatDetails };
+export interface FacetedStat { weapon_summary?: FacetedStatSummary, details?: FacetedStatDetails };
 
 export type FacetedStatSummary = { [key in Weapon]?: string }; // { "1": "5 (65%)"" }
 export type FacetedStatDetails = { [key: string]: StatDetails[] };
@@ -129,6 +137,7 @@ export interface StatDetails {
     player?: Player;
     weapon?: Weapon;
     whileConced: boolean;
+    value?: string;
 }
 
 export interface ClassTime {

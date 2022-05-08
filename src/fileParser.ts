@@ -104,6 +104,7 @@ export default async function(
             date: allStats.stats[0]!.date,
             time: allStats.stats[0]!.time,
             players: allStats.players,
+            damage_stats_exist: allStats.stats[0]!.damage_stats_exist
         };
 
         // assemble every players' stats

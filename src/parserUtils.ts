@@ -1,8 +1,9 @@
 import PlayerList from "./playerList.js";
-import { Event, RoundParser } from "./parser.js";
+import { Event, ExtraData, RoundParser } from "./parser.js";
 import Player from "./player.js";
-import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop } from "./constants.js";
+import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
 import EventType from "./eventType.js";
+import { decorators } from "handlebars";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 export type TeamScore = { [team in TeamColor]?: number; };
@@ -676,71 +677,71 @@ export default class ParserUtils {
                             break;
                         /** kills */
                         case 'kill':
-                            this.hydrateStat(poStats, 'kills', 'kill', statEvents, false, "Enemy kills");
-                            this.hydrateStat(poStats, 'kills', 'kill_while_conced', statEvents.filter(ev => ev.whileConced == true), false, "Enemy kills while conced");
+                            this.hydrateStat(poStats, thisPlayer, 'kills', 'kill', statEvents, "Enemy kills");
+                            this.hydrateStat(poStats, thisPlayer, 'kills', 'kill_while_conced', statEvents.filter(ev => ev.whileConced == true), "Enemy kills while conced");
                             break;
                         case 'team_kill':
-                            this.hydrateStat(poStats, 'kills', 'teamkill', statEvents, false, "Team kills");
+                            this.hydrateStat(poStats, thisPlayer, 'kills', 'teamkill', statEvents, "Team kills");
                             break;
                         case 'kill_sg':
-                            this.hydrateStat(poStats, 'kills', 'sg', statEvents, false, "Sentry gun kills");
+                            this.hydrateStat(poStats, thisPlayer, 'kills', 'sg', statEvents, "Sentry gun kills");
                             break;
                         /** deaths */
                         case 'death':
-                            this.hydrateStat(poStats, 'deaths', 'death', statEvents, false, "Deaths by enemy");
+                            this.hydrateStat(poStats, thisPlayer, 'deaths', 'death', statEvents, "Deaths by enemy");
                             break;
                         case 'team_death':
-                            this.hydrateStat(poStats, 'deaths', 'by_team', statEvents, false, "Deaths by teammates");
+                            this.hydrateStat(poStats, thisPlayer, 'deaths', 'by_team', statEvents, "Deaths by teammates");
                             break;
                         case 'suicide':
-                            this.hydrateStat(poStats, 'deaths', 'by_self', statEvents, false, "Suicides");
+                            this.hydrateStat(poStats, thisPlayer, 'deaths', 'by_self', statEvents, "Suicides");
                             break;
                         /** objectives */
                         case 'flag_pickup':
-                            this.hydrateStat(poStats, 'objectives', 'flag_touch', statEvents, false, "Flag touches");
+                            this.hydrateStat(poStats, thisPlayer, 'objectives', 'flag_touch', statEvents, "Flag touches");
                             break;
                         case 'flag_capture':
-                            this.hydrateStat(poStats, 'objectives', 'flag_capture', statEvents, false, "Flag captures");
+                            this.hydrateStat(poStats, thisPlayer, 'objectives', 'flag_capture', statEvents, "Flag captures");
                             break;
                         case 'got_button':
-                            this.hydrateStat(poStats, 'objectives', 'button', statEvents, false, "Got button / objective");
+                            this.hydrateStat(poStats, thisPlayer, 'objectives', 'button', statEvents, "Got button / objective");
                             break;
                         case 'det_entrance':
-                            this.hydrateStat(poStats, 'objectives', 'det_entrance', statEvents, false, "Det entrace");
+                            this.hydrateStat(poStats, thisPlayer, 'objectives', 'det_entrance', statEvents, "Det entrace");
                             break;
                         /** weaponStats */
                         case 'conc_jump':
-                            this.hydrateStat(poStats, 'weaponStats', 'concs', statEvents, false, "Conc jumps");
+                            this.hydrateStat(poStats, thisPlayer, 'weaponStats', 'concs', statEvents, "Conc jumps");
                             break;
                         case 'airshot':
-                            this.hydrateStat(poStats, 'weaponStats', 'airshot', statEvents, false, "Airshot");
+                            this.hydrateStat(poStats, thisPlayer, 'weaponStats', 'airshot', statEvents, "Airshot");
                             break;
                         case 'airshoted':
-                            this.hydrateStat(poStats, 'weaponStats', 'airshoted', statEvents, false, "Got airshot (airshitted)");
+                            this.hydrateStat(poStats, thisPlayer, 'weaponStats', 'airshoted', statEvents, "Got airshot (airshitted)");
                             break;
                         // TODO: a bunch of others, save for later
                         /** buildables */
                         case 'build_disp':
-                            this.hydrateStat(poStats, 'buildables', 'build_disp', statEvents, false, "Built dispensers");
+                            this.hydrateStat(poStats, thisPlayer, 'buildables', 'build_disp', statEvents, "Built dispensers");
                             break;
                         case 'build_sg':
-                            this.hydrateStat(poStats, 'buildables', 'build_sg', statEvents, false, "Built sentry guns");
+                            this.hydrateStat(poStats, thisPlayer, 'buildables', 'build_sg', statEvents, "Built sentry guns");
                             break;
                         /* damage stats */
                         case 'damager':
-                            this.hydrateStat(poStats, 'damage', 'to_enemies', statEvents, true, "Damage dealt to enemies");
+                            this.hydrateStat(poStats, thisPlayer, 'damage', 'to_enemies', statEvents, "Damage dealt to enemies");
                             break;
                         case 'damagee':
-                            this.hydrateStat(poStats, 'damage', 'from_enemies', statEvents, true, "Damage taken from enemies");
+                            this.hydrateStat(poStats, thisPlayer, 'damage', 'from_enemies', statEvents, "Damage taken from enemies");
                             break;
                         case 'team_damager':
-                            this.hydrateStat(poStats, 'damage', 'to_team', statEvents, true, "Damage dealt to teammates");
+                            this.hydrateStat(poStats, thisPlayer, 'damage', 'to_team', statEvents, "Damage dealt to teammates");
                             break;
                         case 'team_damagee':
-                            this.hydrateStat(poStats, 'damage', 'from_team', statEvents, true, "Damage taken from teammates");
+                            this.hydrateStat(poStats, thisPlayer, 'damage', 'from_team', statEvents, "Damage taken from teammates");
                             break;
                         case 'self_damage':
-                            this.hydrateStat(poStats, 'damage', 'to_self', statEvents, true, "Damage dealt to self");
+                            this.hydrateStat(poStats, thisPlayer, 'damage', 'to_self', statEvents, "Damage dealt to self");
                             break;
                         // TODO: a bunch of others, save for later
                     }
@@ -755,7 +756,7 @@ export default class ParserUtils {
                 if (playerStats['flag_capture']) {
                     // calculatePlayerFlagStats (called above) updates PlayerCapturedFlag to PlayerCapturedBonusFlag if it involved a cap with a bonus.
                     const capsWithBonus = playerStats['flag_capture'].filter(ev => ev.eventType == EventType.PlayerCapturedBonusFlag);
-                    this.hydrateStat(poStats, 'objectives', 'flag_capture_bonus', capsWithBonus, false, "Flag captures with bonus");
+                    this.hydrateStat(poStats, thisPlayer, 'objectives', 'flag_capture_bonus', capsWithBonus, "Flag captures with bonus");
                 }
 
                 teamPlayers.push(poStats);
@@ -869,34 +870,66 @@ export default class ParserUtils {
 
     private static hydrateStat(
         playerStats: PlayerOutputStatsRound,
+        player: Player,
         category: string,
         item: string,
         events: Event[],
-        aggregateStat: boolean,
         description?: string): GenericStat {
 
         const thisStat = this.ensureStat(playerStats, category, item, description);
-        if (!aggregateStat) {
+        thisStat.events = events;
+        if (category !== "damage") {
             thisStat.value = events.length;
+
+            const facetedStat = this.generateStatDetails(player, category, thisStat);
+            if (facetedStat != null) {
+                thisStat.weapon_summary = facetedStat.weapon_summary;
+                thisStat.details = facetedStat.details;
+            }
         }
-        else {
+        else { // For stats that require summing numbers from the events, e.g. damage done.
             thisStat.value = 0;
             events.forEach((event) => {
                 thisStat.value += Number(event.data?.value);
             });
-        }
-        thisStat.events = events;
-
-        const facetedStat = this.generateStatDetails(category, thisStat);
-        if (facetedStat != null) {
-            thisStat.weapon_summary = facetedStat.weapon_summary;
-            thisStat.details = facetedStat.details;
+            
+            const damageStats = this.generateDamageStats(player, thisStat);
+            if (damageStats != null) {
+                thisStat.details = damageStats.details;
+            }
         }
 
         return thisStat;
     }
 
-    private static generateStatDetails(category: string, stat: GenericStat): FacetedStat | undefined {
+    private static generateDamageStats(player: Player, stat: GenericStat): FacetedStat | undefined {
+        const events = stat.events;
+        if (events == null)
+            return;
+
+        const facetedDetails : FacetedStatDetails = {};
+        let perPlayerDamage = new Map<Player, number>();
+        for (const e of events) {
+            const otherPlayer : Player = (player === e.playerTo) ? e.playerFrom! : e.playerTo!;
+            // Aggregate stats per-player.
+            if (!perPlayerDamage.has(otherPlayer)) {
+                perPlayerDamage.set(otherPlayer, 0);
+            }
+            perPlayerDamage.set(otherPlayer, perPlayerDamage.get(otherPlayer)! + Number(e.data?.value));
+        }
+
+        for (let playerDamage of perPlayerDamage) {
+            const otherPlayer = playerDamage[0].name;
+            if (!facetedDetails[otherPlayer])
+                facetedDetails[otherPlayer] = [];
+
+            facetedDetails[otherPlayer].push({ value: playerDamage[1].toString(), whileConced: false, description: "" });
+        }
+        
+        return { details: facetedDetails };
+    }
+
+    private static generateStatDetails(player: Player, category: string, stat: GenericStat): FacetedStat | undefined {
         const events = stat.events;
         if (events == null)
             return;
@@ -948,8 +981,8 @@ export default class ParserUtils {
                         console.log(`generateStatDetails: not implemented: weaponStats > ${stat.title}`);
                 }
             case 'damage':
-                // This is a high-volume event; don't break it out.
-                return;
+                // Ignore; handled in generateDamageStats.
+                break;
             default:
                 console.log(`generateStatDetails: not implemented: ${category} > ${stat.title}`)
         }

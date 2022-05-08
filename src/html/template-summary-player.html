@@ -167,6 +167,29 @@
                     </div>
                     {{/each}}
 
+                    <!-- damage -->
+                    <div class="emoji">🤕</div>
+                    {{#each round}}
+                    <div class="d-flex flex-column">
+                        {{#each damage}}
+                        <div class="stats-faceted">
+                            <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
+                            <div class="stats-facets">
+                                {{#each details}}
+                                <div class="facet-name">{{@key}}</div>
+                                <div class="facet-value"></div>
+                                <div class="facet-details">
+                                    {{#each this}}
+                                    <span title="{{description}}">{{this.value}}</span>
+                                    {{/each}}
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{/each}}
+
                     <!-- weapons -->
                     <div class="emoji">🔫</div>
                     {{#each round}}
