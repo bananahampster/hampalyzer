@@ -491,6 +491,8 @@ export class Event {
                                     case "Red Cap Point":
                                     case "Blue Capture Point":
                                     case "Red Capture Point":
+                                    case "BlueCapture Point": // haste_r
+                                    case "RedCapture Point":
                                         eventType = EventType.PlayerCapturedFlag;
                                         break;
                                     case "Flag 1": // cornfield; e.g. "Flag 1", "Flag 2"
@@ -841,6 +843,7 @@ export class Event {
             case "teledeath": // TODO: is this a spawn telefrag?
             case "teledeath (world)": // TODO: is this a spawn telefrag?
             case "door (world)": // TODO: door frag?
+            case "door_rotating (world)": // haste_r
             case "world":
             case "worldspawn":
             case "worldspawn (world)":
