@@ -126,7 +126,6 @@ export interface GenericStat<T = string, ValueType = number> extends FacetedStat
 }
 
 export interface FacetedStat { weapon_summary?: FacetedStatSummary, details?: FacetedStatDetails };
-export interface FacetedStat { weapon_summary?: FacetedStatSummary, details?: FacetedStatDetails };
 
 export type FacetedStatSummary = { [key in Weapon]?: string }; // { "1": "5 (65%)"" }
 export type FacetedStatDetails = { [key: string]: StatDetails[] };

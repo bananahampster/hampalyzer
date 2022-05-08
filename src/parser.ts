@@ -882,7 +882,7 @@ export class Event {
     }
 }
 
-export interface ExtraData {
+interface ExtraData {
     class?: PlayerClass;
     team?: TeamColor;
     building?: Weapon;
