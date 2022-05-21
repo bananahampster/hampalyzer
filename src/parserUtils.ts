@@ -588,7 +588,7 @@ export default class ParserUtils {
         const server = serverEvent && serverEvent.value || "Unknown server";
 
         // log name (server [up to 10 char or first word boundary], date string, time)
-        let serverShortName = encodeURIComponent(server.split(/\s+/)[0]);
+        let serverShortName = server.split(/\s+/)[0].replace("?", "_");
         if (serverShortName.length > 10) serverShortName = serverShortName.slice(0, 10);
         const parse_name = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
 
