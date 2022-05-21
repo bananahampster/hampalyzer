@@ -588,7 +588,10 @@ export default class ParserUtils {
         const server = serverEvent && serverEvent.value || "Unknown server";
 
         // log name (server [up to 10 char or first word boundary], date string, time)
-        let serverShortName = server.split(/\s+/)[0].replace("?", "_");
+        let serverShortName = server.split(/\s+/)[0];
+        // Remove reserved characters for Windows compat. The removal of slashes also eliminates the possibility of a path traversal attack.
+        serverShortName = serverShortName.replace(/[\?\\/\*\"<>\|]/g, "_");
+
         if (serverShortName.length > 10) serverShortName = serverShortName.slice(0, 10);
         const parse_name = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
 
