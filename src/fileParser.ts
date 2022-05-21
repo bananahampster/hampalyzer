@@ -148,7 +148,9 @@ export default async function(
         // if everything is successful up to this point, log into the database
         const dbSuccess = await recordLog(pool, matchMeta);
 
-        return dbSuccess ? outputDir : undefined;
+        // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
+        // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
+        return dbSuccess ? `${outputDir}/` : undefined;
     } else console.error('no stats found to write!');
 }
 
