@@ -371,6 +371,9 @@ export class Event {
                                 } else if (nonPlayerDataParts[1] === "Medic_Cured_Hallucinations") {
                                     eventType = EventType.PlayerCuredHallucinations;
 
+                                } else if (nonPlayerDataParts[1] === "Medic_Cured_Tranquilisation") {
+                                    eventType = EventType.PlayerCuredInfection;
+
                                 } else {
                                     console.log("unknown 'triggered' event: " + line);
                                     throw ""; // TODO
