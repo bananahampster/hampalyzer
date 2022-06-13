@@ -62,7 +62,7 @@ class App {
     public async reparseAllLogs(): Promise<void> {
         const success = await this.reparseLogs();
         if (!success) {
-            console.error("failed to reprase all logs; there may be a corresponding error above.");
+            console.error("failed to reparse all logs; there may be a corresponding error above.");
             return process.exit(-10);
         }
     }
@@ -160,7 +160,7 @@ class App {
                 }
             }
         } catch (error: any) {
-            console.error("crtical error: failed to connect to DB to reparse logs: " + error?.message);
+            console.error("critical error: failed to connect to DB to reparse logs: " + error?.message);
         }
 
         // at least some logs must have been reparsed

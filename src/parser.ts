@@ -231,7 +231,6 @@ export class Event {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
 
-        let data: ExtraData = {};
         let withWeapon: Weapon | undefined;
         let playerFrom: Player | undefined;
         let playerFromTeam: TeamColor | undefined;
@@ -257,6 +256,10 @@ export class Event {
             // Split the line context into three objects: the player the event originated from, the player it impacted (if any),
             // and the other strings in the line.
             const lineDataParts = this.explodeLine(lineData);
+
+            // if lineDataParts is empty, this log may be incomplete (stopped writing file mid-line). abort
+            if (lineDataParts.length === 0)
+                return;
 
             let playerRE = /(.*)<([0-9]+)><STEAM_([0-9:]+)><(.*)>/i;
             const fromPlayerDataParts = lineDataParts[0].match(playerRE);
@@ -900,6 +903,7 @@ export class Event {
             case "train (world)":
                 return Weapon.Train;
             case "rock_falling_death (world)": // 2mesa3
+            case "#rock_falling_death (world)":
                 return Weapon.Pit;
             case "timer":
                 return Weapon.None;

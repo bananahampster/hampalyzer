@@ -42,6 +42,13 @@ export default class ParserUtils {
             const isLast = (i) => i >= playerTimes.length - 1;
             playerTimes.forEach((event, i) => {
                 let thisTime = isLast(i) ? endTime - event.timestamp : playerTimes[i + 1].timestamp - event.timestamp;
+
+                // the time difference should never be negative.
+                // this may happen (however) if a game is played over a DST change.
+                // force the difference to include the hour change.
+                if (thisTime < 0)
+                    thisTime += 3600000;
+
                 if (thisTime > maxTime) {
                     primaryTeam = event.team;
                     maxTime = thisTime;
@@ -894,7 +901,7 @@ export default class ParserUtils {
             events.forEach((event) => {
                 thisStat.value += Number(event.data?.value);
             });
-            
+
             const damageStats = this.generateDamageStats(player, thisStat);
             if (damageStats != null) {
                 thisStat.details = damageStats.details;
@@ -927,7 +934,7 @@ export default class ParserUtils {
 
             facetedDetails[otherPlayer].push({ value: playerDamage[1].toString(), whileConced: false, description: "" });
         }
-        
+
         return { details: facetedDetails };
     }
 
