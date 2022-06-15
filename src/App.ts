@@ -1,12 +1,15 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
+import Handlebars from 'handlebars';
 import multer from 'multer';
+import pg from 'pg';
 
-import fileParser from './fileParser.js';
-import { Parser } from './parser.js';
+import { readFileSync } from 'fs';
 import path from 'path';
 
-import pg from 'pg';
+import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
+import { Parser } from './parser.js';
+import TemplateUtils from './templateUtils.js';
 
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
@@ -28,9 +31,10 @@ let upload = multer({
 class App {
     public express: express.Express;
     private pool: pg.Pool;
+    private templates: HampalyzerTemplates;
     private readonly PAGE_SIZE: number = 20;
 
-    constructor(private webserverRoot = "", private outputRoot = "parsedlogs") {
+    constructor(private webserverRoot = "", private outputRoot = "parsedlogs", reparse = false) {
         this.express = express();
         this.mountRoutes();
 
@@ -42,6 +46,25 @@ class App {
             database: 'hampalyzer',
             port: 5432,
         });
+
+        // initialize the handlebars templates to be used globally
+        const templateDir = new URL('./templates/', import.meta.url);
+        const templateFile = new URL('./template-summary.html', templateDir);
+        const playerTemplate = new URL('./template-summary-player.html', templateDir);
+
+        TemplateUtils.registerHelpers();
+        this.templates = {
+            summary: Handlebars.compile(readFileSync(templateFile, 'utf-8')),
+            player:  Handlebars.compile(readFileSync(playerTemplate, 'utf-8')),
+        };
+    }
+
+    public async reparseAllLogs(): Promise<void> {
+        const success = await this.reparseLogs();
+        if (!success) {
+            console.error("failed to reparse all logs; there may be a corresponding error above.");
+            return process.exit(-10);
+        }
     }
 
     private mountRoutes(): void {
@@ -115,36 +138,40 @@ class App {
      * Fails if any previous log fails to parse.
      **/
     private async reparseLogs(): Promise<boolean> {
-        const allPromises: Promise<string | undefined>[] = [];
-        this.pool.query(
-            'SELECT * FROM logs WHERE id > 42', // before 42, wrong log filenames
-            (error, result) => {
-                if (error) {
-                    console.error("crtical error: failed to connect to DB to reparse logs: " + error.message);
+        let result;
+        try {
+            result = await this.pool.query('SELECT log_file1, log_file2 FROM logs WHERE id > 42'); // before 42, wrong log filenames
+            // for (const game of result.rows) {
+            for (let i = 0, len = result.rows.length; i < len; i++) {
+                const game = result.rows[i];
+
+                const filenames: string[] = [];
+                filenames.push(game.log_file1);
+                if (game.log_file2 != null && game.log_file2 != "") {
+                    filenames.push(game.log_file2);
                 }
 
-                for (const game of result.rows) {
-                    const filenames: string[] = [];
-                    filenames.push(game.log_file1);
-                    if (game.log_file2 != null && game.log_file2 != "") {
-                        filenames.push(game.log_file2);
-                    }
+                console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" +  ")}`);
 
-                    allPromises.push(this.parseLogs(filenames, true /* reparse */));
+                const parsedLog = await this.parseLogs(filenames, true /* reparse */);
+                if (!parsedLog) {
+                    console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
+                    return false;
                 }
             }
-        );
+        } catch (error: any) {
+            console.error("critical error: failed to connect to DB to reparse logs: " + error?.message);
+        }
 
-        // ensure that all passed
-        const results = await Promise.all(allPromises);
-        return !results.some(result => result == null);
+        // at least some logs must have been reparsed
+        return result && result.rows.length !== 0;
     }
 
     private parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
-        let parser = new Parser(...filenames)
+        const parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.pool, reparse));
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse));
     }
 }
 

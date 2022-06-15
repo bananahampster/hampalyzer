@@ -27,7 +27,6 @@ export class Parser {
     public async parseRounds(): Promise<ParsedStats | undefined> {
         return Promise.all(this.rounds.map(round => round.parseFile()))
             .then(() => {
-                console.log(`parsed ${this.rounds.length} files.`);
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
 
@@ -124,6 +123,8 @@ export class RoundParser {
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
+
+        console.log(`Map: ${this.summarizedStats.map}`);
     }
 
     private trimPreAndPostMatchEvents() {
@@ -231,7 +232,6 @@ export class Event {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
 
-        let data: ExtraData = {};
         let withWeapon: Weapon | undefined;
         let playerFrom: Player | undefined;
         let playerFromTeam: TeamColor | undefined;
@@ -243,11 +243,11 @@ export class Event {
             // parse date
             timestamp = new Date(line.substr(2, 21).replace(" - ", " "));
 
-            // figure out the type of event (TODO)
+            // figure out the type of event
             const lineData = line.substr(25);
 
             // short-circuit HLTV/Metamod for now (TODO)
-            if (lineData.indexOf('<HLTV><>') !== -1 || lineData.indexOf('[META]') !== -1)
+            if (lineData.indexOf('><HLTV><') !== -1 || lineData.indexOf('[META]') !== -1)
                 return;
 
             // Ignore custom damage events for world damage which is in the form of 'server_name<0><><>" damaged "player<id><STEAM_'.
@@ -257,6 +257,10 @@ export class Event {
             // Split the line context into three objects: the player the event originated from, the player it impacted (if any),
             // and the other strings in the line.
             const lineDataParts = this.explodeLine(lineData);
+
+            // if lineDataParts is empty, this log may be incomplete (stopped writing file mid-line). abort
+            if (lineDataParts.length === 0)
+                return;
 
             let playerRE = /(.*)<([0-9]+)><STEAM_([0-9:]+)><(.*)>/i;
             const fromPlayerDataParts = lineDataParts[0].match(playerRE);
@@ -371,6 +375,9 @@ export class Event {
                                 } else if (nonPlayerDataParts[1] === "Medic_Cured_Hallucinations") {
                                     eventType = EventType.PlayerCuredHallucinations;
 
+                                } else if (nonPlayerDataParts[1] === "Medic_Cured_Tranquilisation") {
+                                    eventType = EventType.PlayerCuredInfection;
+
                                 } else {
                                     console.log("unknown 'triggered' event: " + line);
                                     throw ""; // TODO
@@ -378,10 +385,12 @@ export class Event {
                                 break;
                             case "damaged": // For servers with custom damage stats mod.
                                 const damageAsNumber = Number(nonPlayerDataParts[2]); // damaged for <value>
-                                if (damageAsNumber < 10000) { // Pregame end shows large self-damage values.
-                                    eventType = EventType.PlayerDamage;
-                                    data.value = nonPlayerDataParts[2];
-                                }
+                                // Pregame end shows large self-damage values.
+                                if (damageAsNumber >= 10000)
+                                    return;
+
+                                eventType = EventType.PlayerDamage;
+                                data.value = nonPlayerDataParts[2];
                                 break;
                             default:
                                 console.log("Unknown multi-player event: " + line);
@@ -402,13 +411,25 @@ export class Event {
                             case "entered":
                                 eventType = EventType.PlayerJoinServer;
                                 break;
+                            case "connected,":
+                            case "STEAM":
+                                // we don't care about STEAM validation messages or initial connection (above "entered" means client is alive)
+                                return;
+                            case "disconnected":
+                            case "disconnected\r":
+                                eventType = EventType.PlayerLeftServer;
+                                break;
                             case "changed":
-                                // TOOD: track name changes; for now, just drop the event
-                                if (nonPlayerDataParts[1] === "name")
-                                    break;
+                                if (nonPlayerDataParts[1] === "name") {
+                                    eventType = EventType.PlayerChangedName;
+                                    data.value = nonPlayerDataParts[3];
+                                }
+                                else if (nonPlayerDataParts[1] === "role") {
+                                    eventType = EventType.PlayerChangeRole;
+                                    data.class = Event.parseClass(nonPlayerDataParts[3]);
+                                }
 
-                                eventType = EventType.PlayerChangeRole;
-                                data.class = Event.parseClass(nonPlayerDataParts[3]);
+                                // TODO: what else comes through here?
                                 break;
                             case "committed": // TODO: sometimes this line has extra data
                             /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
@@ -435,23 +456,6 @@ export class Event {
                                         eventType = EventType.PlayerUpgradedGun;
                                         data.level = 3;
                                         break;
-                                    case "Sentry_Repair":
-                                        eventType = EventType.PlayerRepairedBuilding;
-                                        data.building = Event.parseWeapon("sentrygun");
-                                        break;
-                                    case "Built_Dispenser":
-                                        eventType = EventType.PlayerBuiltDispenser;
-                                        break;
-                                    case "Teleporter_Entrace_Finished":
-                                    case "Teleporter_Entrance_Finished":
-                                    case "Teleporter_Exit_Finished":
-                                        eventType = EventType.PlayerBuiltTeleporter;
-                                        data.building = Event.parseWeapon(nonPlayerDataParts[1]);
-                                        break;
-                                    case "Dispenser_Destroyed":
-                                        eventType = EventType.PlayerDetonatedBuilding;
-                                        data.building = Event.parseWeapon("dispenser");
-                                        break;
                                     case "Sentry_Destroyed":
                                         eventType = EventType.PlayerDetonatedBuilding;
                                         data.building = Event.parseWeapon("sentrygun");
@@ -460,15 +464,58 @@ export class Event {
                                         eventType = EventType.PlayerDismantledBuilding;
                                         data.building = Event.parseWeapon("sentrygun");
                                         break;
+                                    case "Sentry_Repair":
+                                        eventType = EventType.PlayerRepairedBuilding;
+                                        data.building = Event.parseWeapon("sentrygun");
+                                        break;
+                                    case "Built_Dispenser":
+                                        eventType = EventType.PlayerBuiltDispenser;
+                                        break;
+                                    case "Dispenser_Dismantle":
+                                        eventType = EventType.PlayerDismantledBuilding;
+                                        data.building = Event.parseWeapon("dispenser");
+                                        break;
+                                    case "Dispenser_Destroyed":
+                                        eventType = EventType.PlayerDetonatedBuilding;
+                                        data.building = Event.parseWeapon("dispenser");
+                                        break;
+                                    case "Teleporter_Entrace_Finished":
+                                    case "Teleporter_Entrance_Finished":
+                                    case "Teleporter_Exit_Finished":
+                                        eventType = EventType.PlayerBuiltTeleporter;
+                                        data.building = Event.parseWeapon(nonPlayerDataParts[1]);
+                                        break;
+                                    case "Teleporter_Entrance_Repaired":
+                                    case "Teleporter_Exit_Repaired":
+                                        eventType = EventType.PlayerRepairedBuilding;
+                                        data.building = Event.parseWeapon("teleporter");
+                                        break;
+                                    case "Teleporter_Entrance_Dismantle":
+                                    case "Teleporter_Exit_Dismantle":
+                                        eventType = EventType.PlayerDismantledBuilding;
+                                        data.building = Event.parseWeapon("teleporter");
+                                        break;
                                     case "Teleporter_Exit_Destroyed":
                                     case "Teleporter_Entrance_Destroyed":
                                         eventType = EventType.PlayerDetonatedBuilding;
                                         data.building = Event.parseWeapon("teleporter");
+                                        break;
                                     case "Detpack_Set":
                                         eventType = EventType.PlayerDetpackSet;
                                         break;
                                     case "Detpack_Explode":
                                         eventType = EventType.PlayerDetpackExplode;
+                                        break;
+                                    // coach's airshot plugin (no dmg'd player?)
+                                    case "Airshot":
+                                    case "A2A Shot":
+                                        eventType = EventType.PlayerHitAirshot;
+                                        withWeapon = Weapon.Rocket;
+                                        break;
+                                    // coach's airshot plugin (no dmg'd player?)
+                                    case "Bluepipe Airshot":
+                                        eventType = EventType.PlayerHitAirshot;
+                                        withWeapon = Weapon.BluePipe;
                                         break;
                                     case "dropitems": // custom event for Inhouse
                                         eventType = EventType.PlayerThrewFlag;
@@ -489,6 +536,10 @@ export class Event {
                                     case "Blue Flag Plus":
                                         eventType = EventType.PlayerPickedUpBonusFlag;
                                         break;
+                                    case "Blue Capture Point Extra": // cranked
+                                    case "Red Capture Point Extra":
+                                        eventType = EventType.PlayerCapturedBonusFlag;
+                                        break;
                                     case "Capture Point":
                                     case "Blue Cap":
                                     case "Red Cap":
@@ -508,11 +559,41 @@ export class Event {
                                     case "Flag 4":
                                         eventType = EventType.PlayerPickedUpFlag;
                                         break;
+                                    case "Capture Point 1": // cornfield
+                                    case "Capture Point 2":
+                                    case "Capture Point 3":
+                                    case "Capture Point 4":
+                                        eventType = EventType.PlayerCapturedFlag;
+                                        break;
                                     case "Team 1 dropoff":
                                     case "Team 2 dropoff":
                                     case "Team 3 dropoff":
                                     case "Team 4 dropoff":
                                         eventType = EventType.PlayerCapturedFlag;
+                                    case "Flag1": // asti_r flags
+                                    case "Flag2":
+                                    case "Flag3":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        break;
+                                    case "Capture":
+                                        if (nonPlayerDataParts[2] = "Point")
+                                            eventType = EventType.PlayerCapturedFlag;
+                                        else
+                                            console.error("unknown player trigger Capture: " + lineData);
+                                        break;
+                                    case "Team":
+                                        if (nonPlayerDataParts.length !== 4) {
+                                            console.error('unknown player trigger Team: ' + lineData);
+                                            break;
+                                        }
+
+                                        switch (nonPlayerDataParts[3]) {
+                                            case 'dropoff':
+                                                eventType = EventType.PlayerCapturedFlag;
+                                                break;
+                                            default:
+                                                console.error('unknown player trigger Team (len 3): ' + lineData);
+                                        }
                                         break;
                                     case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
                                     case "t2df":
@@ -532,8 +613,9 @@ export class Event {
                                         break;
                                     case 'rdet': // oppose2k1 water entrance det opened
                                     case 'bdet':
-                                    case 'red_det': // 2mesa3 water opened
+                                    case 'red_det': // 2mesa3 / stowaway2 water opened
                                     case 'blue_det':
+                                    case 'rholedet': // cornfield cp4 / avanti
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerOpenedDetpackEntrance;
                                         else
@@ -555,13 +637,39 @@ export class Event {
                                         }
                                         break;
                                     // ignore these triggers
+                                    case '%s':
+                                        let phrase = nonPlayerDataParts.slice(2).join(' ').toLowerCase();
+                                        // ignore redundant flag message (proton_l / 2mach_b4)
+                                        if (phrase === "capped the red flag" || phrase === "capped the blue flag")
+                                            return;
+
+                                        break;
+                                    case 'amx_tsay':
+                                    case 'amx_say':
+                                    case 'amx_chat':
+                                        // TODO: log amx-specific chat messages?
+                                        break;
                                     case 'red_30': // 30s laser warning on schtop
                                     case 'blue_30': // 30s laser warning on schtop
                                     case 'ful': // full concs on oppose2k1
                                     case 'spawn_pak': // spawn pack on 2mesa3 (?)
                                     case 'blue_pak8': // spawn/gren pack on 2mesa3 (?)
                                     case 'func_button': // spawn door on 2mesa3 (either has "1" or "2" following)
-                                        break;
+                                    case 'func_button 1':
+                                    case 'func_button 2':
+                                    case 'Blue team spawn stuff': // cornfield spawn
+                                    case 'Red team spawn stuff': // cornfield spawn
+                                    case 'forced respawn': // cornfield force-respawn (?)
+                                    case 'weaponstats': // adminmod "weaponstats" plugin (ignore specific dmg)
+                                    case 'weaponstats2':// adminmod "weaponstats2" plugin (ignore specific dmg)
+                                    case 'time': // adminmod 'time' plugin
+                                    case 'latency': // adminmod 'latency' plugin
+                                    case '#2fort_got_enemy_flag': // redundant 2mach_b4 flag message
+                                    case 'Blue Bag': // ??
+                                    case 'RED_SPAWN_three': // mulch_trench respawn?
+                                    case 'RED_SPAWN_ONE': // mulch_trench_lg respawn
+                                    // case 'grenbackpack': // ??
+                                        return;
                                     default:
                                         console.error(`unknown player trigger: ${nonPlayerDataParts[1]}: ${lineData}`);
                                 }
@@ -616,13 +724,36 @@ export class Event {
                                     data.key = nonPlayerDataParts[2];
                                     data.value = nonPlayerDataParts[4];
                                     break;
+                                case "say":
+                                    eventType = EventType.ServerSay;
+                                    data.value = nonPlayerDataParts.slice(2).join(' ');
+                                    break;
                                 default:
                                     console.error("unknown 'server' command: " + lineData);
                             }
                             break;
                         case "Rcon":
+                        case "Rcon:":
                             eventType = EventType.RconCommand;
-                            data.value = nonPlayerDataParts[4];
+                            data.value = nonPlayerDataParts[3];
+                            break;
+                        case "Bad":
+                            if (nonPlayerDataParts[1] === "Rcon:") {
+                                eventType = EventType.BadRcon;
+                                data.value = nonPlayerDataParts[3];
+                            }
+                            break;
+                        case "Kick":
+                        case "Kick:":
+                            eventType = EventType.PlayerKicked;
+                            // usually, who was kicked is populated.
+                            if (otherPlayerDataParts != null) {
+                                const otherPlayerName = otherPlayerDataParts[1];
+                                const otherPlayerID = Number(otherPlayerDataParts[2]);
+                                const otherPlayerSteamID = otherPlayerDataParts[3];
+                                playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
+                                playerTo = playerList.getPlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                            }
                             break;
                         case "World":
                             if (nonPlayerDataParts[1] !== "triggered") {
@@ -647,12 +778,52 @@ export class Event {
                                     else
                                         data.value = lineData.slice(lastIndex);
                                     break;
+                                case "Cease_Fire": // e.g. dustbowl / cornfield / avanti
+                                    eventType = EventType.ServerSwitchSides;
+                                    break;
+                                case "#dustbowl_gates_open": // e.g. dustbowl / cornfield / avanti
+                                    eventType = EventType.ServerGatesOpen;
+                                    break;
+                                case "Blue Lasers Are Down": // stormz2
+                                case "Red Lasers Are Down": // stormz2
+                                case "Blue WATER ACCESS is OPEN for 60 seconds!":
+                                case "Red WATER ACCESS is OPEN for 60 seconds!":
+                                    eventType = EventType.PlayerGotSecurity;
+                                    break;
+                                case "Blue Lasers Restored!": // stormz2
+                                case "Red Lasers Restored!": // stormz2
+                                case "Blue WATER ACCESS is now DENIED!":
+                                case "Red WATER ACCESS is now DENIED!":
+                                    eventType = EventType.SecurityUp;
+                                    break;
+                                case "Red":
+                                case "Blue":
+                                    let phrase = nonPlayerDataParts.slice(2).join(' ');
+                                    // turbo_b10
+                                    if (phrase === "Blue Water access closing!" || phrase === "Red Water access closing!") {
+                                        eventType = EventType.SecurityUp;
+                                        break;
+                                    }
                                 case "Blue security is now operating!":
                                 case "Red security is now operating!":
                                 case "Blue security has been deactivated!":
                                 case "Red security has been deactivated!":
+                                case "Blue security will be operational in 30 seconds!": // schtop
+                                case "Red security will be operational in 30 seconds!": // schtop
                                 case "Blue_Flag_Vox":
                                 case "Red_Flag_Vox":
+                                case "#dustbowl_60_secs": // dustbowl / cornfield
+                                case "#dustbowl_30_secs": // dustbowl / cornfield
+                                case "#dustbowl_10_secs": // dustbowl / cornfield
+                                case "defenders_score": // adl-specific score for time held (e.g., cornfield)
+                                case "Command Point 4 Wall Breached": // cornfield (already handled by rholedet)
+                                case "Command Point Four breached!": // avanti(?) (already handled by rholedet)
+                                case "#italy_hole_text": // avanti (already handled by rholedet)
+                                case "#rock_red_yard_opened": // crossover2 (already handled by rholedet)
+                                case "The blue cave has been breached": // stowaway2 (already handled by 'blue_det')
+                                case "The red cave has been breached": // stowaway2 (already handled by 'red_det')
+                                case "#well_bgrate_destroyed": // 2mesa3 (already handled by "blue_det")
+                                case "#well_rgrate_destroyed": // 2mesa3 (already handled by "red_det")
                                     return; // Ignore
                                 default:
                                     console.log('unknown World trigger: ' + lineData);
@@ -667,6 +838,16 @@ export class Event {
                             data.team = Event.parseTeam(nonPlayerDataParts[1]);
                             data.value = nonPlayerDataParts[3];
                             break;
+                        case "[ETANA]":
+                        case "[SUMMARY]": // dmg plugin summary
+                            // TODO, log?
+                            return;
+                        case "<-1><><Blue>":
+                        case "<-1><><Red>":
+                        case "<-1><><Green>":
+                        case "<-1><><Yellow>":
+                            // frags that happen after the round ends
+                            return;
                         default:
                             console.error('unknown non-player log message: ' + lineData);
                     }
@@ -677,7 +858,7 @@ export class Event {
                 throw error;
             }
 
-            if (eventType && timestamp) {
+            if (eventType != null && timestamp) {
                 return new Event({
                     eventType: eventType,
                     lineNumber: lineNumber,
@@ -690,6 +871,9 @@ export class Event {
                     withWeapon: withWeapon,
                 });
             }
+        } else {
+            // invalid line; skip
+            return;
         }
 
         console.log("unknown line in log: " + line);
@@ -873,6 +1057,7 @@ export class Event {
             case "train (world)":
                 return Weapon.Train;
             case "rock_falling_death (world)": // 2mesa3
+            case "#rock_falling_death (world)":
                 return Weapon.Pit;
             case "timer":
                 return Weapon.None;
