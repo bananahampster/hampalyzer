@@ -359,6 +359,8 @@ export default class ParserUtils {
                     case EventType.PlayerSpawn:
                     case EventType.PlayerJoinServer:
                     case EventType.PlayerJoinTeam:
+                    case EventType.PlayerChangedName:
+                    case EventType.PlayerLeftServer:
                         // no-op
                         break;
                     case EventType.SecurityUp:

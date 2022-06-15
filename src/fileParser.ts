@@ -76,7 +76,7 @@ export default async function(
         // the CSS file should stay in versioned with the output
         copyFile(cssFile, `${outputDir}/hamp2.css`, (error) => {
             if (error) console.error(`failed to copy CSS file: ${error}`);
-            console.log(`copied CSS file`);
+            // console.log(`copied CSS file`);
         });
 
         // generate the summary output
@@ -95,7 +95,7 @@ export default async function(
 
         writeFile(summaryOutput, html, err => {
             if (err) console.error(`failed to write output: ${err}`);
-            console.log(`saved file ${summaryOutput}`);
+            // console.log(`saved file ${summaryOutput}`);
         });
 
         // TODO: logic for generating player pages
@@ -143,7 +143,7 @@ export default async function(
 
             writeFile(playerOutput, html, err => {
                 if (err) console.error(`failed to write output: ${err}`);
-                console.log(`saved file ${playerOutput}`);
+                // console.log(`saved file ${playerOutput}`);
             });
         }
 

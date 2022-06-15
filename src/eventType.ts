@@ -60,6 +60,12 @@ export enum EventType {
     PlayerCuredHallucinations,
     PlayerDamage, /* custom server mod */
     PlayerCuredTranquilisation,
+    PlayerChangedName,
+    PlayerLeftServer,
+    ServerSwitchSides, // e.g., going to black on ADL maps
+    ServerGatesOpen, // e.g., dustbowl cp2 gates open
+    PlayerKicked,
+    BadRcon,
 };
 
 export default EventType;
