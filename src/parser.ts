@@ -570,6 +570,7 @@ export class Event {
                                     case "Team 3 dropoff":
                                     case "Team 4 dropoff":
                                         eventType = EventType.PlayerCapturedFlag;
+                                        break;
                                     case "Flag1": // asti_r flags
                                     case "Flag2":
                                     case "Flag3":

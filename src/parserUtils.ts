@@ -367,7 +367,7 @@ export default class ParserUtils {
                         // dunno what to do with this event
                         break;
                     default:
-                        console.log(`didn't log event id ${event.eventType} for ${thisPlayer.name}.`)
+                        console.log(`didn't log event id ${EventType[event.eventType]} for ${thisPlayer.name}.`)
                 }
             } else {
                 // this involved another player... make sure both get an event
