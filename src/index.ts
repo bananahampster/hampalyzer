@@ -23,7 +23,9 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
     if (programArgs[2])
         webserverRoot = programArgs[2];
 
-    let reparse = programArgs[3].toLocaleLowerCase() === '--reparse';
+    let reparse = false;
+    if (programArgs[3])
+        reparse = programArgs[3].toLocaleLowerCase() === '--reparse';
 
     const outputDir = path.join(programArgs[2] || "", outputRoot);
     if (!existsSync(outputDir))
@@ -61,7 +63,9 @@ else {
         // logs = ['logs/hellotnsbaconbowlr1.log', 'logs/hellotnsbaconbowlr2.log']; // baconbowl
         // logs = ['logs/hellothxtorch2r1.log', 'logs/hellothxtorch2r2.log']; // torch2
         // logs = ['logs/schtopr1.log', 'logs/schtopr2.log']; // incomplete
-        logs = ['logs/1641109721918-L0102072.log', 'logs/1641109721922-L0102073.log']; // siden
+        // logs = ['logs/1641109721918-L0102072.log', 'logs/1641109721922-L0102073.log']; // siden
+        // logs = ['dist/uploads/1647142313653-L0313008.log', 'dist/uploads/1647142313653-L0313009.log']; // teams fucked?
+        logs = ['dist/uploads/1654325677960-L0604008.log', 'dist/uploads/1654325677973-L0604009.log']; // dmg not counted?
 
     console.log(`parsing logs ${logs.join(" and ")} ...`);
 
