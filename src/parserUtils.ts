@@ -49,7 +49,7 @@ export default class ParserUtils {
                 if (thisTime < 0)
                     thisTime += 3600000;
 
-                if (thisTime > maxTime) {
+                if (thisTime > maxTime || (primaryTeam == TeamColor.Spectator && thisTime > 180)) {
                     primaryTeam = event.team;
                     maxTime = thisTime;
                 }
