@@ -105,7 +105,7 @@ export class RoundParser {
         this.allEvents = this.rawLogData.split("\n");
 
         this.allEvents.forEach((event, lineNumber) => {
-            const newEvent = Event.createEvent(lineNumber, event, this.players);
+            const newEvent = Event.createEvent(lineNumber + 1, event, this.players);
             if (newEvent)
                 this.events.push(newEvent);
         });
@@ -602,6 +602,10 @@ export class Event {
                                             eventType = EventType.PlayerCapturedFlag;
                                         else
                                             console.error('unknown t1df trigger: ' + lineData);
+                                        break;
+                                    case "greenX": // run (the map) flag pickup
+                                    case "yellowX":
+                                        eventType = EventType.PlayerPickedUpFlag;
                                         break;
                                     case "blueflag_point": // run (the map) flag capture
                                     case "blueflag_point2":
