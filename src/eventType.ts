@@ -44,6 +44,9 @@ export enum EventType {
     PlayerPickedUpFlag, /* TODO: will be very map-specific */
     PlayerPickedUpBonusFlag, /* TODO: will be very map-specific */
     PlayerThrewFlag,
+    PlayerCapturedArenaOwn, /* scrummage */
+    PlayerCapturedArenaCenter, /* scrummage */
+    PlayerCapturedArenaOpponent, /* scrummage */
     PlayerCapturedFlag, /* TODO: will be very map-specific */
     PlayerCapturedBonusFlag, /* TODO: will be very map-specific */
     PlayerGotSecurity, /* TODO: will be very map-specific */

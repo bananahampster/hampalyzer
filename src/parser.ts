@@ -187,8 +187,10 @@ export class Event {
 
     public data?: ExtraData;
     public playerFrom?: Player;
+    public playerFromTeam?: TeamColor;
     public playerFromClass?: PlayerClass;
     public playerTo?: Player;
+    public playerToTeam?: TeamColor;
     public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
     public whileConced: boolean;
@@ -202,8 +204,10 @@ export class Event {
         // optional fields
         this.data = options.data;
         this.playerFrom = options.playerFrom;
+        this.playerFromTeam = options.playerFromTeam;
         this.playerFromClass = options.playerFromClass;
         this.playerTo = options.playerTo;
+        this.playerToTeam = options.playerToTeam;
         this.playerToClass = options.playerToClass;
         this.withWeapon = options.withWeapon;
         this.whileConced = false; // Filled in later.
@@ -602,6 +606,18 @@ export class Event {
                                             eventType = EventType.PlayerCapturedFlag;
                                         else
                                             console.error('unknown t1df trigger: ' + lineData);
+                                        break;
+                                    case "CEN BStat":
+                                    case "CEN RStat":
+                                        eventType = EventType.PlayerCapturedArenaCenter;
+                                        break;
+                                    case "BA BStat": // scrummage
+                                    case "RA RStat": // scrummage
+                                        eventType = EventType.PlayerCapturedArenaOwn;
+                                        break;
+                                    case "BA RStat": // scrummage
+                                    case "RA BStat":
+                                        eventType = EventType.PlayerCapturedArenaOpponent;
                                         break;
                                     case "greenX": // run (the map) flag pickup
                                     case "yellowX":
