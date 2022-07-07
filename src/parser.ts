@@ -1075,6 +1075,7 @@ export class Event {
             case "the blue team's lasers (world)": // orbit_l3
             case "env_beam (world)": // stormz2
             case "rock_laser_kill (world)": // baconbowl
+            case "info_tfgoal (world)": // fry_complex
                 return Weapon.Lasers;
             case "train":
             case "train (world)":
