@@ -947,10 +947,12 @@ export class Event {
             case "blue":
             case "blue :d?": // destroy_l
             case "dustbowl_team1": // baconbowl
+            case "attackers": // attac
                 return TeamColor.Blue;
             case "red":
             case "red :d?": // destroy_l
             case "dustbowl_team2": // baconbowl
+            case "defenders": // attac
                 return TeamColor.Red;
             case "yellow":
                 return TeamColor.Yellow;
