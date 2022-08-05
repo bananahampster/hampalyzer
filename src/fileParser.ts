@@ -47,7 +47,6 @@ export default async function(
         const templateDir = new URL('./templates/', import.meta.url);
         const templateFile = new URL('./template-summary.html', templateDir);
         const playerTemplate = new URL('./template-summary-player.html', templateDir);
-        const cssFile = new URL('./hamp2.css', templateDir);
 
         // if no pre-parsed templates were provided, get them from well-known places and compile
         if (!templates) {
@@ -72,12 +71,6 @@ export default async function(
 
         // ensure directory exists; create if it doesn't
         mkdir(outputDir, { mode: 0o775, recursive: true, }, err => { if (err && err.code !== "EEXIST") throw err; });
-
-        // the CSS file should stay in versioned with the output
-        copyFile(cssFile, `${outputDir}/hamp2.css`, (error) => {
-            if (error) console.error(`failed to copy CSS file: ${error}`);
-            // console.log(`copied CSS file`);
-        });
 
         // generate the summary output
         let flagPaceChartMarkup = "";
