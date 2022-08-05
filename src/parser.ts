@@ -1070,6 +1070,7 @@ export class Event {
             case "normalgrenade (world)": // getting killed after round ends (e.g. suicide via grenade):
             case "mirvgrenade (world)":
             case "nailgrenade (world)":
+            case "env_explosion (world)": // attac
                 return Weapon.WorldSpawn;
             case "trigger_hurt":
             case "trigger_hurt (world)": // TODO: this could be a trigger at the bottom of a pit (shutdown) or world (orbit), how can we distinguish with fall damage?
