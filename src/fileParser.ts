@@ -24,13 +24,17 @@ export interface HampalyzerTemplates {
     player: HandlebarsTemplateDelegate<any>;
 }
 
+export interface ParsedPath {
+    path: string
+};
+
 export default async function(
     allStats: ParsedStats | undefined,
     outputRoot: string = 'parsedlogs',
     templates?: HampalyzerTemplates,
     pool?: pg.Pool,
     reparse?: boolean,
-    ): Promise<string | undefined> {
+    ): Promise<ParsedPath | undefined> {
 
     if (allStats) {
         const matchMeta: MatchMetadata = {
@@ -62,7 +66,9 @@ export default async function(
         if (!reparse) {
             const isDuplicate = await checkHasDuplicate(pool, matchMeta);
             console.log('isDuplicate', isDuplicate);
-            if (isDuplicate) return `${outputRoot}/${matchMeta.logName}`;
+            if (isDuplicate) {
+                return { path: `${outputRoot}/${matchMeta.logName}` };
+            }
         }
 
         const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
@@ -156,7 +162,9 @@ export default async function(
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
         // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
-        return (dbSuccess || reparse) ? `${outputDir}/` : undefined;
+        return (dbSuccess || reparse) ?
+            { path: `${outputDir}/` } :
+            undefined;
     } else console.error('no stats found to write!');
 }
 

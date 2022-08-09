@@ -12,6 +12,13 @@ export interface ParsedStats {
     comparison?: TeamStatsComparison;
 }
 
+export function isParsedStats(parsedStats: ParsedStats | unknown): parsedStats is ParsedStats {
+    if ((parsedStats as ParsedStats).players && (parsedStats as ParsedStats).stats)
+        return true;
+
+    return false;
+}
+
 export class Parser {
     private rounds: RoundParser[] = [];
 
@@ -24,7 +31,7 @@ export class Parser {
         return this.rounds.map(round => round.stats);
     }
 
-    public async parseRounds(): Promise<ParsedStats | undefined> {
+    public async parseRounds(): Promise<ParsedStats | string> {
         return Promise.all(this.rounds.map(round => round.parseFile()))
             .then(() => {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
@@ -45,6 +52,9 @@ export class Parser {
                     stats,
                     comparison,
                 };
+            },
+            (error: string) => {
+                return error;
             });
     }
 }
@@ -64,22 +74,30 @@ export class RoundParser {
         // should probably check if the file exists here
     }
 
-    public async parseFile(): Promise<void> {
+    public async parseFile(): Promise<string | void> {
         return this.parseRound(this.filename)
-            .catch(() => console.error(`failed to parse file ${this.filename}.`));
+            .catch((error: string) => {
+                console.error(`failed to parse file ${this.filename}.`);
+                return error;
+            });
     }
 
     private async parseRound(filename: string): Promise<void> {
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve, reject) => {
             const logStream = fs.createReadStream(filename);
             logStream.on('data', chunk => {
                 this.rawLogData += chunk;
             }).on('end', () => {
-                resolve();
                 this.doneReading = true;
-                this.parseData();
-            }).on('error', (error) => {
+                try {
+                    this.parseData();
+                } catch (error) {
+                    reject(error);
+                }
+
                 resolve();
+            }).on('error', (error) => {
+                reject(error);
                 console.log(error);
             });
         });
@@ -854,8 +872,9 @@ export class Event {
                 }
             }
             catch (error) {
-                console.error(`\n\nFailed to parse line number ${lineNumber}: ${lineData}`);
-                throw error;
+                const errorDescription = `Failed to parse line number ${lineNumber}: ${lineData}`;
+                console.error(errorDescription);
+                throw errorDescription + "\n\t" + error;
             }
 
             if (eventType != null && timestamp) {

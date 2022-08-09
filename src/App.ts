@@ -7,9 +7,22 @@ import pg from 'pg';
 import { readFileSync } from 'fs';
 import path from 'path';
 
-import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
-import { Parser } from './parser.js';
+import { default as fileParser, HampalyzerTemplates, ParsedPath } from './fileParser.js';
+import { isParsedStats, ParsedStats, Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
+
+type ParsedResult = ParsedPath | ParsedError;
+
+interface ParsedError {
+    error: string;
+}
+
+function isParsedError(parsedError: ParsedResult): parsedError is ParsedError {
+    if ((parsedError as ParsedError).error !== undefined)
+        return true;
+
+    return false;
+}
 
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
@@ -80,15 +93,18 @@ class App {
                 console.error("expected two files");
             }
 
-            let outputPath = await this.parseLogs([
+            let parsedResult = await this.parseLogs([
                 req.files[0].path,
                 req.files[1].path]);
 
-            if (outputPath == null) {
+            if (parsedResult == null) {
                 res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
+            } else if (isParsedError(parsedResult)) {
+                res.status(500).json({ error: parsedResult.error })
             } else {
                 // sanitize the outputPath by removing the webserverRoot path
                 // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
+                let outputPath = parsedResult.path;
                 if (outputPath.startsWith(this.webserverRoot)) {
                     outputPath = outputPath.slice(this.webserverRoot.length);
                 }
@@ -100,13 +116,16 @@ class App {
         router.post('/parseLog', cors(), upload.single('logs[]'), async (req, res) => {
             // res.status(500).json({ error: "Single log parsing is still a work in progress; try uploading two rounds of a game instead." });
 
-            let outputPath = await this.parseLogs([req.file.path]);
+            let parsedResult = await this.parseLogs([req.file.path]);
 
-            if (outputPath == null) {
+            if (parsedResult == null) {
                 res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
+            } else if (isParsedError(parsedResult)) {
+                res.status(500).json({ error: parsedResult.error })
             } else {
                 // sanitize the outputPath by removing the webserverRoot path
                 // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
+                let outputPath = parsedResult.path;
                 if (outputPath.startsWith(this.webserverRoot)) {
                     outputPath = outputPath.slice(this.webserverRoot.length);
                 }
@@ -154,8 +173,8 @@ class App {
                 console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" +  ")}`);
 
                 const parsedLog = await this.parseLogs(filenames, true /* reparse */);
-                if (!parsedLog) {
-                    console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
+                if (!parsedLog || isParsedError(parsedLog)) {
+                    console.error(`failed to parse logs ${filenames.join(" + ")} for reason: ${parsedLog?.error}; aborting`);
                     return false;
                 }
             }
@@ -167,11 +186,19 @@ class App {
         return result && result.rows.length !== 0;
     }
 
-    private parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
+    private parseLogs(filenames: string[], reparse?: boolean): Promise<ParsedResult | undefined> {
         const parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse));
+            .then(
+                allStats => {
+                    if (isParsedStats(allStats))
+                        return fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse);
+
+                    // return { error: "An unknown, unthrown error occurred" };
+                },
+                (error: string) => ({ error })
+            );
     }
 }
 
