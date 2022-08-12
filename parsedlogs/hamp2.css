@@ -1,5 +1,12 @@
+html {
+    --navbar-height: 48px;
+    scroll-padding-top: var(--navbar-height);
+}
+
 body {
     font-size: .875rem;
+    --team-a-color: rgba(175, 141, 195, 0.65);
+    --team-b-color: rgba(127, 191, 123, 0.65);
 }
 
 .sidebar {
@@ -8,7 +15,7 @@ body {
     bottom: 0;
     left: 0;
     z-index: 100; /* behind navbar */
-    padding: 48px 0 0; /* navbar height */
+    padding: var(--navbar-height) 0 0; /* navbar height */
     box-shadow: inset -1px 0 0 rgba(222, 226, 230, 0.65);
 
     color: #e6e6e6;
@@ -17,7 +24,7 @@ body {
 .sidebar-sticky {
     position: relative;
     top: 0;
-    height: calc(100vh - 48px);
+    height: calc(100vh - var(--navbar-height));
     padding-top: .5rem;
     overflow-x: hidden;
     overflow-y: auto;
@@ -58,11 +65,11 @@ body {
 }
 
 .sidebar .icon.icon-team-a {
-    background-color: rgba(175, 141, 195, 0.65);
+    background-color: var(--team-a-color);
 }
 
 .sidebar .icon.icon-team-b {
-    background-color: rgba(127, 191, 123, 0.65);
+    background-color: var(--team-b-color);
 }
 
 /** main styles */
@@ -88,11 +95,11 @@ body {
 }
 
 .team-comp > :nth-child(1) {
-    background-color: rgba(175, 141, 195, 0.65);
+    background-color: var(--team-a-color);
 }
 
 .team-comp > :nth-child(2) {
-    background-color: rgba(127, 191, 123, 0.65);
+    background-color: var(--team-b-color);
 }
 
 .stats-round {
@@ -154,7 +161,7 @@ table tr.total {
 }
 
 .summary > :not(thead) tr:nth-child(1) {
-    background-color: rgba(175, 141, 195, 0.65);
+    background-color: var(--team-a-color);
 }
 
 .summary tr.comp td.up {
@@ -162,7 +169,7 @@ table tr.total {
 }
 
 .summary tr:nth-child(3) {
-    background-color: rgba(127, 191, 123, 0.65);
+    background-color: var(--team-b-color);
 }
 
 .summary tr.comp td.down {
@@ -198,8 +205,12 @@ table tr.total {
     border-bottom: 2px solid #333;
 }
 
-.stats {
+.stats, .summary-offense, .summary-defense {
     --padding-between-sections: 15px;
+}
+
+.stats span.mvp {
+    color: yellow;
 }
 
 .stats td:first-child, .stats th:first-child,
@@ -209,6 +220,7 @@ table tr.total {
 
 /** tks */
 .stats td.team-kills, .stats th.team-kills,
+.stats td.damage-team, .stats th.damage-team,
 .stats td.suicides, .stats th.suicides,
 .stats td.team-deaths, .stats th.team-deaths {
     color: rgb(255, 125, 138);
@@ -216,7 +228,8 @@ table tr.total {
 }
 
 /** minus sign prepend */
-.stats td.team-kills::before, .stats th.team-kills::before {
+.stats td.team-kills::before, .stats th.team-kills::before,
+.stats td.damage-team::before, .stats th.damage-team::before {
     content: "\2212";
 }
 
@@ -236,28 +249,22 @@ table tr.total {
 }
 
 .stats td.roles, .stats th.roles,
-.stats td.sentry-kills, .stats th.sentry-kills,
-.stats td.team-deaths, .stats th.team-deaths,
-.summary td:nth-child(1), .summary th:nth-child(1),
-.summary-offense td:nth-child(5), .summary-offense th:nth-child(5),
-.summary-offense td:nth-child(9), .summary-offense th:nth-child(9),
-.summary-defense td:nth-child(4), .summary-defense th:nth-child(4),
-.summary-defense td:nth-child(8), .summary-defense th:nth-child(8) {
+td.sentry-kills, th.sentry-kills,
+td.damage-team, th.damage-team,
+td.team-deaths, th.team-deaths,
+.summary td.team, .summary th.team,
+.summary-defense td.conc-kills, .summary-defense th.conc-kills {
     border-right: 1px solid #333;
     padding-right: var(--padding-between-sections);
 }
 
-.stats td.objectives, .stats th.objectives {
+.stats td.objectives, .stats th.objectives,
+.summary-offense td.flag-time, .summary-offense th.flag-time,
+.summary-defense td.airshots, .summary-defense th.airshots {
     padding-right: var(--padding-between-sections);
 }
 
-.stats td:nth-child(0), .stats th:nth-child(0),
-.stats td:nth-child(6), .stats th:nth-child(6),
-.stats td:nth-child(9), .stats th:nth-child(9),
-.stats td:nth-child(13), .stats th:nth-child(13),
-.stats td:nth-child(18), .stats th:nth-child(18),
-.stats td:nth-child(21), .stats th:nth-child(21)
-.summary td:nth-child(2), .summary th:nth-child(2),
+
 .summary-offense td:nth-child(6), .summary-offense th:nth-child(6),
 .summary-offense td:nth-child(10), .summary-offense th:nth-child(10),
 .summary-defense td:nth-child(5), .summary-defense th:nth-child(5),
@@ -298,11 +305,11 @@ table tr.total {
 }
 
 .table a {
-    color: #66b0ff;
+    color: inherit;
 }
 
 .table a:hover {
-    color: #3395ff;
+    color: inherit;
 }
 
 /** player stats styles */
@@ -365,7 +372,7 @@ table tr.total {
 /** weapon styles **/
 
 .weapon-icon {
-    background: url('assets/img/tfc_dmsg_transparent.png');
+    background: url('/assets/img/tfc_dmsg_transparent.png');
     display: inline-block;
     width: 60px;
     height: 16px;

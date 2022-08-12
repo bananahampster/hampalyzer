@@ -49,7 +49,7 @@ export default class ParserUtils {
                 if (thisTime < 0)
                     thisTime += 3600000;
 
-                if (thisTime > maxTime) {
+                if (thisTime > maxTime || (event.team != TeamColor.Spectator && primaryTeam == TeamColor.Spectator && thisTime > 180000)) {
                     primaryTeam = event.team;
                     maxTime = thisTime;
                 }
@@ -303,6 +303,29 @@ export default class ParserUtils {
                     case EventType.PlayerBuiltTeleporter:
                         this.addStat(thisPlayerStats, 'build_tele', event);
                         break;
+                    case EventType.PlayerCapturedArenaCenter:
+                    case EventType.PlayerCapturedArenaOpponent:
+                    case EventType.PlayerCapturedArenaOwn:
+                        // Special scrummage logic to get reasonable stats
+                        // with minimal map-specific changes:
+                        // Treat each arena capture generate a synthetic flag pickup event.
+                        // For the team's own arena, treat it as one cap.
+                        // For center arena, treat it as three caps.
+                        // For the opposing team's arena, treat it as ten caps.
+                        let syntheticCaptureCount = 1;
+                        if (event.eventType == EventType.PlayerCapturedArenaCenter) {
+                            syntheticCaptureCount = 3;
+                        }
+                        else if (event.eventType == EventType.PlayerCapturedArenaOpponent) {
+                            syntheticCaptureCount = 10;
+                        }
+                        for (let i = 0; i < syntheticCaptureCount; i++) {
+                            this.addStat(thisPlayerStats, 'flag_pickup', event);
+                            this.addStat(playerStats.flag, 'flag_pickup', event);
+                            this.addStat(thisPlayerStats, 'flag_capture', event);
+                            this.addStat(playerStats.flag, 'flag_capture', event);
+                        }
+                        break;
                     case EventType.PlayerCapturedFlag:
                         this.addStat(thisPlayerStats, 'flag_capture', event);
                         this.addStat(playerStats.flag, 'flag_capture', event);
@@ -367,7 +390,7 @@ export default class ParserUtils {
                         // dunno what to do with this event
                         break;
                     default:
-                        console.log(`didn't log event id ${event.eventType} for ${thisPlayer.name}.`)
+                        console.log(`didn't log event id ${EventType[event.eventType]} for ${thisPlayer.name}.`)
                 }
             } else {
                 // this involved another player... make sure both get an event

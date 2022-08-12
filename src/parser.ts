@@ -123,7 +123,7 @@ export class RoundParser {
         this.allEvents = this.rawLogData.split("\n");
 
         this.allEvents.forEach((event, lineNumber) => {
-            const newEvent = Event.createEvent(lineNumber, event, this.players);
+            const newEvent = Event.createEvent(lineNumber + 1, event, this.players);
             if (newEvent)
                 this.events.push(newEvent);
         });
@@ -205,8 +205,10 @@ export class Event {
 
     public data?: ExtraData;
     public playerFrom?: Player;
+    public playerFromTeam?: TeamColor;
     public playerFromClass?: PlayerClass;
     public playerTo?: Player;
+    public playerToTeam?: TeamColor;
     public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
     public whileConced: boolean;
@@ -220,8 +222,10 @@ export class Event {
         // optional fields
         this.data = options.data;
         this.playerFrom = options.playerFrom;
+        this.playerFromTeam = options.playerFromTeam;
         this.playerFromClass = options.playerFromClass;
         this.playerTo = options.playerTo;
+        this.playerToTeam = options.playerToTeam;
         this.playerToClass = options.playerToClass;
         this.withWeapon = options.withWeapon;
         this.whileConced = false; // Filled in later.
@@ -588,6 +592,7 @@ export class Event {
                                     case "Team 3 dropoff":
                                     case "Team 4 dropoff":
                                         eventType = EventType.PlayerCapturedFlag;
+                                        break;
                                     case "Flag1": // asti_r flags
                                     case "Flag2":
                                     case "Flag3":
@@ -619,6 +624,22 @@ export class Event {
                                             eventType = EventType.PlayerCapturedFlag;
                                         else
                                             console.error('unknown t1df trigger: ' + lineData);
+                                        break;
+                                    case "CEN BStat":
+                                    case "CEN RStat":
+                                        eventType = EventType.PlayerCapturedArenaCenter;
+                                        break;
+                                    case "BA BStat": // scrummage
+                                    case "RA RStat": // scrummage
+                                        eventType = EventType.PlayerCapturedArenaOwn;
+                                        break;
+                                    case "BA RStat": // scrummage
+                                    case "RA BStat":
+                                        eventType = EventType.PlayerCapturedArenaOpponent;
+                                        break;
+                                    case "greenX": // run (the map) flag pickup
+                                    case "yellowX":
+                                        eventType = EventType.PlayerPickedUpFlag;
                                         break;
                                     case "blueflag_point": // run (the map) flag capture
                                     case "blueflag_point2":
@@ -945,10 +966,14 @@ export class Event {
             case "blue":
             case "blue :d?": // destroy_l
             case "dustbowl_team1": // baconbowl
+            case "attackers": // attac
+            case "#dustbowl_team1": // rasen
                 return TeamColor.Blue;
             case "red":
             case "red :d?": // destroy_l
             case "dustbowl_team2": // baconbowl
+            case "defenders": // attac
+            case "#dustbowl_team2": // rasen
                 return TeamColor.Red;
             case "yellow":
                 return TeamColor.Yellow;
@@ -1064,6 +1089,9 @@ export class Event {
             case "the blue lift (world)": // openfire
             case "timer (world)": // getting killed after round ends (e.g. infection kill after time)
             case "normalgrenade (world)": // getting killed after round ends (e.g. suicide via grenade):
+            case "mirvgrenade (world)":
+            case "nailgrenade (world)":
+            case "env_explosion (world)": // attac
                 return Weapon.WorldSpawn;
             case "trigger_hurt":
             case "trigger_hurt (world)": // TODO: this could be a trigger at the bottom of a pit (shutdown) or world (orbit), how can we distinguish with fall damage?
@@ -1071,6 +1099,7 @@ export class Event {
             case "the blue team's lasers (world)": // orbit_l3
             case "env_beam (world)": // stormz2
             case "rock_laser_kill (world)": // baconbowl
+            case "info_tfgoal (world)": // fry_complex
                 return Weapon.Lasers;
             case "train":
             case "train (world)":
