@@ -573,13 +573,13 @@ export class Event {
                                     case "Capture Point 2":
                                     case "Capture Point 3":
                                     case "Capture Point 4":
-                                        eventType = EventType.PlayerCapturedFlag;
+                                        eventType = EventType.PlayerCapturedPoint;
                                         break;
                                     case "capture point 1": // magelli
                                     case "capture point 2":
                                     case "capture point 3":
                                     case "capture point 4":
-                                        eventType = EventType.PlayerCapturedFlag;
+                                        eventType = EventType.PlayerCapturedPoint;
                                         break;
                                     case "Team 1 dropoff":
                                     case "Team 2 dropoff":
@@ -822,6 +822,10 @@ export class Event {
                                     eventType = EventType.FlagReturn;
                                     data.team = Event.parseTeam(nonPlayerDataParts[2].split(" ")[0]);
                                     break;
+                                case "Flag has returned Info": // e.g. magelli
+                                    eventType = EventType.FlagReturn;
+                                    // No team is associated with this event.
+                                    break;
                                 case 'never': // TODO: normalize this a little across maps
                                     eventType = EventType.WorldTrigger;
 
@@ -901,6 +905,8 @@ export class Event {
                         case "[ETANA]":
                         case "[SUMMARY]": // dmg plugin summary
                             // TODO, log?
+                            return;
+                        case "[AMX]":
                             return;
                         case "<-1><><Blue>":
                         case "<-1><><Red>":

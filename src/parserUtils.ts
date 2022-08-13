@@ -327,6 +327,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerCapturedFlag:
+                    case EventType.PlayerCapturedPoint:
                         this.addStat(thisPlayerStats, 'flag_capture', event);
                         this.addStat(playerStats.flag, 'flag_capture', event);
                         break;

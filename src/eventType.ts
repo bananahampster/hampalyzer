@@ -47,6 +47,7 @@ export enum EventType {
     PlayerCapturedArenaOwn, /* scrummage */
     PlayerCapturedArenaCenter, /* scrummage */
     PlayerCapturedArenaOpponent, /* scrummage */
+    PlayerCapturedPoint, /* e.g. cornfield, magelli */
     PlayerCapturedFlag, /* TODO: will be very map-specific */
     PlayerCapturedBonusFlag, /* TODO: will be very map-specific */
     PlayerGotSecurity, /* TODO: will be very map-specific */
