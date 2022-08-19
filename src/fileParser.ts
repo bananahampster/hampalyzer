@@ -24,17 +24,13 @@ export interface HampalyzerTemplates {
     player: HandlebarsTemplateDelegate<any>;
 }
 
-export interface ParsedPath {
-    path: string
-};
-
 export default async function(
     allStats: ParsedStats | undefined,
     outputRoot: string = 'parsedlogs',
     templates?: HampalyzerTemplates,
     pool?: pg.Pool,
     reparse?: boolean,
-    ): Promise<ParsedPath | undefined> {
+    ): Promise<string | undefined> {
 
     if (allStats) {
         const matchMeta: MatchMetadata = {
@@ -66,7 +62,7 @@ export default async function(
             const isDuplicate = await checkHasDuplicate(pool, matchMeta);
             console.log('isDuplicate', isDuplicate);
             if (isDuplicate) {
-                return { path: `${outputRoot}/${matchMeta.logName}` };
+                return `${outputRoot}/${matchMeta.logName}`;
             }
         }
 
@@ -142,7 +138,6 @@ export default async function(
 
             writeFile(playerOutput, html, err => {
                 if (err) console.error(`failed to write output: ${err}`);
-                // console.log(`saved file ${playerOutput}`);
             });
         }
 
@@ -155,10 +150,13 @@ export default async function(
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
         // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
-        return (dbSuccess || reparse) ?
-            { path: `${outputDir}/` } :
-            undefined;
-    } else console.error('no stats found to write!');
+        if (dbSuccess || reparse) {
+            console.log(`writing log to ${outputDir}`);
+            return `${outputDir}/`;
+        }
+    }
+    else
+        console.error('no stats found to write!');
 }
 
 async function checkHasDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {

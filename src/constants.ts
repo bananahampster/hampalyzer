@@ -15,6 +15,7 @@ export interface OutputStats {
     teams: TeamsOutputStatsDetailed;
     scoring_activity?: ScoringActivity;
     damage_stats_exist: boolean;
+    parsing_errors?: string[];
 }
 
 // expected to be ordered by timestamp ascending

@@ -53,6 +53,14 @@
                                 Flag pace
                             </a>
                         </li>
+                        {{#ifListNotEmpty ../parsing_errors}}
+                        <li class="nav-item">
+                            <a id="parsing-errors-nav-link" class="nav-link" href="#parsing-errors">
+                                Parsing errors
+                                <span class="badge badge-warning badge-pill">{{countParsingErrors ../parsing_errors}}</span>
+                            </a>
+                        </li>
+                        {{/ifListNotEmpty}}
                     </ul>
 
                     <h6 class="sidebar-heading px-3 mt-4 mb-1">
@@ -274,6 +282,23 @@
                         {{{chartMarkup}}}
                     </div>
                 </div>
+
+                {{#ifListNotEmpty parsing_errors}}
+                <div id="parsing-errors" class="alert alert-warning my-5 col-sm-9" role="alert">
+                    <h4 class="alert-heading">Parsing errors</h4>
+                    <hr>
+                    {{#each parsing_errors}}
+                    {{#if this}}
+                    <h5 class="alert-heading">Round {{math @index "+" 1}}</h5>
+                    <ul class="mb-0">
+                        {{#each this}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                    {{/if}}
+                    {{/each}}
+                </div>
+                {{/ifListNotEmpty}}
             </main>
         </div>
     </div>
