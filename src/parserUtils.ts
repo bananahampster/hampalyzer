@@ -876,7 +876,7 @@ export default class ParserUtils {
 
                     break;
                 case TeamRole.Defense:
-                    stats.airshots = this.getSummarizedStat(player, 'weaponStats', 'airshot');
+                    stats.airshots += this.getSummarizedStat(player, 'weaponStats', 'airshot');
                     break;
             }
 
