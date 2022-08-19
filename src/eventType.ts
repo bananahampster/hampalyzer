@@ -56,6 +56,7 @@ export enum EventType {
     FlagReturn, /* done */
     SecurityUp, /* done */
     TeamScore, /* done */
+    TeamFlagHoldBonus, /* ss_nyx_ectfc */
     MetaModMessages,
     EndLog, /* done */
     PlayerCuredInfection,

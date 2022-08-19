@@ -733,8 +733,9 @@ export class Event {
                     // handle non-player log messages
 
                     // if no matches, must be a malformed line (crashed server?)
-                    if (!nonPlayerDataParts || nonPlayerDataParts.length === 0)
+                    if (!nonPlayerDataParts || nonPlayerDataParts.length === 0) {
                         return;
+                    }
                     switch (nonPlayerDataParts[0]) {
                         case "Log":
                             if (nonPlayerDataParts[2] === "started")
@@ -861,6 +862,17 @@ export class Event {
                                         eventType = EventType.SecurityUp;
                                         break;
                                     }
+                                    // ss_nyx_ectfc
+                                    else if (phrase == "Blue team held their flag for 5 minutes!") {
+                                        eventType = EventType.TeamFlagHoldBonus;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    }
+                                    else if (phrase == "Red team held their flag for 5 minutes!") {
+                                        eventType = EventType.TeamFlagHoldBonus;
+                                        data.team = TeamColor.Red;
+                                        break;
+                                    }
                                 case "Blue security is now operating!":
                                 case "Red security is now operating!":
                                 case "Blue security has been deactivated!":
@@ -915,7 +927,7 @@ export class Event {
                             // frags that happen after the round ends
                             return;
                         default:
-                            console.error('unknown non-player log message: ' + lineData);
+                            console.error(`unknown non-player log message on line number ${lineNumber}: ${lineData}`);
                     }
                 }
             }
@@ -942,7 +954,7 @@ export class Event {
             return;
         }
 
-        console.log("unknown line in log: " + line);
+        console.log(`unknown line in log on line number ${lineNumber}: ${line}`);
     }
 
     public get value(): string {
