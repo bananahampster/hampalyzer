@@ -170,6 +170,19 @@ export class RoundParser {
                     }
                 }
             }
+
+            // also cull suicides/dmg due to prematch end
+            const prematchEndIndex = this.events.findIndex(event => event.lineNumber === matchStartLineNumber);
+            let i = prematchEndIndex + 1;
+            while (this.events[i].gameTimeAsSeconds === 0) {
+                const currentEvent = this.events[i];
+                if (currentEvent.eventType === EventType.PlayerCommitSuicide ||
+                    currentEvent.eventType === EventType.PlayerDamage) {
+                    this.events.splice(i, 1);
+                }
+                else
+                    i++;
+            }
         }
     }
 }
