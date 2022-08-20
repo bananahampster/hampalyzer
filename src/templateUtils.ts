@@ -30,6 +30,19 @@ export default class TemplateUtils {
             }
         });
 
+        Handlebars.registerHelper('ifListNotEmpty', function(this: unknown, givenArray: any[][], options) {
+            if (givenArray.length && givenArray.some(item => item.length))
+                return options.fn(this);
+            else
+                return options.inverse(this);
+        });
+
+        Handlebars.registerHelper('countParsingErrors', function(this: unknown, givenArray: any[][]) {
+            if (givenArray.length && givenArray.some(item => item.length)) {
+                return givenArray.reduce((acc, round) => acc + (round.length || 0), 0);
+            }
+        });
+
         // dumping json objects
         Handlebars.registerHelper('json', function(context) {
             return JSON.stringify(context);

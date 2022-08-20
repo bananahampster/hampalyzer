@@ -9,6 +9,7 @@ type RoundStats = (OutputStats | undefined)[];
 export interface ParsedStats {
     stats: RoundStats;
     players: TeamComposition<OutputPlayer>;
+    parsing_errors: (string[] | undefined)[];
     comparison?: TeamStatsComparison;
 }
 
@@ -43,6 +44,7 @@ export class Parser {
                 return <ParsedStats> {
                     players: teamComp,
                     stats,
+                    parsing_errors: stats.map(round => round?.parsing_errors),
                     comparison,
                 };
             });
@@ -60,6 +62,8 @@ export class RoundParser {
     private teamComp: TeamComposition | undefined;
     private summarizedStats: OutputStats | undefined;
 
+    private parsingErrors: string[] = [];
+
     constructor(private filename: string) {
         // should probably check if the file exists here
     }
@@ -70,17 +74,17 @@ export class RoundParser {
     }
 
     private async parseRound(filename: string): Promise<void> {
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve, reject) => {
             const logStream = fs.createReadStream(filename);
             logStream.on('data', chunk => {
                 this.rawLogData += chunk;
             }).on('end', () => {
-                resolve();
                 this.doneReading = true;
                 this.parseData();
-            }).on('error', (error) => {
                 resolve();
-                console.log(error);
+            }).on('error', (error) => {
+                console.error(error);
+                reject(error);
             });
         });
     }
@@ -106,8 +110,14 @@ export class RoundParser {
 
         this.allEvents.forEach((event, lineNumber) => {
             const newEvent = Event.createEvent(lineNumber + 1, event, this.players);
-            if (newEvent)
-                this.events.push(newEvent);
+            if (newEvent) {
+                if (typeof newEvent === 'string') {
+                    this.parsingErrors.push(newEvent);
+                }
+                else {
+                    this.events.push(newEvent);
+                }
+            }
         });
 
         this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
@@ -123,8 +133,7 @@ export class RoundParser {
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
         this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
-
-        console.log(`Map: ${this.summarizedStats.map}`);
+        this.summarizedStats.parsing_errors = this.parsingErrors;
     }
 
     private trimPreAndPostMatchEvents() {
@@ -232,7 +241,7 @@ export class Event {
         return parts;
     }
 
-    public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | undefined {
+    public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | string | undefined {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
 
@@ -241,6 +250,7 @@ export class Event {
         let playerFromTeam: TeamColor | undefined;
         let playerTo: Player | undefined;
         let playerToTeam: TeamColor | undefined;
+        let data: ExtraData = {};
 
         // a valid log line must start with 'L'
         if (line[0] === 'L') {
@@ -282,8 +292,6 @@ export class Event {
                 nonPlayerDataParts.push(lineDataParts[i]);
             }
 
-            const data: ExtraData = {};
-
             // Wrap in a try/catch so we can log the line number for a failed parse.
             try {
                 // if there is a player match, we'll have multiple parts
@@ -309,7 +317,7 @@ export class Event {
                                     eventType = EventType.PlayerFraggedPlayer;
                                     withWeapon = Event.parseWeapon(nonPlayerDataParts[2]);
                                 } else
-                                    console.log("Unknown 'killed' event: " + line);
+                                    throw "unknown 'killed' event: " + line;
                                 break;
                             case "triggered":
                                 if (nonPlayerDataParts[1].startsWith("airshot")) {
@@ -383,8 +391,7 @@ export class Event {
                                     eventType = EventType.PlayerCuredInfection;
 
                                 } else {
-                                    console.log("unknown 'triggered' event: " + line);
-                                    throw ""; // TODO
+                                    throw "unknown two-person trigger event";
                                 }
                                 break;
                             case "damaged": // For servers with custom damage stats mod.
@@ -397,8 +404,7 @@ export class Event {
                                 data.value = nonPlayerDataParts[2];
                                 break;
                             default:
-                                console.log("Unknown multi-player event: " + line);
-                                throw ""; // TODO
+                                throw "unknown multi-player event";
                         }
                     } else {
                         switch (nonPlayerDataParts[0]) {
@@ -528,7 +534,7 @@ export class Event {
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerPickedUpFlag;
                                         else
-                                            console.error('unknown player trigger "goalitem": ' + lineData);
+                                            throw 'unknown player trigger "goalitem"';
                                         break;
                                     case "Red Flag":
                                     case "Blue Flag":
@@ -596,12 +602,11 @@ export class Event {
                                         if (nonPlayerDataParts[2] = "Point")
                                             eventType = EventType.PlayerCapturedFlag;
                                         else
-                                            console.error("unknown player trigger Capture: " + lineData);
+                                            throw "unknown player trigger Capture";
                                         break;
                                     case "Team":
                                         if (nonPlayerDataParts.length !== 4) {
-                                            console.error('unknown player trigger Team: ' + lineData);
-                                            break;
+                                            throw 'unknown player trigger Team';
                                         }
 
                                         switch (nonPlayerDataParts[3]) {
@@ -609,7 +614,7 @@ export class Event {
                                                 eventType = EventType.PlayerCapturedFlag;
                                                 break;
                                             default:
-                                                console.error('unknown player trigger Team (len 3): ' + lineData);
+                                                throw 'unknown player trigger Team (len 3)';
                                         }
                                         break;
                                     case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
@@ -617,7 +622,7 @@ export class Event {
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerCapturedFlag;
                                         else
-                                            console.error('unknown t1df trigger: ' + lineData);
+                                            throw 'unknown t1df trigger';
                                         break;
                                     case "CEN BStat":
                                     case "CEN RStat":
@@ -642,7 +647,7 @@ export class Event {
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerCapturedFlag;
                                         else
-                                            console.error('unknown "run"-like trigger: ' + lineData);
+                                            throw 'unknown "run"-like trigger';
                                         break;
                                     case 'rdet': // oppose2k1 water entrance det opened
                                     case 'bdet':
@@ -653,14 +658,14 @@ export class Event {
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerOpenedDetpackEntrance;
                                         else
-                                            console.error('unknown rdet/bdet trigger: ' + lineData);
+                                            throw 'unknown rdet/bdet trigger';
                                         break;
                                     case 'red_down': // schtop
                                     case 'blue_down':
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerGotSecurity;
                                         else
-                                            console.error('unknown red_down/blue_down trigger: ' + lineData);
+                                            throw 'unknown red_down/blue_down trigger';
                                         break;
                                     case 'red_up': // schtop
                                     case 'blue_up':
@@ -724,7 +729,7 @@ export class Event {
                                     case "Start message": // magelli (can be player or world, already handled by #dustbowl_gates_open)
                                         return;
                                     default:
-                                        console.error(`unknown player trigger: ${nonPlayerDataParts[1]}: ${lineData}`);
+                                        throw `unknown player trigger: ${nonPlayerDataParts[1]}`;
                                 }
                                 break;
                             }
@@ -743,21 +748,21 @@ export class Event {
                             else if (nonPlayerDataParts[2] === "closed")
                                 eventType = EventType.EndLog;
                             else
-                                console.error("Unknown 'log' message: " + lineData);
+                                throw "unknown 'log' message";
                             break;
                         case "Loading":
                             if (nonPlayerDataParts[1] === "map") {
                                 eventType = EventType.MapLoading;
                                 data.value = nonPlayerDataParts[2];
                             } else
-                                console.error("unknown 'loading' command: " + lineData);
+                                throw "unknown 'loading' command";
                             break;
                         case "Started":
                             if (nonPlayerDataParts[1] === "map") {
                                 eventType = EventType.MapLoaded;
                                 data.value = nonPlayerDataParts[2];
                             } else
-                                console.error("unknown 'loading' command: " + lineData);
+                                throw "unknown 'loading' command";
                             break;
                         case "Server":
                             switch (lineDataParts[1]) {
@@ -771,7 +776,7 @@ export class Event {
                                     else if (nonPlayerDataParts[2] === "end")
                                         eventType = EventType.ServerCvarEnd
                                     else
-                                        console.error("unknown 'server cvars' command: " + lineData);
+                                        throw "unknown 'server cvars' command";
                                     break;
                                 case "cvar":
                                     eventType = EventType.ServerCvar;
@@ -783,7 +788,7 @@ export class Event {
                                     data.value = nonPlayerDataParts.slice(2).join(' ');
                                     break;
                                 default:
-                                    console.error("unknown 'server' command: " + lineData);
+                                    throw "unknown 'server' command";
                             }
                             break;
                         case "Rcon":
@@ -811,8 +816,7 @@ export class Event {
                             break;
                         case "World":
                             if (nonPlayerDataParts[1] !== "triggered") {
-                                console.error("unknown 'World' command: " + lineData);
-                                break;
+                                throw "unknown 'World' command";
                             }
                             switch (nonPlayerDataParts[2]) {
                                 case "Match_Begins_Now":
@@ -902,13 +906,12 @@ export class Event {
                                 case "#well_rgrate_destroyed": // 2mesa3 (already handled by "red_det")
                                     return; // Ignore
                                 default:
-                                    console.log('unknown World trigger: ' + lineData);
+                                    throw 'unknown World trigger';
                             }
                             break;
                         case "Team":
                             if (nonPlayerDataParts[2] !== "scored") {
-                                console.error("unknown 'Team' command: " + lineData);
-                                break;
+                                throw "unknown 'Team' command";
                             }
                             eventType = EventType.TeamScore;
                             data.team = Event.parseTeam(nonPlayerDataParts[1]);
@@ -927,13 +930,15 @@ export class Event {
                             // frags that happen after the round ends
                             return;
                         default:
-                            console.error(`unknown non-player log message on line number ${lineNumber}: ${lineData}`);
+                            throw 'unknown non-player log message';
                     }
                 }
             }
+            // also catch any parserUtil errors (can only catch exceptions)
             catch (error) {
-                console.error(`\n\nFailed to parse line number ${lineNumber}: ${lineData}`);
-                throw error;
+                const errorDescription = `Failed to parse line number ${lineNumber}: ${lineData} -- ${error}`;
+                console.error(errorDescription);
+                return errorDescription;
             }
 
             if (eventType != null && timestamp) {
@@ -954,7 +959,7 @@ export class Event {
             return;
         }
 
-        console.log(`unknown line in log on line number ${lineNumber}: ${line}`);
+        return `Unknown line (${lineNumber}) in log: ${line}`;
     }
 
     public get value(): string {

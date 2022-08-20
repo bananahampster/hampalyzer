@@ -61,7 +61,9 @@ export default async function(
         if (!reparse) {
             const isDuplicate = await checkHasDuplicate(pool, matchMeta);
             console.log('isDuplicate', isDuplicate);
-            if (isDuplicate) return `${outputRoot}/${matchMeta.logName}`;
+            if (isDuplicate) {
+                return `${outputRoot}/${matchMeta.logName}`;
+            }
         }
 
         const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
@@ -136,7 +138,6 @@ export default async function(
 
             writeFile(playerOutput, html, err => {
                 if (err) console.error(`failed to write output: ${err}`);
-                // console.log(`saved file ${playerOutput}`);
             });
         }
 
@@ -149,8 +150,13 @@ export default async function(
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
         // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
-        return (dbSuccess || reparse) ? `${outputDir}/` : undefined;
-    } else console.error('no stats found to write!');
+        if (dbSuccess || reparse) {
+            console.log(`writing log to ${outputDir}`);
+            return `${outputDir}/`;
+        }
+    }
+    else
+        console.error('no stats found to write!');
 }
 
 async function checkHasDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {
