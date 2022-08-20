@@ -47,6 +47,7 @@ export enum EventType {
     PlayerCapturedArenaOwn, /* scrummage */
     PlayerCapturedArenaCenter, /* scrummage */
     PlayerCapturedArenaOpponent, /* scrummage */
+    PlayerCapturedPoint, /* e.g. cornfield, magelli */
     PlayerCapturedFlag, /* TODO: will be very map-specific */
     PlayerCapturedBonusFlag, /* TODO: will be very map-specific */
     PlayerGotSecurity, /* TODO: will be very map-specific */
@@ -55,6 +56,7 @@ export enum EventType {
     FlagReturn, /* done */
     SecurityUp, /* done */
     TeamScore, /* done */
+    TeamFlagHoldBonus, /* ss_nyx_ectfc */
     MetaModMessages,
     EndLog, /* done */
     PlayerCuredInfection,

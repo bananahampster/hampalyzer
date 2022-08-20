@@ -208,9 +208,13 @@ export default class ParserUtils {
         });
 
         if (teams) {
-            const flagCapEvents = events.filter(ev => ev.eventType === EventType.PlayerCapturedFlag || ev.eventType === EventType.PlayerCapturedBonusFlag);
+            const flagCapEvents = events.filter(
+                ev => ev.eventType === EventType.PlayerCapturedFlag
+                || ev.eventType === EventType.PlayerCapturedBonusFlag
+                || ev.eventType === EventType.TeamFlagHoldBonus);
             let pointsPerCap = 10;
             let pointsPerBonusCap = pointsPerCap;
+            const pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
             if (!needToComputeTeamScore) {
                 const firstTeamFlagCapEvents = events.filter(ev => {
                     return ev.eventType === EventType.PlayerCapturedFlag
@@ -220,6 +224,9 @@ export default class ParserUtils {
                     return ev.eventType === EventType.PlayerCapturedBonusFlag
                         && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
                 });
+                const firstTeamFlagHoldBonusEvents = flagCapEvents.filter(ev => ev.eventType === EventType.TeamFlagHoldBonus && ev.data!.team == TeamColor.Blue);
+                const pointsFromFlagHoldBonuses = firstTeamFlagHoldBonusEvents.length * pointsPerTeamFlagHoldBonus;
+
                 if (scores[1] && firstTeamBonusFlagCapEvents.length > 0) {
                     // This is a map with bonus caps, e.g. raiden6's coast-to-coast mechanic.
                     // To estimate the values for a normal cap and a bonus cap, assume a normal cap value of 10.
@@ -231,7 +238,7 @@ export default class ParserUtils {
                 else {
                     pointsPerCap = scores[1] ?
                         (firstTeamFlagCapEvents.length > 0 ?
-                            (scores[1] / firstTeamFlagCapEvents.length) : pointsPerCap)
+                            ((scores[1] - pointsFromFlagHoldBonuses) / firstTeamFlagCapEvents.length) : pointsPerCap)
                         : pointsPerCap;
                 }
                 if (pointsPerCap != 10) {
@@ -244,8 +251,15 @@ export default class ParserUtils {
             }
             let runningScore: TeamScore = {};
             flagCapEvents.forEach(event => {
-                const player = event.playerFrom!;
-                const team = ParserUtils.getTeamForPlayer(player, teams);
+                const player = event.playerFrom;
+                
+                let team : number;
+                if (event.eventType == EventType.TeamFlagHoldBonus) {
+                    team = event.data!.team!;
+                }
+                else {
+                    team = ParserUtils.getTeamForPlayer(player!, teams);
+                }
 
                 if (!flagMovements[team]) {
                     const teamFlagStats: FlagMovement[] = [];
@@ -255,10 +269,20 @@ export default class ParserUtils {
                 if (!runningScore[team]) {
                     runningScore[team] = 0;
                 }
-                runningScore[team] += event.eventType === EventType.PlayerCapturedBonusFlag ? pointsPerBonusCap : pointsPerCap;
+                switch (event.eventType) {
+                    case EventType.TeamFlagHoldBonus:
+                        runningScore[team] += pointsPerTeamFlagHoldBonus;
+                        break;
+                    case EventType.PlayerCapturedBonusFlag:
+                        runningScore[team] += pointsPerBonusCap;
+                        break;
+                    default:
+                        runningScore[team] += pointsPerCap;
+                        break;
+                }
                 const flagMovement: FlagMovement = {
                     game_time_as_seconds: event.gameTimeAsSeconds!,
-                    player: player.name,
+                    player: player ? player.name : "<Team>",
                     current_score: runningScore[team],
                     how_dropped: FlagDrop.Captured,
 
@@ -327,6 +351,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerCapturedFlag:
+                    case EventType.PlayerCapturedPoint:
                         this.addStat(thisPlayerStats, 'flag_capture', event);
                         this.addStat(playerStats.flag, 'flag_capture', event);
                         break;
@@ -851,7 +876,7 @@ export default class ParserUtils {
 
                     break;
                 case TeamRole.Defense:
-                    stats.airshots = this.getSummarizedStat(player, 'weaponStats', 'airshot');
+                    stats.airshots += this.getSummarizedStat(player, 'weaponStats', 'airshot');
                     break;
             }
 

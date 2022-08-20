@@ -568,11 +568,23 @@ export class Event {
                                     case "Flag 4":
                                         eventType = EventType.PlayerPickedUpFlag;
                                         break;
+                                    case "Flag #1": // osaka
+                                    case "Flag #2":
+                                    case "Flag #3":
+                                    case "Flag #4":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        break;
                                     case "Capture Point 1": // cornfield
                                     case "Capture Point 2":
                                     case "Capture Point 3":
                                     case "Capture Point 4":
-                                        eventType = EventType.PlayerCapturedFlag;
+                                        eventType = EventType.PlayerCapturedPoint;
+                                        break;
+                                    case "capture point 1": // magelli
+                                    case "capture point 2":
+                                    case "capture point 3":
+                                    case "capture point 4":
+                                        eventType = EventType.PlayerCapturedPoint;
                                         break;
                                     case "Team 1 dropoff":
                                     case "Team 2 dropoff":
@@ -641,6 +653,7 @@ export class Event {
                                     case 'red_det': // 2mesa3 / stowaway2 water opened
                                     case 'blue_det':
                                     case 'rholedet': // cornfield cp4 / avanti
+                                    case 'det1detect': // magelli
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerOpenedDetpackEntrance;
                                         else
@@ -694,6 +707,25 @@ export class Event {
                                     case 'RED_SPAWN_three': // mulch_trench respawn?
                                     case 'RED_SPAWN_ONE': // mulch_trench_lg respawn
                                     // case 'grenbackpack': // ??
+                                    case "ammo_giver": // osaka spawn trigger
+                                    case "Blue team spawn stuff 1": // magelli spawn trigger
+                                    case "Blue team spawn stuff 2": // magelli spawn trigger
+                                    case "Blue team spawn stuff 3": // magelli spawn trigger
+                                    case "Red team spawn stuff 1": // magelli spawn trigger
+                                    case "Red team spawn stuff 2": // magelli spawn trigger
+                                    case "Red team spawn stuff 3": // magelli spawn trigger
+                                    case "warning sound1": // magelli message handling
+                                    case "warning sound2": // magelli message handling
+                                    case "warning sound3": // magelli message handling
+                                    case "warning sound4": // magelli message handling
+                                    case "Spawn mover 1": // magelli helper entity
+                                    case "Spawn mover 2": // magelli helper entity
+                                    case "Flag mover 1": // magelli helper entity
+                                    case "Flag mover 2": // magelli helper entity
+                                    case "attackers win": // magelli (already handled by Cease_Fire? TODO: investigate this)
+                                    case "Reset spawns": // magelli (already handled by Cease_Fire? TODO: investigate this)
+                                    case "reset flag": // magelli (already handled by Cease_Fire? TODO: investigate this)
+                                    case "Start message": // magelli (can be player or world, already handled by #dustbowl_gates_open)
                                         return;
                                     default:
                                         throw `unknown player trigger: ${nonPlayerDataParts[1]}`;
@@ -705,8 +737,9 @@ export class Event {
                     // handle non-player log messages
 
                     // if no matches, must be a malformed line (crashed server?)
-                    if (!nonPlayerDataParts || nonPlayerDataParts.length === 0)
+                    if (!nonPlayerDataParts || nonPlayerDataParts.length === 0) {
                         return;
+                    }
                     switch (nonPlayerDataParts[0]) {
                         case "Log":
                             if (nonPlayerDataParts[2] === "started")
@@ -793,6 +826,10 @@ export class Event {
                                     eventType = EventType.FlagReturn;
                                     data.team = Event.parseTeam(nonPlayerDataParts[2].split(" ")[0]);
                                     break;
+                                case "Flag has returned Info": // e.g. magelli
+                                    eventType = EventType.FlagReturn;
+                                    // No team is associated with this event.
+                                    break;
                                 case 'never': // TODO: normalize this a little across maps
                                     eventType = EventType.WorldTrigger;
 
@@ -828,6 +865,17 @@ export class Event {
                                         eventType = EventType.SecurityUp;
                                         break;
                                     }
+                                    // ss_nyx_ectfc
+                                    else if (phrase == "Blue team held their flag for 5 minutes!") {
+                                        eventType = EventType.TeamFlagHoldBonus;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    }
+                                    else if (phrase == "Red team held their flag for 5 minutes!") {
+                                        eventType = EventType.TeamFlagHoldBonus;
+                                        data.team = TeamColor.Red;
+                                        break;
+                                    }
                                 case "Blue security is now operating!":
                                 case "Red security is now operating!":
                                 case "Blue security has been deactivated!":
@@ -836,10 +884,17 @@ export class Event {
                                 case "Red security will be operational in 30 seconds!": // schtop
                                 case "Blue_Flag_Vox":
                                 case "Red_Flag_Vox":
+                                case "#dustbowl_90_secs": // magelli
                                 case "#dustbowl_60_secs": // dustbowl / cornfield
                                 case "#dustbowl_30_secs": // dustbowl / cornfield
                                 case "#dustbowl_10_secs": // dustbowl / cornfield
                                 case "defenders_score": // adl-specific score for time held (e.g., cornfield)
+                                case "Defender score timer": // magelli
+                                case "warning sound1": // magelli
+                                case "warning sound2": // magelli
+                                case "warning sound3": // magelli
+                                case "warning sound4": // magelli
+                                case "Start message": // magelli (can be player or world, already handled by #dustbowl_gates_open)
                                 case "Command Point 4 Wall Breached": // cornfield (already handled by rholedet)
                                 case "Command Point Four breached!": // avanti(?) (already handled by rholedet)
                                 case "#italy_hole_text": // avanti (already handled by rholedet)
@@ -865,6 +920,8 @@ export class Event {
                         case "[SUMMARY]": // dmg plugin summary
                             // TODO, log?
                             return;
+                        case "[AMX]":
+                            return;
                         case "<-1><><Blue>":
                         case "<-1><><Red>":
                         case "<-1><><Green>":
@@ -878,9 +935,9 @@ export class Event {
             }
             // also catch any parserUtil errors (can only catch exceptions)
             catch (error) {
-                const errorDescription = `Failed to parse line number ${lineNumber}: ${lineData}`;
+                const errorDescription = `Failed to parse line number ${lineNumber}: ${lineData} -- ${error}`;
                 console.error(errorDescription);
-                return errorDescription + " -- " + error;
+                return errorDescription;
             }
 
             if (eventType != null && timestamp) {
@@ -953,12 +1010,14 @@ export class Event {
             case "dustbowl_team1": // baconbowl
             case "attackers": // attac
             case "#dustbowl_team1": // rasen
+            case "goto clan": // osaka
                 return TeamColor.Blue;
             case "red":
             case "red :d?": // destroy_l
             case "dustbowl_team2": // baconbowl
             case "defenders": // attac
             case "#dustbowl_team2": // rasen
+            case "ii clan": // osaka
                 return TeamColor.Red;
             case "yellow":
                 return TeamColor.Yellow;
