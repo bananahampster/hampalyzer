@@ -74,7 +74,7 @@ export class RoundParser {
     }
 
     private async parseRound(filename: string): Promise<void> {
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
             const logStream = fs.createReadStream(filename);
             logStream.on('data', chunk => {
                 this.rawLogData += chunk;
@@ -84,6 +84,7 @@ export class RoundParser {
                 resolve();
             }).on('error', (error) => {
                 console.error(error);
+                reject(error);
             });
         });
     }
