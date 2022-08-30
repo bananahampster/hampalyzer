@@ -580,6 +580,7 @@ export class Event {
                                     case "Flag 2":
                                     case "Flag 3":
                                     case "Flag 4":
+                                    case "Flag 5": // arendal
                                         eventType = EventType.PlayerPickedUpFlag;
                                         break;
                                     case "Flag #1": // osaka
@@ -604,10 +605,11 @@ export class Event {
                                     case "Capture Point 4":
                                         eventType = EventType.PlayerCapturedPoint;
                                         break;
-                                    case "capture point 1": // magelli
-                                    case "capture point 2":
-                                    case "capture point 3":
-                                    case "capture point 4":
+                                    case "capture point 1": // magelli / arendal
+                                    case "capture point 2": // magelli / arendal
+                                    case "capture point 3": // magelli / arendal
+                                    case "capture point 4": // magelli / arendal
+                                    case "capture point 5": // arendal
                                         eventType = EventType.PlayerCapturedPoint;
                                         break;
                                     case "Blue Capture Point 1": // troy2
@@ -688,6 +690,7 @@ export class Event {
                                     case 'blue_det':
                                     case 'rholedet': // cornfield cp4 / avanti
                                     case 'det1detect': // magelli
+                                    case "det3detect": // arendal
                                         if (nonPlayerDataParts.length === 2)
                                             eventType = EventType.PlayerOpenedDetpackEntrance;
                                         else
@@ -742,20 +745,32 @@ export class Event {
                                     case 'RED_SPAWN_ONE': // mulch_trench_lg respawn
                                     // case 'grenbackpack': // ??
                                     case "ammo_giver": // osaka spawn trigger
-                                    case "Blue team spawn stuff 1": // magelli spawn trigger
-                                    case "Blue team spawn stuff 2": // magelli spawn trigger
-                                    case "Blue team spawn stuff 3": // magelli spawn trigger
-                                    case "Red team spawn stuff 1": // magelli spawn trigger
-                                    case "Red team spawn stuff 2": // magelli spawn trigger
-                                    case "Red team spawn stuff 3": // magelli spawn trigger
+                                    case "Blue team spawn stuff 1": // magelli / arendal spawn trigger
+                                    case "Blue team spawn stuff 2": // magelli / arendal spawn trigger
+                                    case "Blue team spawn stuff 3": // magelli / arendal spawn trigger
+                                    case "Blue team spawn stuff 4": // arendal spawn trigger
+                                    case "Blue team spawn stuff 5": // arendal spawn trigger
+                                    case "Red team spawn stuff 1": // magelli / arendal spawn trigger
+                                    case "Red team spawn stuff 2": // magelli / arendal spawn trigger
+                                    case "Red team spawn stuff 3": // magelli / arendal spawn trigger
+                                    case "Red team spawn stuff 4": // arendal spawn trigger
+                                    case "Red team spawn stuff 5": // arendal spawn trigger
                                     case "warning sound1": // magelli message handling
                                     case "warning sound2": // magelli message handling
                                     case "warning sound3": // magelli message handling
                                     case "warning sound4": // magelli message handling
-                                    case "Spawn mover 1": // magelli helper entity
-                                    case "Spawn mover 2": // magelli helper entity
-                                    case "Flag mover 1": // magelli helper entity
-                                    case "Flag mover 2": // magelli helper entity
+                                    case "Spawn mover 1": // magelli / arendal helper entity
+                                    case "Spawn mover 2": // magelli / arendal helper entity
+                                    case "Spawn mover 3": // arendal helper entity
+                                    case "Spawn mover 4": // arendal helper entity
+                                    case "spawn remover 1": // arendal helper entity
+                                    case "spawn remover 2": // arendal helper entity
+                                    case "spawn remover 3": // arendal helper entity
+                                    case "spawn remover 5": // arendal helper entity
+                                    case "Flag mover 1": // magelli / arendal helper entity
+                                    case "Flag mover 2": // magelli / arendal helper entity
+                                    case "Flag mover 3": // arendal helper entity
+                                    case "Flag mover 4": // arendal helper entity
                                     case "attackers win": // magelli (already handled by world trigger Cease_Fire)
                                     case "Reset spawns": // magelli (already handled by world trigger Cease_Fire)
                                     case "reset flag": // magelli (already handled by world trigger Cease_Fire)
@@ -872,7 +887,7 @@ export class Event {
                                     eventType = EventType.FlagReturn;
                                     data.team = Event.parseTeam(nonPlayerDataParts[2].split(" ")[0]);
                                     break;
-                                case "Flag has returned Info": // e.g. magelli
+                                case "Flag has returned Info": // e.g. magelli / arendal
                                 case "Flag 1 Return Messages": // troy2
                                 case "Flag 2 Return Messages": // troy2
                                 case "Flag 3 Return Messages": // troy2
@@ -965,7 +980,9 @@ export class Event {
                                 case "The Flag has returned to Command Point ONE!": // troy2 (already handled by "Flag 2 Return Messages")
                                 case "The Flag has returned to Command Point TWO!": // troy2 (already handled by "Flag 3 Return Messages")
                                 case "The Flag has returned to Command Point THREE!": // troy2 (already handled by "Flag 4 Return Messages")
-                                case "The Temple has been breached!": // troy2 (already handled by "Detpack_Explode")
+                                case "The Temple has been breached!": // troy2 wall det message - TODO: figure out which player triggered this?
+                                case "New path to the delivery area is open!": // arendal (already handled by "det3detect")
+                                case "#dustbowl_flag_returned": // arendal (already handled by "Flag has returned Info") - TODO: research potential conflict with dustbowl?
                                     return; // Ignore
                                 default:
                                     throw 'unknown World trigger';
