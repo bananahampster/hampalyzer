@@ -176,7 +176,7 @@
                                         <td class="flag-captures">{{#if objectives.flag_capture}}{{objectives.flag_capture.value}}{{#if ../teamStats.caps_bonus}} ({{objectives.flag_capture_bonus.value}}){{/if}}{{else}}--{{/if}}</td>
                                         <td class="flag-touches">{{#if objectives.flag_touch}}{{objectives.flag_touch.value}} ({{objectives.touches_initial.value}}){{else}}--{{/if}}</td>
                                         <td class="flag-toss-percentage">{{#if objectives.flag_touch}}{{#if objectives.toss_percent}}{{objectives.toss_percent.value}}%{{else}}--{{/if}}{{else}}--{{/if}}</td>
-                                        <td class="flag-time">{{Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(objectives.flag_time_in_seconds.value * 1000)}}</td>
+                                        <td class="flag-time">{{formatSecondsForDisplay objectives.flag_time_in_seconds.value}}</td>
                                         <td class="objectives">{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
                                     </tr>
                                     {{/each}}
@@ -197,7 +197,7 @@
                                         <td class="flag-captures">{{#if caps}}{{caps}}{{#if caps_bonus}} ({{caps_bonus}}){{/if}}{{else}}--{{/if}}</td>
                                         <td class="flag-touches">{{#if touches}}{{touches}} ({{touches_initial}}){{else}}--{{/if}}</td>
                                         <td class="flag-toss-percentage">{{#if toss_percent}}{{toss_percent}}%{{else}}--{{/if}}</td>
-                                        <td class="flag-time">{{#if flag_time_in_seconds}}{{flag_time_in_seconds}}{{else}}--{{/if}}</td>
+                                        <td class="flag-time">{{#if flag_time_in_seconds}}{{formatSecondsForDisplay flag_time_in_seconds}}{{else}}--{{/if}}</td>
                                         <td class="objectives">{{#if obj}}{{obj}}{{else}}--{{/if}}</td>
                                     </tr>
                                     {{/with}}
