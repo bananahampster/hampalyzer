@@ -1,6 +1,5 @@
 import Handlebars from 'handlebars';
 import { OffenseTeamStats, DefenseTeamStats, OutputPlayer } from './constants';
-import { isNumber } from 'util';
 
 export default class TemplateUtils {
     public static registerHelpers() {
@@ -41,6 +40,22 @@ export default class TemplateUtils {
             if (givenArray.length && givenArray.some(item => item.length)) {
                 return givenArray.reduce((acc, round) => acc + (round.length || 0), 0);
             }
+        });
+
+        function formatSecondsForDisplay(seconds: number) {
+            let isNegative = false;
+            if (seconds < 0) {
+                isNegative = true;
+                seconds = Math.abs(seconds);
+            }
+            let formatted = Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(seconds * 1000);
+            if (isNegative) {
+                formatted = '-' + formatted;
+            }
+            return formatted;
+        }
+        Handlebars.registerHelper('formatSecondsForDisplay', function(seconds: number) {
+            return formatSecondsForDisplay(seconds);
         });
 
         // dumping json objects
@@ -84,7 +99,7 @@ export default class TemplateUtils {
                     ${TemplateUtils.getRow(this.caps, isComparison, "flag-captures")}
                     ${TemplateUtils.getRow(this.touches, isComparison, "flag-touches")}
                     ${TemplateUtils.getRow(this.toss_percent, isComparison, "flag-toss-percentage")}
-                    ${TemplateUtils.getRow(this.flag_time, isComparison, "flag-time")}
+                    ${TemplateUtils.getRow(formatSecondsForDisplay(this.flag_time_in_seconds), isComparison, "flag-time")}
                 </tr>`;
         });
 
