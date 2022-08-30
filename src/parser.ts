@@ -588,6 +588,16 @@ export class Event {
                                     case "Flag #4":
                                         eventType = EventType.PlayerPickedUpFlag;
                                         break;
+                                    case "Blue Flag 1": // troy2
+                                    case "Blue Flag 2":
+                                    case "Blue Flag 3":
+                                    case "Blue Flag 4":
+                                    case "Red Flag 1": // troy2
+                                    case "Red Flag 2":
+                                    case "Red Flag 3":
+                                    case "Red Flag 4":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        break;
                                     case "Capture Point 1": // cornfield
                                     case "Capture Point 2":
                                     case "Capture Point 3":
@@ -598,6 +608,16 @@ export class Event {
                                     case "capture point 2":
                                     case "capture point 3":
                                     case "capture point 4":
+                                        eventType = EventType.PlayerCapturedPoint;
+                                        break;
+                                    case "Blue Capture Point 1": // troy2
+                                    case "Blue Capture Point 2":
+                                    case "Blue Capture Point 3":
+                                    case "Blue Capture Point 4":
+                                    case "Red Capture Point 1": // troy2
+                                    case "Red Capture Point 2":
+                                    case "Red Capture Point 3":
+                                    case "Red Capture Point 4":
                                         eventType = EventType.PlayerCapturedPoint;
                                         break;
                                     case "Team 1 dropoff":
@@ -736,11 +756,23 @@ export class Event {
                                     case "Spawn mover 2": // magelli helper entity
                                     case "Flag mover 1": // magelli helper entity
                                     case "Flag mover 2": // magelli helper entity
-                                    case "attackers win": // magelli (already handled by Cease_Fire? TODO: investigate this)
-                                    case "Reset spawns": // magelli (already handled by Cease_Fire? TODO: investigate this)
-                                    case "reset flag": // magelli (already handled by Cease_Fire? TODO: investigate this)
+                                    case "attackers win": // magelli (already handled by world trigger Cease_Fire)
+                                    case "Reset spawns": // magelli (already handled by world trigger Cease_Fire)
+                                    case "reset flag": // magelli (already handled by world trigger Cease_Fire)
                                     case "Start message": // magelli (can be player or world, already handled by #dustbowl_gates_open)
-                                        return;
+                                    case "Attacker Spawn Stuff": // troy2 spawn trigger
+                                    case "Defender Spawn Stuff": // troy2 spawn trigger
+                                    case "backpack": // troy2 bags (netname = backpack)
+                                    case "Grenades": // troy2 grenade bags
+                                    case "Stop Scoring": // troy2 (already handled by world trigger Cease_Fire)
+                                    case "End of Round": // troy2 (already handled by world trigger Cease_Fire)
+                                    case "Respawn": // troy2 (already handled by world trigger Cease_Fire)
+                                    case "Det wall reset": // troy2 (already handled by world trigger Cease_Fire)
+                                    case "30 Second Warning": // troy2 (becomes player trigger after first round)
+                                    case "10 Second Warning": // troy2 (becomes player trigger after first round)
+                                    case "Start Scoring": // troy2
+                                    case "Door Announcement": // troy2 (already handled by world trigger "The gates of Troy are open!")
+                                        return; // Ignore
                                     default:
                                         throw `unknown player trigger: ${nonPlayerDataParts[1]}`;
                                 }
@@ -841,6 +873,10 @@ export class Event {
                                     data.team = Event.parseTeam(nonPlayerDataParts[2].split(" ")[0]);
                                     break;
                                 case "Flag has returned Info": // e.g. magelli
+                                case "Flag 1 Return Messages": // troy2
+                                case "Flag 2 Return Messages": // troy2
+                                case "Flag 3 Return Messages": // troy2
+                                case "Flag 4 Return Messages": // troy2
                                     eventType = EventType.FlagReturn;
                                     // No team is associated with this event.
                                     break;
@@ -857,6 +893,7 @@ export class Event {
                                     eventType = EventType.ServerSwitchSides;
                                     break;
                                 case "#dustbowl_gates_open": // e.g. dustbowl / cornfield / avanti
+                                case "The gates of Troy are open!": // troy2
                                     eventType = EventType.ServerGatesOpen;
                                     break;
                                 case "Blue Lasers Are Down": // stormz2
@@ -902,13 +939,20 @@ export class Event {
                                 case "#dustbowl_60_secs": // dustbowl / cornfield
                                 case "#dustbowl_30_secs": // dustbowl / cornfield
                                 case "#dustbowl_10_secs": // dustbowl / cornfield
+                                case "30 Second Warning": // troy2
+                                case "The gates of Troy will open in 30 seconds!": // troy2
+                                case "10 Second Warning": // troy2
+                                case "The gates of Troy will open in 10 seconds!": // troy2
                                 case "defenders_score": // adl-specific score for time held (e.g., cornfield)
+                                case "Defenders Points": // troy2 version of defenders_score timer
                                 case "Defender score timer": // magelli
                                 case "warning sound1": // magelli
                                 case "warning sound2": // magelli
                                 case "warning sound3": // magelli
                                 case "warning sound4": // magelli
                                 case "Start message": // magelli (can be player or world, already handled by #dustbowl_gates_open)
+                                case "Start Scoring": // troy2 (already handled by #dustbowl_gates_open)
+                                case "Door Announcement": // troy2 (already handled by #dustbowl_gates_open)
                                 case "Command Point 4 Wall Breached": // cornfield (already handled by rholedet)
                                 case "Command Point Four breached!": // avanti(?) (already handled by rholedet)
                                 case "#italy_hole_text": // avanti (already handled by rholedet)
@@ -917,6 +961,11 @@ export class Event {
                                 case "The red cave has been breached": // stowaway2 (already handled by 'red_det')
                                 case "#well_bgrate_destroyed": // 2mesa3 (already handled by "blue_det")
                                 case "#well_rgrate_destroyed": // 2mesa3 (already handled by "red_det")
+                                case "The Flag has returned to the Gate!": // troy2 (already handled by "Flag 1 Return Messages")
+                                case "The Flag has returned to Command Point ONE!": // troy2 (already handled by "Flag 2 Return Messages")
+                                case "The Flag has returned to Command Point TWO!": // troy2 (already handled by "Flag 3 Return Messages")
+                                case "The Flag has returned to Command Point THREE!": // troy2 (already handled by "Flag 4 Return Messages")
+                                case "The Temple has been breached!": // troy2 (already handled by "Detpack_Explode")
                                     return; // Ignore
                                 default:
                                     throw 'unknown World trigger';
