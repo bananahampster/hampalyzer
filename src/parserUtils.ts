@@ -548,35 +548,6 @@ export default class ParserUtils {
         return playerStats;
     }
 
-    // expects time of format 00:00 (min:sec)
-    private static addTime(timeA: string, timeB: string): string {
-        const timeAParts = timeA.split(":");
-        const timeBParts = timeB.split(":");
-        const seconds = parseInt(timeAParts[1]) + parseInt(timeBParts[1]);
-        const minutes = parseInt(timeAParts[0]) + parseInt(timeBParts[0]) + Math.floor(seconds / 60);
-
-        const minPad = minutes < 10 ? "0" : "";
-        const dispSeconds = seconds % 60;
-        const secPad = dispSeconds < 10 ? "0" : "";
-
-        return `${minPad + minutes}:${secPad + dispSeconds}`;
-    }
-
-    // expects time of format 00:00 (min:sec)
-    private static diffTime(timeA: string, timeB: string): string {
-        const timeAParts = timeA.split(":");
-        const timeBParts = timeB.split(":");
-        const seconds = parseInt(timeAParts[1]) - parseInt(timeBParts[1]);
-        const minCarryover = seconds >= 0 ? Math.floor(seconds / 60) : Math.ceil(seconds / 60);
-        const minutes = parseInt(timeAParts[0]) - parseInt(timeBParts[0]) + minCarryover;
-
-        const minPad = minutes < 10 && minutes >= 0 ? "0" : "";
-        const dispSeconds = Math.abs(seconds % 60);
-        const secPad = dispSeconds < 10 ? "0" : "";
-
-        return `${minPad + minutes}:${secPad + dispSeconds}`;
-    }
-
     private static addStat(stats: Stats, key: string, event: Event) {
         if (!stats[key])
             stats[key] = [];
@@ -807,8 +778,8 @@ export default class ParserUtils {
                 }
 
                 // Flag statistics (requires holistic view of flag movement).
-                const [flag_time, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, teams, stats.flag, matchEnd);
-                this.ensureStat<string>(poStats, 'objectives', 'flag_time').value = flag_time;
+                const [flag_time_in_seconds, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, teams, stats.flag, matchEnd);
+                this.ensureStat(poStats, 'objectives', 'flag_time_in_seconds').value = flag_time_in_seconds;
                 this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
                 this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
 
@@ -870,9 +841,7 @@ export default class ParserUtils {
                     stats.toss_percent += this.getSummarizedStat(player, 'objectives', 'toss_percent')
                         * this.getSummarizedStat(player, 'objectives', 'flag_touch');
 
-                    stats.flag_time = this.addTime(
-                        stats.flag_time,
-                        this.getSummarizedStat(player, 'objectives', 'flag_time').toString());
+                    stats.flag_time_in_seconds += this.getSummarizedStat(player, 'objectives', 'flag_time_in_seconds');
 
                     break;
                 case TeamRole.Defense:
@@ -1118,7 +1087,7 @@ export default class ParserUtils {
                 blankStats.touches = 0;
                 blankStats.touches_initial = 0;
                 blankStats.toss_percent = 0;
-                blankStats.flag_time = "0:00";
+                blankStats.flag_time_in_seconds = 0;
                 break;
             case TeamRole.Defense:
                 blankStats.airshots = 0;
@@ -1155,7 +1124,7 @@ export default class ParserUtils {
             touches: offenseTeams[0].touches - offenseTeams[1].touches,
             touches_initial: offenseTeams[0].touches_initial - offenseTeams[1].touches_initial,
             toss_percent: offenseTeams[0].toss_percent - offenseTeams[1].toss_percent,
-            flag_time: this.diffTime(offenseTeams[0].flag_time, offenseTeams[1].flag_time),
+            flag_time_in_seconds: offenseTeams[0].flag_time_in_seconds - offenseTeams[1].flag_time_in_seconds,
         };
 
         const defenseDiff: DefenseTeamStats = {
@@ -1177,7 +1146,7 @@ export default class ParserUtils {
         return [offenseDiff, defenseDiff];
     }
 
-    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, teams: TeamComposition, flagEvents: Stats, matchEnd: Date): [string, number, number] {
+    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, teams: TeamComposition, flagEvents: Stats, matchEnd: Date): [number, number, number] {
         // Capture and pickup events are passed in via flagEvents;
         // also use 'team_death'/'death', and 'flag_thrown' events to calculate flag time.
         const deaths = playerEvents['death'];
@@ -1288,10 +1257,10 @@ export default class ParserUtils {
             flagTimeMS += (matchEnd.valueOf() - lastFlagSequence[1]!.timestamp.valueOf());
         }
 
-        const flagTime = Intl.DateTimeFormat('en-us', { minute: 'numeric', second: '2-digit' }).format(flagTimeMS);
+        const flagTimeInSeconds = flagTimeMS / 1000;
         const tossPercent = flagCarries > 0 ? Math.round(flagThrows / flagCarries * 100) : 0;
 
-        return [flagTime, tossPercent, initialTouches];
+        return [flagTimeInSeconds, tossPercent, initialTouches];
     }
 
     private static calculateAndApplyPlayerClassOnAllEvents(player: Player, playerEvents: Stats, matchEnd: Date) {
