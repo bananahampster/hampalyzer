@@ -267,9 +267,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary @root.stats.[0].damage_stats_exist "A" @root.players.[1]}}}{{/with}}
+                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary @root.stats.[0].damage_stats_exist "A" @root.players.[1]}}}{{/with}}
                                 {{#with comparison.[1]}}{{{defenseSummary @root.stats.[0].damage_stats_exist "Comp"}}}{{/with}}
-                                {{#with stats.[1].teams.[2].teamStats}}{{{defenseSummary @root.stats.[0].damage_stats_exist "B" @root.players.[2]}}}{{/with}}
+                                {{#with stats.[0].teams.[2].teamStats}}{{{defenseSummary @root.stats.[0].damage_stats_exist "B" @root.players.[2]}}}{{/with}}
                             </tbody>
                         </table>
                     </div>
