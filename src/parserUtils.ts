@@ -1100,9 +1100,7 @@ export default class ParserUtils {
     public static generateTeamRoleComparison(stats: [OutputStats, OutputStats]): TeamStatsComparison {
         // expect that stats is of length 2 (two rounds)
         const offenseTeams = stats.map(roundStats => roundStats.teams[1]!.teamStats) as [OffenseTeamStats, OffenseTeamStats];
-
-        // flip so that order matches offense
-        const defenseTeams = stats.map(roundStats => roundStats.teams[2]!.teamStats).reverse() as [DefenseTeamStats, DefenseTeamStats];
+        const defenseTeams = stats.map(roundStats => roundStats.teams[2]!.teamStats) as [DefenseTeamStats, DefenseTeamStats];
 
         const offenseDiff: OffenseTeamStats = {
             team: 0,
