@@ -362,6 +362,8 @@ export default class ParserUtils {
                         this.addStat(thisPlayerStats, 'suicide', event);
                         break;
                     case EventType.PlayerConced:
+                        // This shouldn't be possible.
+                        throw "Concussion grenade event didn't contain a second player";
                         this.addStat(thisPlayerStats, 'conc', event);
                         break;
                     case EventType.PlayerDetonatedBuilding:
@@ -1335,7 +1337,7 @@ export default class ParserUtils {
     }
 
     private static getConcTimeEffectDurationInSeconds(playerClass: PlayerClass | undefined) {
-        const concTimeDurationInSeconds = 8;
+        const concTimeDurationInSeconds = 10;
         return playerClass != PlayerClass.Medic ? concTimeDurationInSeconds : (concTimeDurationInSeconds / 2);
     }
 
@@ -1346,7 +1348,6 @@ export default class ParserUtils {
 
         let concSequence = new Array<Event>()
             .concat(
-                playerEvents['conc'],
                 playerEvents['conc_jump'],
                 playerEvents['team_concee'],
                 playerEvents['concee'],
@@ -1394,6 +1395,7 @@ export default class ParserUtils {
             }
         }
         if (concStartEvent != null) {
+            concEndTimestamp = new Date(concStartEvent.timestamp.getTime() + ParserUtils.getConcTimeEffectDurationInSeconds(concStartEvent.playerToClass));
             concPeriods.push([concStartEvent, concEndTimestamp]);
         }
 
@@ -1404,15 +1406,24 @@ export default class ParserUtils {
             let curConcPeriodIndex = 0;
             statEvents.forEach((statEvent) => {
                 // Advance through the array of conc periods until we reach one that ended after this event.
-                while (curConcPeriodIndex < concPeriods.length && statEvent.timestamp > concPeriods[curConcPeriodIndex][1]) {
+                while (curConcPeriodIndex < concPeriods.length
+                    && ((statEvent.timestamp == concPeriods[curConcPeriodIndex][1] && statEvent.lineNumber > concPeriods[curConcPeriodIndex][0].lineNumber)
+                        || statEvent.timestamp > concPeriods[curConcPeriodIndex][1])) {
                     curConcPeriodIndex++;
                 }
-                // Check if the event fell within the period.
-                if (curConcPeriodIndex < concPeriods.length) {
-                    if (statEvent.lineNumber > concPeriods[curConcPeriodIndex][0].lineNumber
-                        && statEvent.timestamp < concPeriods[curConcPeriodIndex][1]) {
-                        statEvent.whileConced = true;
+                if (curConcPeriodIndex >= concPeriods.length) {
+                    // The event was after all of the conc periods.
+                    return;
+                }
+                if (statEvent.lineNumber < concPeriods[curConcPeriodIndex][0].lineNumber) {
+                    // The event happened before the first conc period.
+                    return;
+                }
+                if (statEvent.timestamp <= concPeriods[curConcPeriodIndex][1]) {
+                    if (statEvent.playerFrom != player) {
+                        return;
                     }
+                    statEvent.whileConced = true;
                 }
             });
         }
