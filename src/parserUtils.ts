@@ -1366,8 +1366,18 @@ export default class ParserUtils {
             const concSequenceEvent = concSequence[curConcEventIndex];
             if (concSequenceEvent.eventType == EventType.PlayerConced) {
                 if (concSequenceEvent.playerTo == player) {
+                    let extendingConcEvent = false;
                     if (concStartEvent != null && concSequenceEvent.timestamp < concEndTimestamp) {
-                        // The player was conced again while conced; extend the period.
+                        // The player was conced again while conced.
+                        extendingConcEvent = true;
+                    }
+                    else if (concStartEvent == null && concPeriods.length > 0 && concPeriods[concPeriods.length - 1][0].timestamp == concSequenceEvent.timestamp) {
+                        // The conc event happened in the same second as when the previous period ended. Resume extending the previous one.
+                        let previousConcPeriod = concPeriods.pop();
+                        concStartEvent = previousConcPeriod![0];
+                        extendingConcEvent = true;
+                    }
+                    if (extendingConcEvent) {
                         concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
                         concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + ParserUtils.getConcTimeEffectDurationInSeconds(concSequenceEvent.playerToClass));
                     }
@@ -1399,6 +1409,10 @@ export default class ParserUtils {
             concPeriods.push([concStartEvent, concEndTimestamp]);
         }
 
+        if (concPeriods.length == 0) {
+            return;
+        }
+
         for (const stat in playerEvents) {
             let statEvents = playerEvents[stat];
             statEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
@@ -1406,20 +1420,14 @@ export default class ParserUtils {
             let curConcPeriodIndex = 0;
             statEvents.forEach((statEvent) => {
                 // Advance through the array of conc periods until we reach one that ended after this event.
-                while (curConcPeriodIndex < concPeriods.length
-                    && ((statEvent.timestamp == concPeriods[curConcPeriodIndex][1] && statEvent.lineNumber > concPeriods[curConcPeriodIndex][0].lineNumber)
-                        || statEvent.timestamp > concPeriods[curConcPeriodIndex][1])) {
+                while (curConcPeriodIndex < concPeriods.length && statEvent.timestamp > concPeriods[curConcPeriodIndex][1]) {
                     curConcPeriodIndex++;
                 }
                 if (curConcPeriodIndex >= concPeriods.length) {
                     // The event was after all of the conc periods.
                     return;
                 }
-                if (statEvent.lineNumber < concPeriods[curConcPeriodIndex][0].lineNumber) {
-                    // The event happened before the first conc period.
-                    return;
-                }
-                if (statEvent.timestamp <= concPeriods[curConcPeriodIndex][1]) {
+                if (statEvent.lineNumber > concPeriods[curConcPeriodIndex][0].lineNumber && statEvent.timestamp <= concPeriods[curConcPeriodIndex][1]) {
                     if (statEvent.playerFrom != player) {
                         return;
                     }
