@@ -310,7 +310,7 @@
             && "intersectionRatio" in window.IntersectionObserverEntry.prototype
         ) {
             const intersectionRatioThreshold = 0.3;
-            document.querySelectorAll("#summary, #comp, #flag-pace").forEach((element) => {
+            document.querySelectorAll("#summary, #comp, #flag-pace, #parsing-errors").forEach((element) => {
                 let observer = new IntersectionObserver(entries => {
                     entries.forEach((entry) => {
                         if (entry.intersectionRatio >= intersectionRatioThreshold) {
