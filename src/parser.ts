@@ -950,11 +950,11 @@ export class Event {
                                     break;
                                 case "Blue security will be operational in 30 seconds!": // schtop
                                 case "Red security will be operational in 30 seconds!": // schtop
-                                    break;
-                                case "Blue security is now operating!":
-                                case "Red security is now operating!":
                                 case "Blue Security will be Operational in 15 seconds!": // demolish
                                 case "Red Security will be Operational in 15 seconds!": // demolish
+                                    return; // ignore
+                                case "Blue security is now operating!":
+                                case "Red security is now operating!":
                                 case "Blue Security is now Operating": // demolish
                                 case "Red Security is now Operating": // demolish
                                     eventType = EventType.SecurityUp;
