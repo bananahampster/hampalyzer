@@ -942,12 +942,23 @@ export class Event {
                                         data.team = TeamColor.Red;
                                         break;
                                     }
-                                case "Blue security is now operating!":
-                                case "Red security is now operating!":
                                 case "Blue security has been deactivated!":
                                 case "Red security has been deactivated!":
+                                case "Blue Security has been Deactivated for 45s": // demolish
+                                case "Red Security has been Deactivated for 45s": // demolish
+                                    eventType = EventType.PlayerGotSecurity;
+                                    break;
                                 case "Blue security will be operational in 30 seconds!": // schtop
                                 case "Red security will be operational in 30 seconds!": // schtop
+                                    break;
+                                case "Blue security is now operating!":
+                                case "Red security is now operating!":
+                                case "Blue Security will be Operational in 15 seconds!": // demolish
+                                case "Red Security will be Operational in 15 seconds!": // demolish
+                                case "Blue Security is now Operating": // demolish
+                                case "Red Security is now Operating": // demolish
+                                    eventType = EventType.SecurityUp;
+                                    break;
                                 case "Blue_Flag_Vox":
                                 case "Red_Flag_Vox":
                                 case "#dustbowl_90_secs": // magelli

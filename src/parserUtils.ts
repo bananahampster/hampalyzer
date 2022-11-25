@@ -1367,7 +1367,7 @@ export default class ParserUtils {
             if (concSequenceEvent.eventType == EventType.PlayerConced) {
                 if (concSequenceEvent.playerTo == player) {
                     let extendingConcEvent = false;
-                    if (concStartEvent != null && concSequenceEvent.timestamp < concEndTimestamp) {
+                    if (concStartEvent != null && concSequenceEvent.timestamp <= concEndTimestamp) {
                         // The player was conced again while conced.
                         extendingConcEvent = true;
                     }
