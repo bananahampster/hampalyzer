@@ -1,5 +1,5 @@
 import Handlebars from 'handlebars';
-import { OffenseTeamStats, DefenseTeamStats, OutputPlayer } from './constants';
+import { OffenseTeamStats, DefenseTeamStats, OutputPlayer } from './constants.js';
 
 export default class TemplateUtils {
     public static registerHelpers() {

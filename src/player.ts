@@ -1,4 +1,4 @@
-import { OutputPlayer } from "./constants";
+import { OutputPlayer } from "./constants.js";
 
 class Player {
     private steamNum: string;

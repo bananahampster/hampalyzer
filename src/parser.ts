@@ -2,7 +2,10 @@ import * as fs from 'fs';
 import EventType from './eventType.js';
 import Player from './player.js';
 import PlayerList from './playerList.js';
+import { EventHandlingPhase, EventSubscriber, EventSubscriberManager } from './eventSubscriberManager.js';
+import { PlayerTeamTracker } from './playerTeamTracker.js';
 import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import { RoundState } from './roundState.js';
 import ParserUtils, { TeamComposition } from './parserUtils.js';
 
 type RoundStats = (OutputStats | undefined)[];
@@ -64,6 +67,8 @@ export class RoundParser {
 
     private parsingErrors: string[] = [];
 
+    private eventSubscribersByPhase = []
+
     constructor(private filename: string) {
         // should probably check if the file exists here
     }
@@ -119,6 +124,15 @@ export class RoundParser {
                 }
             }
         });
+
+        //
+        // Work in progress: accumulate state by progressively evaluating events. Multiple phases are supported
+        // to enable ordering dependencies between event subscribers.
+        //
+        const roundState = new RoundState();
+        const eventSubscriberManager = new EventSubscriberManager(roundState.getEventSubscribers(), roundState);
+        eventSubscriberManager.handleEvents(this.events);
+
 
         this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
         const [scores, flagMovements] = ParserUtils.getScoreAndFlagMovements(this.events);

@@ -1,6 +1,6 @@
-import { TeamScore, TeamComposition } from "./parserUtils";
-import { Event } from "./parser";
-import Player from "./player";
+import { TeamScore, TeamComposition } from "./parserUtils.js";
+import { Event } from "./parser.js";
+import Player from "./player.js";
 
 export interface OutputStats {
     parse_name: string;  // 'user-friendly' URI slug
