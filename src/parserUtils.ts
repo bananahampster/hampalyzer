@@ -59,7 +59,7 @@ export default class ParserUtils {
             if (!teams[primaryTeam])
                 teams[primaryTeam] = [];
 
-            const playerObj = playerList.getPlayer(player);
+            const playerObj = playerList.ensurePlayer(player);
             if (playerObj)
                 teams[primaryTeam]!.push(playerObj);
         }
@@ -692,7 +692,7 @@ export default class ParserUtils {
 
             for (const playerID of teamPlayerIDs) {
                 let poStats: PlayerOutputStatsRound = this.blankOutputPlayerStatsDetail(team);
-                let thisPlayer = players.getPlayer(playerID) as Player;
+                let thisPlayer = players.ensurePlayer(playerID) as Player;
                 poStats.name = thisPlayer.name;
                 poStats.steamID = playerID;
                 poStats.id = thisPlayer.steamID.split(":")[2];

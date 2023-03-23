@@ -9,7 +9,7 @@ import PlayerList from "./playerList.js";
 
 export class PlayerTeamTracker implements EventSubscriber {
     // The players seen throughout the round.
-    private players: PlayerList;
+    public players: PlayerList;
     // The teams throughout the round.
     public teams: TeamComposition;
     // The current team composition.
@@ -31,6 +31,7 @@ export class PlayerTeamTracker implements EventSubscriber {
                 this.setPlayerTeam(event.playerFrom!, team);
                 break;
             case EventType.PlayerLeftServer:
+            case EventType.PlayerKicked:
                 this.setPlayerTeam(event.playerFrom!, undefined);
                 break;
             default:
@@ -38,8 +39,12 @@ export class PlayerTeamTracker implements EventSubscriber {
         }
     }
 
+    public ensurePlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
+        return this.players.ensurePlayer(steamID, name, playerID);
+    }
+
     public setPlayerTeam(player: Player, team: TeamColor | undefined) {
-        const playerObj = this.players.getPlayer(player.steamID, player.name, player.playerID);
+        const playerObj = this.players.ensurePlayer(player.steamID, player.name, player.playerID);
         if (!playerObj) {
             throw "Couldn't get player: " + player.steamID;
         }
@@ -58,11 +63,10 @@ export class PlayerTeamTracker implements EventSubscriber {
         for (const [currentTeam, currentTeamMembers] of Object.entries(this.currentTeams)) {
             if (currentTeamMembers) {
                 if (team && currentTeam === team.toString()) {
-                    if (currentTeamMembers.indexOf(playerObj) > -1) {
-                        throw "Set player team request for a team they're already on";
+                    // Duplicate join team events have been observed in actual logs.
+                    if (currentTeamMembers.indexOf(playerObj) == -1) {
+                        currentTeamMembers.push(playerObj);
                     }
-                    currentTeamMembers.push(playerObj);
-                }
                 else {
                     const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID == playerObj.steamID);
                     if (indexOfPlayerInTeam !== -1) {

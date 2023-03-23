@@ -11,7 +11,7 @@ class PlayerList {
         this.teams = {};
     }
 
-    public getPlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
+    public ensurePlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
         const playerIndex = this.playerExistsAtIndex(steamID);
         if (playerIndex !== -1)
             return this._players[playerIndex];

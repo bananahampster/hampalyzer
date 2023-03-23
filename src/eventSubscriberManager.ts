@@ -38,7 +38,14 @@ export class EventSubscriberManager {
             // Pass one event at a time to all handlers in this phase.
             events.forEach((event) => {
                 this.eventSubscribersByPhase[phase].forEach((subscriber: EventSubscriber) => {
-                    subscriber.handleEvent(event, phase, this.roundState);
+                    try {
+                        subscriber.handleEvent(event, phase, this.roundState);
+                    }
+                    catch (originalError: any) {
+                        const error = new Error(`[subscriber=${subscriber.constructor.name}, phase=${EventHandlingPhase[phase]}] failed (error=${originalError}) when handling line ${event.lineNumber}: ${event.rawLine}`);
+                        error.stack = originalError.stack;
+                        throw error;
+                    }
                 });
             });
         });

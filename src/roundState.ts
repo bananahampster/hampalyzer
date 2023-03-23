@@ -1,6 +1,7 @@
 import { EventHandlingPhase, EventSubscriber, SubscriberList } from "./eventSubscriberManager.js";
 import { PlayerTeamTracker } from "./playerTeamTracker.js";
 import { Event } from "./parser.js";
+import Player from "./player.js";
 
 class PreAndPostMatchHandler implements EventSubscriber {
     handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): void {
@@ -30,7 +31,14 @@ export class RoundState {
         };
     }
 
+    public ensurePlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
+        return this.playerTeamTracker.ensurePlayer(steamID, name, playerID);
+    }
+
     get currentTeams() {
         return this.playerTeamTracker.currentTeams;
+    } 
+    get players() {
+        return this.playerTeamTracker.players;
     } 
 }

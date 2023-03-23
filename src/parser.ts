@@ -113,8 +113,10 @@ export class RoundParser {
     private parseData(): void {
         this.allEvents = this.rawLogData.split("\n");
 
+        const roundState = new RoundState();
+
         this.allEvents.forEach((event, lineNumber) => {
-            const newEvent = Event.createEvent(lineNumber + 1, event, this.players);
+            const newEvent = Event.createEvent(lineNumber + 1, event, roundState);
             if (newEvent) {
                 if (typeof newEvent === 'string') {
                     this.parsingErrors.push(newEvent);
@@ -129,12 +131,17 @@ export class RoundParser {
         // Work in progress: accumulate state by progressively evaluating events. Multiple phases are supported
         // to enable ordering dependencies between event subscribers.
         //
-        const roundState = new RoundState();
         const eventSubscriberManager = new EventSubscriberManager(roundState.getEventSubscribers(), roundState);
-        eventSubscriberManager.handleEvents(this.events);
+        try {
+            eventSubscriberManager.handleEvents(this.events);
+        }
+        catch (error: any) {
+            console.error(error.message);
+            return;
+        }
 
 
-        this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
+        this.teamComp = ParserUtils.getPlayerTeams(this.events, roundState.players);
         const [scores, flagMovements] = ParserUtils.getScoreAndFlagMovements(this.events);
         for (const team in this.teamComp) {
             const teamPlayers = this.teamComp[team];
@@ -146,7 +153,7 @@ export class RoundParser {
         this.trimPreAndPostMatchEvents();
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
-        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
+        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, roundState.players, this.teamComp, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
     }
 
@@ -203,6 +210,7 @@ export class RoundParser {
 
 export interface EventCreationOptions {
     eventType: EventType;
+    rawLine: string;
     lineNumber: number;
     timestamp: Date;
     data?: ExtraData;
@@ -217,6 +225,7 @@ export interface EventCreationOptions {
 
 export class Event {
     public eventType: EventType;
+    public rawLine: string;
     public lineNumber: number;
     public timestamp: Date;
     public gameTimeAsSeconds?: number;
@@ -234,6 +243,7 @@ export class Event {
     constructor(options: EventCreationOptions) {
         // required fields
         this.eventType = options.eventType;
+        this.rawLine = options.rawLine;
         this.lineNumber = options.lineNumber;
         this.timestamp = options.timestamp;
 
@@ -268,7 +278,7 @@ export class Event {
         return parts;
     }
 
-    public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | string | undefined {
+    public static createEvent(lineNumber: number, line: string, roundState: RoundState): Event | string | undefined {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
 
@@ -328,7 +338,7 @@ export class Event {
                     const playerSteamID = fromPlayerDataParts[3];
                     playerFromTeam = fromPlayerDataParts[4] !== "" ? this.parseTeam(fromPlayerDataParts[4]) : undefined;
 
-                    playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
+                    playerFrom = roundState.ensurePlayer(playerSteamID, playerName, playerID);
 
                     if (otherPlayerDataParts != null) { // Two players were affected.
                         const otherPlayerName = otherPlayerDataParts[1];
@@ -336,7 +346,7 @@ export class Event {
                         const otherPlayerSteamID = otherPlayerDataParts[3];
                         playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
 
-                        playerTo = playerList.getPlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                        playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
                         // do a switch based on the statement
                         switch (nonPlayerDataParts[0]) {
                             case "killed":
@@ -885,7 +895,7 @@ export class Event {
                                 const otherPlayerID = Number(otherPlayerDataParts[2]);
                                 const otherPlayerSteamID = otherPlayerDataParts[3];
                                 playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
-                                playerTo = playerList.getPlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                                playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
                             }
                             break;
                         case "World":
@@ -1048,6 +1058,7 @@ export class Event {
             if (eventType != null && timestamp) {
                 return new Event({
                     eventType: eventType,
+                    rawLine: line,
                     lineNumber: lineNumber,
                     timestamp: timestamp,
                     data: data,
