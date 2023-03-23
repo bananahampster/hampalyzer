@@ -1,16 +1,16 @@
-import { EventHandlingPhase, EventSubscriber, SubscriberList } from "./eventSubscriberManager.js";
+import { EventHandlingPhase, EventSubscriber, HandlerRequest, SubscriberList } from "./eventSubscriberManager.js";
 import { PlayerTeamTracker } from "./playerTeamTracker.js";
+import { PreAndPostMatchCuller } from "./preAndPostMatchCuller.js";
 import { Event } from "./parser.js";
 import Player from "./player.js";
 
-class PreAndPostMatchHandler implements EventSubscriber {
-    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): void {
-        //console.log("PreAndPostMatchHandler handled event in phase " + EventHandlingPhase[phase] + ": " + event.lineNumber);
-    }
-}
 class FlagMovementHandler implements EventSubscriber {
-    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): void {
+    phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {
+    }
+
+    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest {
         //console.log("FlagMovementHandler handled event in phase " + EventHandlingPhase[phase] + ": " + event.lineNumber);
+        return HandlerRequest.None;
     }
 }
 
@@ -25,9 +25,9 @@ export class RoundState {
 
     public getEventSubscribers(): SubscriberList {
         return {
-            playerTeamStateHandler: { subscriber: this.playerTeamTracker, phases: [EventHandlingPhase.Phase0]},
-            preAndPostMatchHandler: { subscriber: new PreAndPostMatchHandler(), phases: [EventHandlingPhase.Phase0, EventHandlingPhase.Phase1]},
-            anotherHandler: { subscriber: new FlagMovementHandler(), phases: [EventHandlingPhase.Phase0]},
+            playerTeamStateHandler: { subscriber: this.playerTeamTracker, phases: [EventHandlingPhase.Initial]},
+            preAndPostMatchHandler: { subscriber: new PreAndPostMatchCuller(), phases: [EventHandlingPhase.Initial, EventHandlingPhase.EarlyFixups]},
+            anotherHandler: { subscriber: new FlagMovementHandler(), phases: [EventHandlingPhase.Main]},
         };
     }
 

@@ -1,7 +1,7 @@
 import { Event } from "./parser.js";
 import EventType from './eventType.js';
 import { TeamComposition } from "./parserUtils.js";
-import { EventSubscriber, EventHandlingPhase } from "./eventSubscriberManager.js";
+import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
 import { RoundState } from "./roundState.js";
 import { TeamColor } from "./constants.js";
 import Player from "./player.js";
@@ -21,7 +21,10 @@ export class PlayerTeamTracker implements EventSubscriber {
         this.currentTeams = {};
     }
 
-    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): void {
+    phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {
+    }
+
+    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest {
         switch (event.eventType) {
             case EventType.PlayerJoinTeam:
                 const team = event.data && event.data.team;
@@ -37,6 +40,7 @@ export class PlayerTeamTracker implements EventSubscriber {
             default:
                 break;
         }
+        return HandlerRequest.None;
     }
 
     public ensurePlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
@@ -67,7 +71,9 @@ export class PlayerTeamTracker implements EventSubscriber {
                     if (currentTeamMembers.indexOf(playerObj) == -1) {
                         currentTeamMembers.push(playerObj);
                     }
+                }
                 else {
+                    // The player is not currently a part of this team.
                     const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID == playerObj.steamID);
                     if (indexOfPlayerInTeam !== -1) {
                         currentTeamMembers.splice(indexOfPlayerInTeam, 1);

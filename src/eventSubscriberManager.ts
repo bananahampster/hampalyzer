@@ -2,12 +2,19 @@ import { Event } from './parser.js';
 import { RoundState } from './roundState.js';
 
 export enum EventHandlingPhase {
-    Phase0,
-    Phase1,
+    Initial,
+    EarlyFixups,
+    Main
+}
+
+export enum HandlerRequest {
+    None,
+    RemoveEvent
 }
 
 export interface EventSubscriber {
-    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): void;
+    phaseStart(phase: EventHandlingPhase, roundState: RoundState): void;
+    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest;
 }
 
 export type SubscriberList = Record<string, { subscriber: EventSubscriber, phases: EventHandlingPhase[] }>;
@@ -18,8 +25,9 @@ export class EventSubscriberManager {
     constructor(subscribers: SubscriberList, roundState: RoundState) {
         let phaseHandlers = {};
         this.eventSubscribersByPhase = {
-            [EventHandlingPhase.Phase0]: [],
-            [EventHandlingPhase.Phase1]: [],
+            [EventHandlingPhase.Initial]: [],
+            [EventHandlingPhase.EarlyFixups]: [],
+            [EventHandlingPhase.Main]: [],
         };
         
         for (const [name, subscriber] of Object.entries(subscribers)) {
@@ -32,14 +40,25 @@ export class EventSubscriberManager {
     }
 
     public handleEvents(events: Event[]) {
-        // Repeat the delivery of all events for every phase.
+        // Repeat the delivery of events for each phase.
         Object.keys(EventHandlingPhase).filter((key) => isNaN(Number(key))).map((phaseKey) => {
             const phase = EventHandlingPhase[phaseKey];
-            // Pass one event at a time to all handlers in this phase.
-            events.forEach((event) => {
+            
+            // Notify subscribers the phase is starting.
+            this.eventSubscribersByPhase[phase].forEach((subscriber: EventSubscriber) => {
+                subscriber.phaseStart(phase, this.roundState);
+            });
+
+            // Pass each event into all subscribers for the phase.
+            for (let i = 0; i < events.length; i++) {
+                const event = events[i];
+                let shouldRemoveEvent = false;
                 this.eventSubscribersByPhase[phase].forEach((subscriber: EventSubscriber) => {
                     try {
-                        subscriber.handleEvent(event, phase, this.roundState);
+                        const request = subscriber.handleEvent(event, phase, this.roundState);
+                        if (request === HandlerRequest.RemoveEvent) {
+                            shouldRemoveEvent = true;
+                        }
                     }
                     catch (originalError: any) {
                         const error = new Error(`[subscriber=${subscriber.constructor.name}, phase=${EventHandlingPhase[phase]}] failed (error=${originalError}) when handling line ${event.lineNumber}: ${event.rawLine}`);
@@ -47,7 +66,11 @@ export class EventSubscriberManager {
                         throw error;
                     }
                 });
-            });
+                if (shouldRemoveEvent) {
+                    events.splice(i, 1);
+                    --i;
+                }
+            }
         });
     }
 }
