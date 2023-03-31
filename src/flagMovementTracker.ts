@@ -139,7 +139,7 @@ export class FlagMovementTracker implements EventSubscriber {
                         break;
                     case EventType.FlagReturn:
                         if (!event.data) {
-                            // TODO: throw here instead and determine if it's possible to see a flag return with a team associated with it.
+                            // TODO: throw here instead and determine if it's possible to see a flag return without a team associated with it.
                             for (let team in this.currentFlagStatusByTeam) {
                                 this.currentFlagStatusByTeam[team] = new FlagStatus();
                             }

@@ -38,14 +38,23 @@ export class PreAndPostMatchCuller implements EventSubscriber {
                     this.matchEndEvent = this.lastEvent;
                 }
                 this.matchEndLineNumber = this.matchEndEvent!.lineNumber;
-                roundState.roundEndTimeInGameSeconds = this.matchEndEvent!.gameTimeAsSeconds!
                 break;
             default:
                 throw "Unexpected phase";
         }
     }
 
-    phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void {}
+    phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void {
+        switch (phase) {
+            case EventHandlingPhase.Initial:
+                break;
+            case EventHandlingPhase.EarlyFixups:
+                roundState.roundEndTimeInGameSeconds = this.matchEndEvent!.gameTimeAsSeconds!
+                break;
+            default:
+                throw "Unexpected phase";
+        }
+    }
 
     handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest {
         switch (phase) {
