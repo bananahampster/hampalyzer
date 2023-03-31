@@ -20,7 +20,10 @@ export class PreAndPostMatchCuller implements EventSubscriber {
     private matchStartEvent?: Event;
     private matchStartLineNumber?: number;
     private matchEndEvent?: Event;
+    private lastEvent?: Event;
     private matchEndLineNumber?: number;
+    private previousEventGameTimeAsSeconds?: number;
+    private eventGameTimeAsSecondsAdjustment: number = 0;
 
     constructor() {
     }
@@ -31,15 +34,18 @@ export class PreAndPostMatchCuller implements EventSubscriber {
                 break;
             case EventHandlingPhase.EarlyFixups: // Write out game time on events and remove pre/post-match events we don't need.
                 this.matchStartLineNumber = this.matchStartEvent!.lineNumber;
-                if (this.matchEndEvent) {
-                    this.matchEndLineNumber = this.matchEndEvent.lineNumber;
+                if (!this.matchEndEvent) {
+                    this.matchEndEvent = this.lastEvent;
                 }
+                this.matchEndLineNumber = this.matchEndEvent!.lineNumber;
+                roundState.roundEndTimeInGameSeconds = this.matchEndEvent!.gameTimeAsSeconds!
                 break;
             default:
                 throw "Unexpected phase";
         }
-
     }
+
+    phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void {}
 
     handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest {
         switch (phase) {
@@ -58,10 +64,28 @@ export class PreAndPostMatchCuller implements EventSubscriber {
                     default:
                         break;
                 }
+                this.lastEvent = event;
                 return HandlerRequest.None;
             case EventHandlingPhase.EarlyFixups:
                 // Will be negative if a pre-match event.
                 event.gameTimeAsSeconds = Math.round((event.timestamp.getTime() - this.matchStartEvent!.timestamp.getTime()) / 1000);
+
+                // If there's a clock adjustment (e.g. via an NTP update or a daylight saving time change), adjust this and future events
+                // to make the clock monotonically increasing and without large (>~1 hour) gaps.
+                if (!this.previousEventGameTimeAsSeconds) {
+                    this.previousEventGameTimeAsSeconds = event.gameTimeAsSeconds;
+                }
+                else {
+                    event.gameTimeAsSeconds += this.eventGameTimeAsSecondsAdjustment;
+                    if (event.gameTimeAsSeconds < this.previousEventGameTimeAsSeconds || // Clock went backwards; shift events forward.
+                        event.gameTimeAsSeconds > (this.previousEventGameTimeAsSeconds + 3500) // Likely DST adjustment
+                        ) {
+                        this.eventGameTimeAsSecondsAdjustment = this.previousEventGameTimeAsSeconds - event.gameTimeAsSeconds;
+                        console.log(`Time adjustment required starting on line ${event.lineNumber}: ${this.eventGameTimeAsSecondsAdjustment}`);
+                        event.gameTimeAsSeconds += this.eventGameTimeAsSecondsAdjustment;
+                    }
+                }
+                this.previousEventGameTimeAsSeconds = event.gameTimeAsSeconds;
 
                 if (event.lineNumber < this.matchStartLineNumber! || (this.matchStartLineNumber !== undefined && event.lineNumber > this.matchEndLineNumber!)) {
                     if (eventsNotToCull.indexOf(event.eventType) === -1) {

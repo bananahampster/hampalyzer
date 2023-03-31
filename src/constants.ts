@@ -287,7 +287,8 @@ export namespace PlayerClass {
 }
 
 export enum TeamColor {
-    Blue = 1,
+    None = 0,
+    Blue,
     Red,
     Yellow,
     Green,

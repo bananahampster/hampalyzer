@@ -4,7 +4,8 @@ import { RoundState } from './roundState.js';
 export enum EventHandlingPhase {
     Initial,
     EarlyFixups,
-    Main
+    Main,
+    PostMain
 }
 
 export enum HandlerRequest {
@@ -13,7 +14,11 @@ export enum HandlerRequest {
 }
 
 export interface EventSubscriber {
+    // Called before handleEvent calls begin for the phase..
     phaseStart(phase: EventHandlingPhase, roundState: RoundState): void;
+    // Called after handleEvent calls end for the phase.
+    phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void;
+    // Every event is provided one at a time to this method during each phase this subscriber is registered for.
     handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest;
 }
 
@@ -28,6 +33,7 @@ export class EventSubscriberManager {
             [EventHandlingPhase.Initial]: [],
             [EventHandlingPhase.EarlyFixups]: [],
             [EventHandlingPhase.Main]: [],
+            [EventHandlingPhase.PostMain]: [],
         };
         
         for (const [name, subscriber] of Object.entries(subscribers)) {
@@ -43,8 +49,7 @@ export class EventSubscriberManager {
         // Repeat the delivery of events for each phase.
         Object.keys(EventHandlingPhase).filter((key) => isNaN(Number(key))).map((phaseKey) => {
             const phase = EventHandlingPhase[phaseKey];
-            
-            // Notify subscribers the phase is starting.
+
             this.eventSubscribersByPhase[phase].forEach((subscriber: EventSubscriber) => {
                 subscriber.phaseStart(phase, this.roundState);
             });
@@ -60,9 +65,8 @@ export class EventSubscriberManager {
                             shouldRemoveEvent = true;
                         }
                     }
-                    catch (originalError: any) {
-                        const error = new Error(`[subscriber=${subscriber.constructor.name}, phase=${EventHandlingPhase[phase]}] failed (error=${originalError}) when handling line ${event.lineNumber}: ${event.rawLine}`);
-                        error.stack = originalError.stack;
+                    catch (error: any) {
+                        console.error(`[subscriber=${subscriber.constructor.name}, phase=${EventHandlingPhase[phase]}] failed (error=${error.message}) when handling line ${event.lineNumber}: ${event.rawLine}`);
                         throw error;
                     }
                 });
@@ -71,6 +75,11 @@ export class EventSubscriberManager {
                     --i;
                 }
             }
+            
+            this.eventSubscribersByPhase[phase].forEach((subscriber: EventSubscriber) => {
+                subscriber.phaseEnd(phase, this.roundState);
+            });
+
         });
     }
 }

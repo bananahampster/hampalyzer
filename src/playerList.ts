@@ -2,58 +2,44 @@ import Player from './player.js';
 import { TeamColor } from './constants.js';
 
 class PlayerList {
-    private _players: Player[];
+    // Each individual player has a per-team Player object to allow
+    // tracking of separate stats across team changes in the same round
+    // as well as to enable accurate tracking in Event objects about
+    // which team a player was on at the time of the event.
     private teams: { [team in TeamColor]?: Player[]; };
-    // private teams: TeamComposition;
 
     constructor() {
-        this._players = [];
         this.teams = {};
     }
 
-    public ensurePlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
-        const playerIndex = this.playerExistsAtIndex(steamID);
-        if (playerIndex !== -1)
-            return this._players[playerIndex];
+    public ensurePlayer(steamID: string, name?: string, playerID?: number, team?: TeamColor): Player | undefined {
+        if (team === undefined) {
+            throw "team must be set";
+        }
+        const player = this.getPlayer(steamID, team);
+        if (player)
+            return player;
 
         if (name && playerID) {
-            const newPlayer = new Player(steamID, name!, playerID!);
-            this._players.push(newPlayer);
+            const newPlayer = new Player(steamID, name!, playerID!, team!);
+            if (!this.teams[team]) {
+                this.teams[team] = [];
+            }
+            this.teams[team]!.push(newPlayer);
             return newPlayer;
         }
+        throw "name and playerID must be set";
     }
 
-    public getPlayerNum(player: Player): number {
-        const playerIndex = this.playerExistsAtIndex(player.steamID);
-        
-        if (playerIndex === -1) {
-            this._players.push(player);
-            return this._players.length - 1;
-        } else {
-            return playerIndex;
-        }
-    }
-
-    // TODO: set players' teams
-    private playerExistsAtIndex(steamID: string): number { 
-        if (!steamID.startsWith("STEAM"))
-            steamID = "STEAM_" + steamID;
-            
-        let foundIndex = -1;
-        this._players.some((curPlayer, i) => {
-            if (curPlayer.steamID === steamID) {
-                foundIndex = i;
-                return true;
+    private getPlayer(steamID: string, team: TeamColor): Player | undefined { 
+        const players = this.teams[team];
+        if (players) {
+            const player = players.find((p) => p.steamID === steamID);
+            if (player) {
+                return player;
             }
-
-            return false;
-        });
-
-        return foundIndex;
-    }
-
-    public get players(): Player[] {
-        return this._players;
+        }
+        return undefined;
     }
 }
 

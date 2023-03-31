@@ -14,7 +14,7 @@ export default class ParserUtils {
         let teams: TeamComposition = {};
         const teamChangeEvents = events.filter(ev => ev.eventType === EventType.PlayerJoinTeam);
 
-        const playerTeams: { [playerID: string]: { lineNumber: number, timestamp: number, team: TeamColor }[] } = {};
+        const playerTeams: { [playerID: string]: { lineNumber: number, gameTimeAsSeconds: number, team: TeamColor }[] } = {};
         teamChangeEvents.forEach(event => {
             // find the player in the team list; add if it isn't there
             const player = event.playerFrom as Player;
@@ -25,7 +25,7 @@ export default class ParserUtils {
             const team = event.data && event.data.team;
             if (!team) throw "expected team with a 'joined team' event";
 
-            playerRecord.push({ lineNumber: event.lineNumber, timestamp: event.timestamp.getTime(), team: team });
+            playerRecord.push({ lineNumber: event.lineNumber, gameTimeAsSeconds: event.gameTimeAsSeconds!, team: team });
         });
 
         // get the end of the round as a reference
@@ -41,15 +41,9 @@ export default class ParserUtils {
 
             const isLast = (i) => i >= playerTimes.length - 1;
             playerTimes.forEach((event, i) => {
-                let thisTime = isLast(i) ? endTime - event.timestamp : playerTimes[i + 1].timestamp - event.timestamp;
+                let thisTime = isLast(i) ? endTime - event.gameTimeAsSeconds : playerTimes[i + 1].gameTimeAsSeconds - event.gameTimeAsSeconds;
 
-                // the time difference should never be negative.
-                // this may happen (however) if a game is played over a DST change.
-                // force the difference to include the hour change.
-                if (thisTime < 0)
-                    thisTime += 3600000;
-
-                if (thisTime > maxTime || (event.team != TeamColor.Spectator && primaryTeam == TeamColor.Spectator && thisTime > 180000)) {
+                if (thisTime > maxTime || (event.team != TeamColor.Spectator && primaryTeam == TeamColor.Spectator && thisTime > 180)) {
                     primaryTeam = event.team;
                     maxTime = thisTime;
                 }
@@ -59,7 +53,7 @@ export default class ParserUtils {
             if (!teams[primaryTeam])
                 teams[primaryTeam] = [];
 
-            const playerObj = playerList.ensurePlayer(player);
+            const playerObj = playerList.ensurePlayer(player, undefined, undefined, primaryTeam);
             if (playerObj)
                 teams[primaryTeam]!.push(playerObj);
         }
@@ -692,7 +686,7 @@ export default class ParserUtils {
 
             for (const playerID of teamPlayerIDs) {
                 let poStats: PlayerOutputStatsRound = this.blankOutputPlayerStatsDetail(team);
-                let thisPlayer = players.ensurePlayer(playerID) as Player;
+                let thisPlayer = players.ensurePlayer(playerID, undefined, undefined, team) as Player;
                 poStats.name = thisPlayer.name;
                 poStats.steamID = playerID;
                 poStats.id = thisPlayer.steamID.split(":")[2];

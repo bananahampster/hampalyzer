@@ -282,17 +282,17 @@ export class Event {
                     const playerName = fromPlayerDataParts[1];
                     const playerID = Number(fromPlayerDataParts[2]);
                     const playerSteamID = fromPlayerDataParts[3];
-                    playerFromTeam = fromPlayerDataParts[4] !== "" ? this.parseTeam(fromPlayerDataParts[4]) : undefined;
+                    playerFromTeam = this.parseTeam(fromPlayerDataParts[4]);
 
-                    playerFrom = roundState.ensurePlayer(playerSteamID, playerName, playerID);
+                    playerFrom = roundState.ensurePlayer(playerSteamID, playerName, playerID, playerFromTeam);
 
                     if (otherPlayerDataParts != null) { // Two players were affected.
                         const otherPlayerName = otherPlayerDataParts[1];
                         const otherPlayerID = Number(otherPlayerDataParts[2]);
                         const otherPlayerSteamID = otherPlayerDataParts[3];
-                        playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
+                        playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
 
-                        playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                        playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
                         // do a switch based on the statement
                         switch (nonPlayerDataParts[0]) {
                             case "killed":
@@ -514,37 +514,53 @@ export class Event {
                                         eventType = EventType.PlayerThrewFlag;
                                         break;
                                     case "goalitem":
-                                        if (nonPlayerDataParts.length === 2)
+                                        if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerPickedUpFlag;
+                                            data.team = TeamColor.None;
+                                        }
                                         else
                                             throw 'unknown player trigger "goalitem"';
                                         break;
-                                    case "Red Flag":
-                                    case "Blue Flag":
-                                    case "Red_Flag": // proton_l
-                                    case "Blue_Flag":
-                                        eventType = EventType.PlayerPickedUpFlag;
-                                        break;
-                                    case "Red Flag Plus": // raiden-style c2c entity pickup
-                                    case "Blue Flag Plus":
-                                        eventType = EventType.PlayerPickedUpBonusFlag;
-                                        break;
+                                    case "Blue Flag Plus": // raiden-style c2c entity pickup
                                     case "Blue Capture Point Extra": // cranked
+                                        eventType = EventType.PlayerPickedUpBonusFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    case "Red Flag Plus":
                                     case "Red Capture Point Extra":
-                                        eventType = EventType.PlayerCapturedBonusFlag;
+                                        eventType = EventType.PlayerPickedUpBonusFlag;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Capture Point":
+                                        // TODO: what maps, if any, use this string which contains no team info?
+                                        eventType = EventType.PlayerCapturedFlag;
+                                        data.team = playerFrom!.team;
+                                        break;
+                                    case "Blue Flag": // proton_l
+                                    case "Blue_Flag":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    case "Red Flag":
+                                    case "Red_Flag":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Red;
+                                        break;
                                     case "Blue Cap":
-                                    case "Red Cap":
                                     case "Blue_Cap":
-                                    case "Red_Cap":
                                     case "Blue Cap Point": // monkey_l
-                                    case "Red Cap Point":
                                     case "Blue Capture Point":
-                                    case "Red Capture Point":
                                     case "BlueCapture Point": // haste_r
+                                        eventType = EventType.PlayerCapturedFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    case "Red Cap":
+                                    case "Red_Cap":
+                                    case "Red Cap Point":
+                                    case "Red Capture Point":
                                     case "RedCapture Point":
                                         eventType = EventType.PlayerCapturedFlag;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Flag 1": // cornfield; e.g. "Flag 1", "Flag 2"
                                     case "Flag 2":
@@ -552,28 +568,35 @@ export class Event {
                                     case "Flag 4":
                                     case "Flag 5": // arendal
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Flag #1": // osaka
                                     case "Flag #2":
                                     case "Flag #3":
                                     case "Flag #4":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Blue Flag 1": // troy2
                                     case "Blue Flag 2":
                                     case "Blue Flag 3":
                                     case "Blue Flag 4":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
                                     case "Red Flag 1": // troy2
                                     case "Red Flag 2":
                                     case "Red Flag 3":
                                     case "Red Flag 4":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Capture Point 1": // cornfield
                                     case "Capture Point 2":
                                     case "Capture Point 3":
                                     case "Capture Point 4":
                                         eventType = EventType.PlayerCapturedPoint;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "capture point 1": // magelli / arendal
                                     case "capture point 2": // magelli / arendal
@@ -581,6 +604,7 @@ export class Event {
                                     case "capture point 4": // magelli / arendal
                                     case "capture point 5": // arendal
                                         eventType = EventType.PlayerCapturedPoint;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Blue Capture Point 1": // troy2
                                     case "Blue Capture Point 2":
@@ -591,21 +615,26 @@ export class Event {
                                     case "Red Capture Point 3":
                                     case "Red Capture Point 4":
                                         eventType = EventType.PlayerCapturedPoint;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Team 1 dropoff":
                                     case "Team 2 dropoff":
                                     case "Team 3 dropoff":
                                     case "Team 4 dropoff":
                                         eventType = EventType.PlayerCapturedFlag;
+                                        data.team = playerFrom!.team;
                                         break;
                                     case "Flag1": // asti_r flags
                                     case "Flag2":
                                     case "Flag3":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Capture":
-                                        if (nonPlayerDataParts[2] = "Point")
+                                        if (nonPlayerDataParts[2] = "Point") {
                                             eventType = EventType.PlayerCapturedFlag;
+                                            data.team = playerFrom!.team;
+                                        }
                                         else
                                             throw "unknown player trigger Capture";
                                         break;
@@ -617,6 +646,7 @@ export class Event {
                                         switch (nonPlayerDataParts[3]) {
                                             case 'dropoff':
                                                 eventType = EventType.PlayerCapturedFlag;
+                                                data.team = TeamColor.None;
                                                 break;
                                             default:
                                                 throw 'unknown player trigger Team (len 3)';
@@ -624,8 +654,10 @@ export class Event {
                                         break;
                                     case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
                                     case "t2df":
-                                        if (nonPlayerDataParts.length === 2)
+                                        if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerCapturedFlag;
+                                            data.team = playerFrom!.team;
+                                        }
                                         else
                                             throw 'unknown t1df trigger';
                                         break;
@@ -642,15 +674,21 @@ export class Event {
                                         eventType = EventType.PlayerCapturedArenaOpponent;
                                         break;
                                     case "greenX": // run (the map) flag pickup
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Green;
+                                        break;
                                     case "yellowX":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Yellow;
                                         break;
                                     case "blueflag_point": // run (the map) flag capture
                                     case "blueflag_point2":
                                     case "redflag_point":
                                     case "redflag_point2":
-                                        if (nonPlayerDataParts.length === 2)
+                                        if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerCapturedFlag;
+                                            data.team = TeamColor.None;
+                                        }
                                         else
                                             throw 'unknown "run"-like trigger';
                                         break;
@@ -840,8 +878,8 @@ export class Event {
                                 const otherPlayerName = otherPlayerDataParts[1];
                                 const otherPlayerID = Number(otherPlayerDataParts[2]);
                                 const otherPlayerSteamID = otherPlayerDataParts[3];
-                                playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
-                                playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                                playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
+                                playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
                             }
                             break;
                         case "World":
@@ -1067,6 +1105,8 @@ export class Event {
         team = team.trim().toLowerCase();
 
         switch (team) {
+            case "":
+                return TeamColor.None;
             case "blue":
             case "blue :d?": // destroy_l
             case "dustbowl_team1": // baconbowl

@@ -11,6 +11,7 @@ export class PlayerTeamTracker implements EventSubscriber {
     // The players seen throughout the round.
     public players: PlayerList;
     // The teams throughout the round.
+    // TODO: collapse with PlayerList which is now tracking based on team composition.
     public teams: TeamComposition;
     // The current team composition.
     public currentTeams: TeamComposition;
@@ -21,8 +22,8 @@ export class PlayerTeamTracker implements EventSubscriber {
         this.currentTeams = {};
     }
 
-    phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {
-    }
+    phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {}
+    phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void {}
 
     handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest {
         switch (event.eventType) {
@@ -43,12 +44,12 @@ export class PlayerTeamTracker implements EventSubscriber {
         return HandlerRequest.None;
     }
 
-    public ensurePlayer(steamID: string, name?: string, playerID?: number): Player | undefined {
-        return this.players.ensurePlayer(steamID, name, playerID);
+    public ensurePlayer(steamID: string, name?: string, playerID?: number, team?: TeamColor): Player | undefined {
+        return this.players.ensurePlayer(steamID, name, playerID, team);
     }
 
     public setPlayerTeam(player: Player, team: TeamColor | undefined) {
-        const playerObj = this.players.ensurePlayer(player.steamID, player.name, player.playerID);
+        const playerObj = this.players.ensurePlayer(player.steamID, player.name, player.playerID, team);
         if (!playerObj) {
             throw "Couldn't get player: " + player.steamID;
         }
