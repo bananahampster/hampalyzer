@@ -170,11 +170,15 @@ export interface EventCreationOptions {
 }
 
 export class Event {
+    // core required data
     public eventType: EventType;
     public rawLine: string;
     public lineNumber: number;
     public timestamp: Date;
-    public gameTimeAsSeconds?: number;
+
+    // filled in by state trackers as required data for further parsing
+    public gameTimeAsSeconds: number; // filled in "EarlyFixups" phase
+    public whileConced: boolean; // filled in "Main" phase
 
     public data?: ExtraData;
     public playerFrom?: Player;
@@ -184,7 +188,6 @@ export class Event {
     public playerToTeam?: TeamColor;
     public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
-    public whileConced: boolean;
 
     constructor(options: EventCreationOptions) {
         // required fields
@@ -202,7 +205,10 @@ export class Event {
         this.playerToTeam = options.playerToTeam;
         this.playerToClass = options.playerToClass;
         this.withWeapon = options.withWeapon;
-        this.whileConced = false; // Filled in later.
+
+        // these items are filled in later
+        this.gameTimeAsSeconds = -1;
+        this.whileConced = false;
     }
 
     // Breaks apart a line on spaces while preserving quoted substrings.

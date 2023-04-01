@@ -2,6 +2,7 @@ import { EventHandlingPhase, EventSubscriber, HandlerRequest, SubscriberList } f
 import { PlayerTeamTracker } from "./playerTeamTracker.js";
 import { PreAndPostMatchCuller } from "./preAndPostMatchCuller.js";
 import { FlagMovementTracker } from "./flagMovementTracker.js";
+import { WhileConcedTracker } from "./whileConcedTracker.js";
 import { Event } from "./parser.js";
 import Player from "./player.js";
 import { TeamColor } from "./constants.js";
@@ -21,9 +22,10 @@ export class RoundState {
 
     public getEventSubscribers(): SubscriberList {
         return {
-            playerTeamStateHandler: { subscriber: this.playerTeamTracker, phases: [EventHandlingPhase.Initial]},
-            preAndPostMatchHandler: { subscriber: new PreAndPostMatchCuller(), phases: [EventHandlingPhase.Initial, EventHandlingPhase.EarlyFixups]},
-            flagMovementHandler: { subscriber: new FlagMovementTracker(), phases: [EventHandlingPhase.Main]},
+            playerTeamStateHandler: { subscriber: this.playerTeamTracker, phases: [EventHandlingPhase.Initial] },
+            preAndPostMatchHandler: { subscriber: new PreAndPostMatchCuller(), phases: [EventHandlingPhase.Initial, EventHandlingPhase.EarlyFixups] },
+            flagMovementHandler: { subscriber: new FlagMovementTracker(), phases: [EventHandlingPhase.Main] },
+            whileConcedHandler: { subscriber: new WhileConcedTracker(), phases: [EventHandlingPhase.Main] },
         };
     }
 
@@ -33,9 +35,9 @@ export class RoundState {
 
     get currentTeams() {
         return this.playerTeamTracker.currentTeams;
-    } 
+    }
     get players() {
         return this.playerTeamTracker.players;
-    } 
-    
+    }
+
 }

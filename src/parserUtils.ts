@@ -246,7 +246,7 @@ export default class ParserUtils {
             let runningScore: TeamScore = {};
             flagCapEvents.forEach(event => {
                 const player = event.playerFrom;
-                
+
                 let team : number;
                 if (event.eventType == EventType.TeamFlagHoldBonus) {
                     team = event.data!.team!;
@@ -693,7 +693,6 @@ export default class ParserUtils {
 
                 const playerStats = stats[playerID];
                 poStats.classes = this.calculateAndApplyPlayerClassOnAllEvents(thisPlayer, playerStats, matchEnd);
-                this.calculateAndApplyWhileConcedOnAllEvents(thisPlayer, playerStats);
                 for (const stat in playerStats) {
                     const statEvents = playerStats[stat];
                     switch (stat) {
@@ -1328,107 +1327,6 @@ export default class ParserUtils {
         }
 
         return classTimes;
-    }
-
-    private static getConcTimeEffectDurationInSeconds(playerClass: PlayerClass | undefined) {
-        const concTimeDurationInSeconds = 10;
-        return playerClass != PlayerClass.Medic ? concTimeDurationInSeconds : (concTimeDurationInSeconds / 2);
-    }
-
-    private static calculateAndApplyWhileConcedOnAllEvents(player: Player, playerEvents: Stats) {
-        if (!playerEvents) {
-            return;
-        }
-
-        let concSequence = new Array<Event>()
-            .concat(
-                playerEvents['conc_jump'],
-                playerEvents['team_concee'],
-                playerEvents['concee'],
-                playerEvents['death'],
-                playerEvents['team_death'],
-                playerEvents['suicide'])
-            .filter(event => event != undefined && event !== null)
-            .sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-
-        // Build a list of periods that the player was conced, as determined by the first conc event for the period
-        // and the end time for when the player was no longer conced.
-        let concPeriods = new Array<[Event, Date]>();
-        let concStartEvent: Event | null = null;
-        let concEndTimestamp = new Date(0);
-        for (let curConcEventIndex = 0; curConcEventIndex < concSequence.length; curConcEventIndex++) {
-            const concSequenceEvent = concSequence[curConcEventIndex];
-            if (concSequenceEvent.eventType == EventType.PlayerConced) {
-                if (concSequenceEvent.playerTo == player) {
-                    let extendingConcEvent = false;
-                    if (concStartEvent != null && concSequenceEvent.timestamp <= concEndTimestamp) {
-                        // The player was conced again while conced.
-                        extendingConcEvent = true;
-                    }
-                    else if (concStartEvent == null && concPeriods.length > 0 && concPeriods[concPeriods.length - 1][0].timestamp == concSequenceEvent.timestamp) {
-                        // The conc event happened in the same second as when the previous period ended. Resume extending the previous one.
-                        let previousConcPeriod = concPeriods.pop();
-                        concStartEvent = previousConcPeriod![0];
-                        extendingConcEvent = true;
-                    }
-                    if (extendingConcEvent) {
-                        concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
-                        concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + ParserUtils.getConcTimeEffectDurationInSeconds(concSequenceEvent.playerToClass));
-                    }
-                    else {
-                        if (concStartEvent != null) {
-                            // Record the previous, now-ended conc.
-                            concPeriods.push([concStartEvent, concEndTimestamp]);
-                        }
-                        // Track the new conc period.
-                        concStartEvent = concSequenceEvent;
-                        concEndTimestamp = new Date(concSequenceEvent.timestamp.getTime());
-                        concEndTimestamp.setSeconds(concEndTimestamp.getSeconds() + ParserUtils.getConcTimeEffectDurationInSeconds(concSequenceEvent.playerToClass));
-                    }
-                }
-            }
-            else { // Death event.
-                if (concStartEvent != null) {
-                    if (concSequenceEvent.timestamp < concEndTimestamp) {
-                        concEndTimestamp = concSequenceEvent.timestamp; // The death marks the end of the conc period.
-                    }
-                    concPeriods.push([concStartEvent, concEndTimestamp]);
-                }
-                concStartEvent = null;
-                concEndTimestamp = new Date(0);
-            }
-        }
-        if (concStartEvent != null) {
-            concEndTimestamp = new Date(concStartEvent.timestamp.getTime() + ParserUtils.getConcTimeEffectDurationInSeconds(concStartEvent.playerToClass));
-            concPeriods.push([concStartEvent, concEndTimestamp]);
-        }
-
-        if (concPeriods.length == 0) {
-            return;
-        }
-
-        for (const stat in playerEvents) {
-            let statEvents = playerEvents[stat];
-            statEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-
-            let curConcPeriodIndex = 0;
-            statEvents.forEach((statEvent) => {
-                // Advance through the array of conc periods until we reach one that ended after this event.
-                while (curConcPeriodIndex < concPeriods.length && statEvent.timestamp > concPeriods[curConcPeriodIndex][1]) {
-                    curConcPeriodIndex++;
-                }
-                if (curConcPeriodIndex >= concPeriods.length) {
-                    // The event was after all of the conc periods.
-                    return;
-                }
-                if (statEvent.lineNumber > concPeriods[curConcPeriodIndex][0].lineNumber && statEvent.timestamp <= concPeriods[curConcPeriodIndex][1]) {
-                    if (statEvent.playerFrom != player) {
-                        return;
-                    }
-                    statEvent.whileConced = true;
-                }
-            });
-        }
     }
 
     private static getPlayerClasses(roleChangedEvents: Event[], matchEnd: Date): string {

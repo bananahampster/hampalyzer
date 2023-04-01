@@ -12,6 +12,7 @@ class PlayerList {
         this.teams = {};
     }
 
+    // TODO: these parameters shouldn't be optional.
     public ensurePlayer(steamID: string, name?: string, playerID?: number, team?: TeamColor): Player | undefined {
         if (team === undefined) {
             throw "team must be set";
@@ -31,7 +32,7 @@ class PlayerList {
         throw "name and playerID must be set";
     }
 
-    private getPlayer(steamID: string, team: TeamColor): Player | undefined { 
+    private getPlayer(steamID: string, team: TeamColor): Player | undefined {
         const players = this.teams[team];
         if (players) {
             const player = players.find((p) => p.steamID === steamID);

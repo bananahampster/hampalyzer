@@ -49,8 +49,17 @@ export class PlayerTeamTracker implements EventSubscriber {
     }
 
     public setPlayerTeam(player: Player, team: TeamColor | undefined) {
-        const playerObj = this.players.ensurePlayer(player.steamID, player.name, player.playerID, team);
-        if (!playerObj) {
+        let playerObj: Player | undefined;
+
+        // if a player has disconnected, we should take the player object as given and remove from current team
+        if (team === undefined) {
+            playerObj = player;
+        }
+        else {
+            playerObj = this.players.ensurePlayer(player.steamID, player.name, player.playerID, team);
+        }
+
+        if (playerObj == null) {
             throw "Couldn't get player: " + player.steamID;
         }
         if (playerObj) {
@@ -75,7 +84,7 @@ export class PlayerTeamTracker implements EventSubscriber {
                 }
                 else {
                     // The player is not currently a part of this team.
-                    const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID == playerObj.steamID);
+                    const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID == playerObj!.steamID);
                     if (indexOfPlayerInTeam !== -1) {
                         currentTeamMembers.splice(indexOfPlayerInTeam, 1);
                     }
