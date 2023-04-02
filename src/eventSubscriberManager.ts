@@ -13,13 +13,13 @@ export enum HandlerRequest {
     RemoveEvent
 }
 
-export interface EventSubscriber {
-    // Called before handleEvent calls begin for the phase..
-    phaseStart(phase: EventHandlingPhase, roundState: RoundState): void;
-    // Called after handleEvent calls end for the phase.
-    phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void;
-    // Every event is provided one at a time to this method during each phase this subscriber is registered for.
-    handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest;
+export abstract class EventSubscriber {
+    /**  Called before handleEvent calls begin for the phase.. */
+    abstract phaseStart(phase: EventHandlingPhase, roundState: RoundState): void;
+    /** Called after handleEvent calls end for the phase. */
+    abstract phaseEnd(phase: EventHandlingPhase, roundState: RoundState): void;
+    /** Every event is provided one at a time (in order) to this method during each phase this subscriber is registered for. */
+    abstract handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest;
 }
 
 export type SubscriberList = Record<string, { subscriber: EventSubscriber, phases: EventHandlingPhase[] }>;
@@ -35,7 +35,7 @@ export class EventSubscriberManager {
             [EventHandlingPhase.Main]: [],
             [EventHandlingPhase.PostMain]: [],
         };
-        
+
         for (const [name, subscriber] of Object.entries(subscribers)) {
             for (const phase of subscriber.phases) {
                 this.eventSubscribersByPhase[phase].push(subscriber.subscriber);
@@ -75,7 +75,7 @@ export class EventSubscriberManager {
                     --i;
                 }
             }
-            
+
             this.eventSubscribersByPhase[phase].forEach((subscriber: EventSubscriber) => {
                 subscriber.phaseEnd(phase, this.roundState);
             });

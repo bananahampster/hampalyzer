@@ -24,18 +24,20 @@ class FlagStatus {
     public hasBeenTouched: boolean = false;
 }
 
-export class FlagMovementTracker implements EventSubscriber {
+export class FlagMovementTracker extends EventSubscriber {
     // Tracks the player current carrying the flag of a given TeamColor.
     // For example, a blue player carrying the red flag would be tracked via
     // TeamColor.Red.
     private currentFlagStatusByTeam: Record<TeamColor, FlagStatus>;
     private sawTeamScoresEvent: boolean = false;
     private flagRoundStatsByTeam: Record<TeamColor, TeamFlagRoundStats>;
-    
+
     private pointsPerCap = 10;
     private pointsPerBonusCap = this.pointsPerCap;
 
     constructor() {
+        super();
+
         this.currentFlagStatusByTeam = {
             [TeamColor.None]: new FlagStatus(),
             [TeamColor.Blue]: new FlagStatus(),
@@ -102,7 +104,7 @@ export class FlagMovementTracker implements EventSubscriber {
                             }
                             if (!score) {
                                 throw "expected value with a TeamScore event";
-                            } 
+                            }
                             this.flagRoundStatsByTeam[team].score = Number(score);
                             this.sawTeamScoresEvent = true;
                         }

@@ -5,7 +5,7 @@ import { Event } from "./parser.js";
 import Player from "./player.js";
 import { RoundState } from "./roundState.js";
 
-export class WhileConcedTracker implements EventSubscriber {
+export class WhileConcedTracker extends EventSubscriber {
 
     private whoIsConced: Record<Player["steamID"], number | null> = {};
 

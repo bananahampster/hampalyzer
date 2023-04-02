@@ -7,7 +7,7 @@ import { TeamColor } from "./constants.js";
 import Player from "./player.js";
 import PlayerList from "./playerList.js";
 
-export class PlayerTeamTracker implements EventSubscriber {
+export class PlayerTeamTracker extends EventSubscriber {
     // The players seen throughout the round.
     public players: PlayerList;
     // The teams throughout the round.
@@ -17,6 +17,8 @@ export class PlayerTeamTracker implements EventSubscriber {
     public currentTeams: TeamComposition;
 
     constructor() {
+        super();
+
         this.players = new PlayerList();
         this.teams = {};
         this.currentTeams = {};

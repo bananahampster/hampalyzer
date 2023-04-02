@@ -16,7 +16,7 @@ const eventsNotToCull = [
     EventType.TeamScore
 ];
 
-export class PreAndPostMatchCuller implements EventSubscriber {
+export class PreAndPostMatchCuller extends EventSubscriber {
     private matchStartEvent?: Event;
     private matchStartLineNumber?: number;
     private matchEndEvent?: Event;
@@ -26,6 +26,7 @@ export class PreAndPostMatchCuller implements EventSubscriber {
     private eventGameTimeAsSecondsAdjustment: number = 0;
 
     constructor() {
+        super();
     }
 
     phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {
