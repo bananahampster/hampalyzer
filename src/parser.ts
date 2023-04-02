@@ -956,6 +956,7 @@ export class Event {
                                         data.team = TeamColor.Red;
                                         break;
                                     }
+                                    return; // ignore
                                 case "Blue security has been deactivated!":
                                 case "Red security has been deactivated!":
                                 case "Blue Security has been Deactivated for 45s": // demolish

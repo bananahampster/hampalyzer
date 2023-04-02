@@ -457,6 +457,7 @@ export default class ParserUtils {
                         // this is only possible between players on different teams
                         this.addStat(thisPlayerStats, 'detpack_disarmer', event);
                         this.addStat(otherPlayerStats, 'detpack_disarmee', event);
+                        break;
                     case EventType.PlayerFraggedDispenser:
                         if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
                             this.addStat(thisPlayerStats, 'team_kill_disp', event);
@@ -991,6 +992,7 @@ export default class ParserUtils {
                         return this.generateFacetedStats(stat.events!,
                             (e) => `Suicided at ${this.getTime(e)}`);
                 }
+                break;
             case 'weaponStats':
                 switch (stat.title) {
                     case 'airshot':
@@ -1003,6 +1005,7 @@ export default class ParserUtils {
                     default:
                         console.log(`generateStatDetails: not implemented: weaponStats > ${stat.title}`);
                 }
+                break;
             case 'damage':
                 // Ignore; handled in generateDamageStats.
                 break;

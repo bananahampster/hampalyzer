@@ -7,7 +7,7 @@ import { RoundState } from "./roundState.js";
 
 export class WhileConcedTracker implements EventSubscriber {
 
-    private whosConced: Record<Player["steamID"], number | null> = {};
+    private whoIsConced: Record<Player["steamID"], number | null> = {};
 
     public phaseStart(phase: EventHandlingPhase, _roundState: RoundState): void {
         if (phase !== EventHandlingPhase.Main)
@@ -20,39 +20,45 @@ export class WhileConcedTracker implements EventSubscriber {
     }
 
     public handleEvent(event: Event, _phase: EventHandlingPhase, _roundState: RoundState): HandlerRequest {
-        const fromPlayerId = event.playerTo?.steamID;
+        const playerFromId: string | null = event.playerFrom ? event.playerFrom.steamID : null;
+        const playerToId: string | null = event.playerTo ? event.playerTo.steamID : null;
 
+        if (event.eventType === EventType.PlayerConced) {
+            // keep track of who's conced, based on time;
+            // assumes preAndPostMatchCuller has already calcuated `event.gameTimeAsSeconds`
+            if (playerToId != null) {
+                this.whoIsConced[playerToId] = event.gameTimeAsSeconds;
+            }
+        }
         switch (event.eventType) {
-            case EventType.PlayerConced:
-                // keep track of who's conced, based on time;
-                // assumes preAndPostMatchCuller has already calcuated `event.gameTimeAsSeconds`
-                if (fromPlayerId != null) {
-                    this.whosConced[fromPlayerId] = event.gameTimeAsSeconds;
-                }
-                break;
-            case EventType.PlayerFraggedPlayer:
             case EventType.PlayerCommitSuicide:
             case EventType.PlayerLeftServer:
             case EventType.PlayerJoinTeam:
-            case EventType.PlayerKicked:
-                if (fromPlayerId != null) {
-                    this.whosConced[fromPlayerId] = null;
-                }
-            default:
-                // if this event has a playerFrom event,
-                // mark it `whileConced` if within conc effect duration
-                if (event.playerFrom != null) {
-                    // TODO this isn't populated by this point; add stateTracker for this
-                    const playerIsMedic = event.playerFromClass === PlayerClass.Medic;
-
-                    const lastConced = this.whosConced[event.playerFrom.steamID];
-                    if (lastConced != null && !isNaN(lastConced) &&
-                        (event.gameTimeAsSeconds - lastConced) <= (playerIsMedic ? 5 : 10)) {
-
-                        event.whileConced = true;
-                    }
+                if (playerFromId != null) {
+                    this.whoIsConced[playerFromId] = null;
                 }
                 break;
+            case EventType.PlayerFraggedPlayer:
+            case EventType.PlayerKicked:
+                if (playerToId != null) {
+                    this.whoIsConced[playerToId] = null;
+                }
+                break;
+            default:
+                break;
+        }
+        // if this event has a playerFrom event,
+        // mark it `whileConced` if within conc effect duration
+        if (event.playerFrom != null) {
+            // TODO this isn't populated by this point; add stateTracker for this
+            const playerIsMedic = event.playerToClass === PlayerClass.Medic;
+
+            const lastConced = this.whoIsConced[event.playerFrom.steamID];
+            if (lastConced != null && !isNaN(lastConced) &&
+                (event.gameTimeAsSeconds - lastConced) <= (playerIsMedic ? 5 : 10)) {
+
+                event.whileConced = true;
+            }
         }
 
         return HandlerRequest.None;
