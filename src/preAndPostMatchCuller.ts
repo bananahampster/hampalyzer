@@ -104,7 +104,7 @@ export class PreAndPostMatchCuller implements EventSubscriber {
                         // Also cull suicides and damage due to prematch end.
                         if (event.eventType === EventType.PlayerCommitSuicide ||
                             event.eventType === EventType.PlayerDamage) {
-                            HandlerRequest.RemoveEvent;
+                            return HandlerRequest.RemoveEvent;
                         }
                     }
                 }
