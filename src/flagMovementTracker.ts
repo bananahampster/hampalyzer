@@ -233,14 +233,6 @@ export class FlagMovementTracker extends EventSubscriber {
         }
     }
 
-    public getPlayerFlagStats(player: Player): [number, number, number] {
-        // flag time in seconds, toss percent, initial touches
-        return [
-            player.roundStats.flagCarryTimeInSeconds,
-            player.roundStats.flagThrows / player.roundStats.flagCarries,
-            player.roundStats.flagInitialTouches]
-    }
-
     public getScoreAndFlagMovements(roundState: RoundState): [TeamScore, TeamFlagMovements] {
         let scores: TeamScore = {};
         let flagMovements: TeamFlagMovements = {};
