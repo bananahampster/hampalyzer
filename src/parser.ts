@@ -802,6 +802,64 @@ export class Event {
                                     case "10 Second Warning": // troy2 (becomes player trigger after first round)
                                     case "Start Scoring": // troy2
                                     case "Door Announcement": // troy2 (already handled by world trigger "The gates of Troy are open!")
+                                    case "AmmoB": // scrummage
+                                    case "AmmoB Tube": // scrummage
+                                    case "AmmoR": // scrummage
+                                    case "AmmoR Tube": // scrummage
+                                    case "CannonB": // scrummage
+                                    case "CannonR": // scrummage
+                                    case "Fort BNoTP": // scrummage
+                                    case "Fort RNoTP": // scrummage
+                                    case "GrenB": // scrummage
+                                    case "GrenR": // scrummage
+                                    case "SCRUMB Pad": // scrummage
+                                    case "SCRUM Red": // scrummage
+                                    case "BA BPad1": // scrummage
+                                    case "BA BPad2": // scrummage
+                                    case "BA RPad1": // scrummage
+                                    case "BA RPad2": // scrummage
+                                    case "BA bonb": // scrummage
+                                    case "BA bonr": // scrummage
+                                    case "BA btmn1": // scrummage
+                                    case "BA BTemp1": // scrummage
+                                    case "BA BTemp2": // scrummage
+                                    case "BA RTemp1": // scrummage
+                                    case "BA RTemp2": // scrummage
+                                    case "BA resupb": // scrummage
+                                    case "BA btmn2": // scrummage
+                                    case "BA rtmn1": // scrummage
+                                    case "BA rtmn2": // scrummage
+                                    case "CEN BPad1": // scrummage
+                                    case "CEN BPad2": // scrummage
+                                    case "CEN RPad1": // scrummage
+                                    case "CEN RPad2": // scrummage
+                                    case "CEN btmn1": // scrummage
+                                    case "CEN btmn2": // scrummage
+                                    case "CEN resupb": // scrummage
+                                    case "CEN resupr": // scrummage
+                                    case "CEN rtmn1": // scrummage
+                                    case "CEN rtmn2": // scrummage
+                                    case "CEN bonb": // scrummage
+                                    case "CEN bonr": // scrummage
+                                    case "CEN RNoTP": // scrummage
+                                    case "CEN BTemp1": // scrummage
+                                    case "CEN BTemp2": // scrummage
+                                    case "CEN RTemp1": // scrummage
+                                    case "CEN RTemp2": // scrummage
+                                    case "RA BPad1": // scrummage
+                                    case "RA BPad2": // scrummage
+                                    case "RA RPad1": // scrummage
+                                    case "RA RPad2": // scrummage
+                                    case "RA bonb": // scrummage
+                                    case "RA bonr": // scrummage
+                                    case "RA BTemp1": // scrummage
+                                    case "RA BTemp2": // scrummage
+                                    case "RA RTemp1": // scrummage
+                                    case "RA RTemp2": // scrummage
+                                    case "RA btmn1": // scrummage
+                                    case "RA btmn2": // scrummage
+                                    case "RA rtmn1": // scrummage
+                                    case "RA rtmn2": // scrummage
                                         return; // Ignore
                                     default:
                                         throw `unknown player trigger: ${nonPlayerDataParts[1]}`;
@@ -1010,9 +1068,19 @@ export class Event {
                                 case "The Temple has been breached!": // troy2 wall det message - TODO: figure out which player triggered this?
                                 case "New path to the delivery area is open!": // arendal (already handled by "det3detect")
                                 case "#dustbowl_flag_returned": // arendal (already handled by "Flag has returned Info") - TODO: research potential conflict with dustbowl?
+                                case "BA rest": // scrummage
+                                case "BA BFlag": // scrummage
+                                case "BA RFlag": // scrummage
+                                case "RA rest": // scrummage
+                                case "RA BFlag": // scrummage
+                                case "RA RFlag": // scrummage
+                                case "CEN BFlag": // scrummage
+                                case "CEN RFlag": // scrummage
+                                case "CEN rest": // scrummage
+                                case undefined: // scrummage first line of multi-line arena capture output
                                     return; // Ignore
                                 default:
-                                    throw 'unknown World trigger';
+                                    throw `unknown World trigger (${nonPlayerDataParts[2]})`;
                             }
                             break;
                         case "Team":
@@ -1035,8 +1103,17 @@ export class Event {
                         case "<-1><><Yellow>":
                             // frags that happen after the round ends
                             return;
+                        case "<-1><><>":
+                            // scrummage Sentry_Malfunction
+                            return;
+                        case "[MATCH":
+                            // [MATCH RESULT] line on Coach's
+                            return;
+                        case "[GAMEND]":
+                            // Coach's "[GAMEND] RECORDING STATS]" line
+                            return;
                         default:
-                            throw 'unknown non-player log message';
+                            throw `unknown non-player log message (${nonPlayerDataParts[0]})`;
                     }
                 }
             }
