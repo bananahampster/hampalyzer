@@ -405,6 +405,7 @@ export class Event {
                                 break;
                             case "joined":
                                 eventType = EventType.PlayerJoinTeam;
+                                playerTo = playerFrom;
                                 data.team = Event.parseTeam(nonPlayerDataParts[2]);
                                 break;
                             case "entered":
@@ -417,6 +418,7 @@ export class Event {
                             case "disconnected":
                             case "disconnected\r":
                                 eventType = EventType.PlayerLeftServer;
+                                playerTo = playerFrom;
                                 break;
                             case "changed":
                                 if (nonPlayerDataParts[1] === "name") {
@@ -433,6 +435,7 @@ export class Event {
                             case "committed": // TODO: sometimes this line has extra data
                             /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
                                 eventType = EventType.PlayerCommitSuicide;
+                                playerTo = playerFrom;
                                 let weaponString = nonPlayerDataParts[3];
                                 if (nonPlayerDataParts.length >= 5 && nonPlayerDataParts[4] === "(world)") {
                                     weaponString += " (world)";

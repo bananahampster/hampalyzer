@@ -20,17 +20,12 @@ export class WhileConcedTracker extends EventSubscriber {
     }
 
     public handleEvent(event: Event, _phase: EventHandlingPhase, _roundState: RoundState): HandlerRequest {
-        const playerFromId: string | null = event.playerFrom ? event.playerFrom.steamID : null;
         const playerToId: string | null = event.playerTo ? event.playerTo.steamID : null;
 
         switch (event.eventType) {
             case EventType.PlayerCommitSuicide:
             case EventType.PlayerLeftServer:
             case EventType.PlayerJoinTeam:
-                if (playerFromId != null) {
-                    this.whoIsConced[playerFromId] = null;
-                }
-                break;
             case EventType.PlayerFraggedPlayer:
             case EventType.PlayerKicked:
                 if (playerToId != null) {
