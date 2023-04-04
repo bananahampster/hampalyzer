@@ -23,13 +23,6 @@ export class WhileConcedTracker extends EventSubscriber {
         const playerFromId: string | null = event.playerFrom ? event.playerFrom.steamID : null;
         const playerToId: string | null = event.playerTo ? event.playerTo.steamID : null;
 
-        if (event.eventType === EventType.PlayerConced) {
-            // keep track of who's conced, based on time;
-            // assumes preAndPostMatchCuller has already calcuated `event.gameTimeAsSeconds`
-            if (playerToId != null) {
-                this.whoIsConced[playerToId] = event.gameTimeAsSeconds;
-            }
-        }
         switch (event.eventType) {
             case EventType.PlayerCommitSuicide:
             case EventType.PlayerLeftServer:
@@ -58,6 +51,16 @@ export class WhileConcedTracker extends EventSubscriber {
                 (event.gameTimeAsSeconds - lastConced) <= (playerIsMedic ? 5 : 10)) {
 
                 event.whileConced = true;
+            }
+        }
+
+        // Update the conc status _after_ the logic above to ensure the `whileConced`
+        // marking on the event is based on prior concs rather than this one.
+        if (event.eventType === EventType.PlayerConced) {
+            // keep track of who's conced, based on time;
+            // assumes preAndPostMatchCuller has already calcuated `event.gameTimeAsSeconds`
+            if (playerToId != null) {
+                this.whoIsConced[playerToId] = event.gameTimeAsSeconds;
             }
         }
 
