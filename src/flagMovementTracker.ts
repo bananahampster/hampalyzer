@@ -6,7 +6,6 @@ import { TeamScore, TeamComposition } from "./parserUtils.js";
 import { FlagDrop, FlagMovement, PlayerClass, TeamColor, TeamFlagMovements } from "./constants.js";
 import Player from "./player.js";
 import { PlayerRoundStats } from "./player.js";
-import e from "express";
 
 class TeamFlagRoundStats {
     public numberOfCaps: number = 0;
