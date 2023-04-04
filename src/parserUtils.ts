@@ -671,7 +671,7 @@ export default class ParserUtils {
                 // Flag statistics (requires holistic view of flag movement).
                 const [flag_time_in_seconds, toss_percent, touches_initial] =  [
                         thisPlayer.roundStats.flagCarryTimeInSeconds,
-                        thisPlayer.roundStats.flagThrows / thisPlayer.roundStats.flagCarries,
+                        thisPlayer.roundStats.flagCarries > 0 ? Math.round(thisPlayer.roundStats.flagThrows / thisPlayer.roundStats.flagCarries * 100) : 0,
                         thisPlayer.roundStats.flagInitialTouches];
 
                 this.ensureStat(poStats, 'objectives', 'flag_time_in_seconds').value = flag_time_in_seconds;

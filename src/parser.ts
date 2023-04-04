@@ -66,8 +66,6 @@ export class RoundParser {
 
     private parsingErrors: string[] = [];
 
-    private eventSubscribersByPhase = []
-
     constructor(private filename: string) {
         // should probably check if the file exists here
     }

@@ -146,16 +146,16 @@ export class FlagMovementTracker extends EventSubscriber {
                         this.currentFlagStatusByTeam[event.data.team!] = new FlagStatus();
                         break;
                     case EventType.PlayerThrewFlag:
-                        this.flagRoundStatsByTeam[event.playerFrom!.team].flagEvents.push(event);
-                        event.playerFrom!.roundStats.flagThrows++;
-                        break;
                     case EventType.PlayerFraggedPlayer:
                     case EventType.PlayerCommitSuicide:
                     case EventType.PlayerLeftServer:
                         {
-                            let flagDropper = event.playerTo!;
+                            let flagDropper = event.eventType === EventType.PlayerThrewFlag ? event.playerFrom! : event.playerTo!;
+                            if (event.eventType === EventType.PlayerThrewFlag) {
+                                flagDropper.roundStats.flagThrows++;
+                            }
                             for (let team in this.currentFlagStatusByTeam) {
-                                if (event.playerTo!.isSamePlayer(this.currentFlagStatusByTeam[team].carrier)) {
+                                if (flagDropper.isSamePlayer(this.currentFlagStatusByTeam[team].carrier)) {
                                     this.flagRoundStatsByTeam[flagDropper.team].flagEvents.push(event);
 
                                     flagDropper!.roundStats.flagCarryTimeInSeconds +=
@@ -263,20 +263,19 @@ export class FlagMovementTracker extends EventSubscriber {
             const flagEvents = this.flagRoundStatsByTeam[team].flagEvents;
             flagEvents.forEach(event => {
                 const player = event.playerFrom;
-                let isScoreEvent = false;
-                let howFlagWasDropped = FlagDrop.Captured;
+                let howFlagWasDropped = FlagDrop.Fragged;
                 switch (event.eventType) {
                     case EventType.TeamFlagHoldBonus:
                         runningScore[team] += this.pointsPerTeamFlagHoldBonus;
-                        isScoreEvent = true;
+                        howFlagWasDropped = FlagDrop.Captured;
                         break;
                     case EventType.PlayerCapturedBonusFlag:
                         runningScore[team] += this.pointsPerBonusCap;
-                        isScoreEvent = true;
+                        howFlagWasDropped = FlagDrop.Captured;
                         break;
                     case EventType.PlayerCapturedFlag:
                         runningScore[team] += this.pointsPerCap;
-                        isScoreEvent = true;
+                        howFlagWasDropped = FlagDrop.Captured;
                         break;
                     case EventType.PlayerThrewFlag:
                         howFlagWasDropped = FlagDrop.Thrown;
@@ -296,7 +295,7 @@ export class FlagMovementTracker extends EventSubscriber {
                 }
                 flagMovements[team].push(flagMovement);
 
-                if (isScoreEvent && needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
+                if (howFlagWasDropped === FlagDrop.Captured && needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
                     scores[team] = runningScore[team];
                 }
             });
