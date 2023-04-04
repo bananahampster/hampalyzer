@@ -860,6 +860,8 @@ export class Event {
                                     case "RA btmn2": // scrummage
                                     case "RA rtmn1": // scrummage
                                     case "RA rtmn2": // scrummage
+                                    case "spawnarea1": // attac
+                                    case "spawnarea2": // attac
                                         return; // Ignore
                                     default:
                                         throw `unknown player trigger: ${nonPlayerDataParts[1]}`;
@@ -1020,17 +1022,23 @@ export class Event {
                                 case "Red security has been deactivated!":
                                 case "Blue Security has been Deactivated for 45s": // demolish
                                 case "Red Security has been Deactivated for 45s": // demolish
+                                case "Blue Security has been deactivate": // attac
+                                case "Red Security has been deactivated": // attac
                                     eventType = EventType.PlayerGotSecurity;
                                     break;
                                 case "Blue security will be operational in 30 seconds!": // schtop
                                 case "Red security will be operational in 30 seconds!": // schtop
                                 case "Blue Security will be Operational in 15 seconds!": // demolish
                                 case "Red Security will be Operational in 15 seconds!": // demolish
+                                case "Blue security will reactivate in 15 seconds": // attac
+                                case "Red security will reactivate in 15 seconds": // attac
                                     return; // ignore
                                 case "Blue security is now operating!":
                                 case "Red security is now operating!":
                                 case "Blue Security is now Operating": // demolish
                                 case "Red Security is now Operating": // demolish
+                                case "Blue security is now active": // attac
+                                case "Red security is now active": // attac
                                     eventType = EventType.SecurityUp;
                                     break;
                                 case "Blue_Flag_Vox":
