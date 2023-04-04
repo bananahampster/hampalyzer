@@ -3,7 +3,7 @@ import { TeamColor } from "./constants.js";
 
 export class PlayerRoundStats {
     public flagCarries = 0;
-    public flagFirstTouches = 0;
+    public flagInitialTouches = 0;
     public flagThrows = 0;
     public flagCarryTimeInSeconds = 0;
 }

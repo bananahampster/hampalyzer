@@ -3,11 +3,10 @@ import EventType from './eventType.js';
 import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
 import { RoundState } from "./roundState.js";
 import { TeamScore, TeamComposition } from "./parserUtils.js";
-import { TeamFlagMovements } from "./constants.js";
+import { FlagDrop, FlagMovement, PlayerClass, TeamColor, TeamFlagMovements } from "./constants.js";
 import Player from "./player.js";
 import { PlayerRoundStats } from "./player.js";
-import { TeamColor } from "./constants.js";
-import { PlayerClass } from "./constants.js";
+import e from "express";
 
 class TeamFlagRoundStats {
     public numberOfCaps: number = 0;
@@ -34,6 +33,7 @@ export class FlagMovementTracker extends EventSubscriber {
 
     private pointsPerCap = 10;
     private pointsPerBonusCap = this.pointsPerCap;
+    private readonly pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
 
     constructor() {
         super();
@@ -78,9 +78,6 @@ export class FlagMovementTracker extends EventSubscriber {
                     this.currentFlagStatusByTeam[team] = new FlagStatus();
                 }
                 this.computePointsPerCap();
-                if (!this.sawTeamScoresEvent) { // The server may have crashed before finishing the log.
-                    console.warn("Can't find ending score, manually counting caps...");
-                }
                 break;
             default:
                 throw "Unexpected phase";
@@ -119,7 +116,7 @@ export class FlagMovementTracker extends EventSubscriber {
                             player.roundStats.flagCarries++;
                             if (!flagStatusToUpdate.hasBeenTouched) {
                                 flagStatusToUpdate.hasBeenTouched = true;
-                                player.roundStats.flagFirstTouches++;
+                                player.roundStats.flagInitialTouches++;
                             }
                             flagStatusToUpdate.bonusActive = false;
                             flagStatusToUpdate.timeFlagWasPickedUpInGameSeconds = event.gameTimeAsSeconds!;
@@ -149,21 +146,21 @@ export class FlagMovementTracker extends EventSubscriber {
                         }
                         this.currentFlagStatusByTeam[event.data.team!] = new FlagStatus();
                         break;
+                    case EventType.PlayerThrewFlag:
+                        this.flagRoundStatsByTeam[event.playerFrom!.team].flagEvents.push(event);
+                        event.playerFrom!.roundStats.flagThrows++;
+                        break;
                     case EventType.PlayerFraggedPlayer:
                     case EventType.PlayerCommitSuicide:
                     case EventType.PlayerLeftServer:
-                    case EventType.PlayerThrewFlag:
                         {
-                            let flagDropper = event.eventType === EventType.PlayerFraggedPlayer ? event.playerTo : event.playerFrom;
-                            this.flagRoundStatsByTeam[flagDropper!.team].flagEvents.push(event);
-                            if (event.eventType === EventType.PlayerThrewFlag) {
-                                flagDropper!.roundStats.flagThrows++;
-                            }
+                            let flagDropper = event.playerTo!;
                             for (let team in this.currentFlagStatusByTeam) {
-                                if (flagDropper!.isSamePlayer(this.currentFlagStatusByTeam[team].carrier)) {
+                                if (event.playerTo!.isSamePlayer(this.currentFlagStatusByTeam[team].carrier)) {
+                                    this.flagRoundStatsByTeam[flagDropper.team].flagEvents.push(event);
 
                                     flagDropper!.roundStats.flagCarryTimeInSeconds +=
-                                    event.gameTimeAsSeconds! - this.currentFlagStatusByTeam[team].timeFlagWasPickedUpInGameSeconds;
+                                        event.gameTimeAsSeconds! - this.currentFlagStatusByTeam[team].timeFlagWasPickedUpInGameSeconds;
 
                                     this.currentFlagStatusByTeam[team].carrier = null;
                                     this.currentFlagStatusByTeam[team].bonusActive = false;
@@ -211,12 +208,11 @@ export class FlagMovementTracker extends EventSubscriber {
 
 
     private computePointsPerCap() {
-        const pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
         if (this.sawTeamScoresEvent) {
             const blueTeamFlagRoundStats = this.flagRoundStatsByTeam[TeamColor.Blue];
 
             const firstTeamFlagHoldBonuses = blueTeamFlagRoundStats.teamFlagHoldBonuses;
-            const pointsFromFlagHoldBonuses = blueTeamFlagRoundStats.numberOfBonusCaps* pointsPerTeamFlagHoldBonus;
+            const pointsFromFlagHoldBonuses = blueTeamFlagRoundStats.numberOfBonusCaps* this.pointsPerTeamFlagHoldBonus;
 
             if (blueTeamFlagRoundStats.score > 0 && blueTeamFlagRoundStats.numberOfBonusCaps > 0) {
                 // This is a map with bonus caps, e.g. raiden6's coast-to-coast mechanic.
@@ -236,5 +232,85 @@ export class FlagMovementTracker extends EventSubscriber {
                 console.warn(`Points per cap is ${this.pointsPerCap}`);
             }
         }
+    }
+
+    public getPlayerFlagStats(player: Player): [number, number, number] {
+        // flag time in seconds, toss percent, initial touches
+        return [
+            player.roundStats.flagCarryTimeInSeconds,
+            player.roundStats.flagThrows / player.roundStats.flagCarries,
+            player.roundStats.flagInitialTouches]
+    }
+
+    public getScoreAndFlagMovements(roundState: RoundState): [TeamScore, TeamFlagMovements] {
+        let scores: TeamScore = {};
+        let flagMovements: TeamFlagMovements = {};
+        const needToComputeTeamScore = !this.sawTeamScoresEvent;
+
+        if (!this.sawTeamScoresEvent) { // maybe the server crashed before finishing the log?
+            console.warn("Can't find ending score, manually counting caps...");
+        }
+
+        let runningScore: TeamScore = {};
+        for (const team in this.flagRoundStatsByTeam) {
+            scores[team] = this.flagRoundStatsByTeam[team].score;
+
+            if (this.flagRoundStatsByTeam[team].flagEvents.count === 0) {
+                continue;
+            }
+
+            if (!flagMovements[team]) {
+                const teamFlagStats: FlagMovement[] = [];
+                flagMovements[team] = teamFlagStats;
+                runningScore[team] = 0;
+            }
+            if (!runningScore[team]) {
+                runningScore[team] = 0;
+            }
+
+
+            const flagEvents = this.flagRoundStatsByTeam[team].flagEvents;
+            flagEvents.forEach(event => {
+                const player = event.playerFrom;
+                let isScoreEvent = false;
+                let howFlagWasDropped = FlagDrop.Captured;
+                switch (event.eventType) {
+                    case EventType.TeamFlagHoldBonus:
+                        runningScore[team] += this.pointsPerTeamFlagHoldBonus;
+                        isScoreEvent = true;
+                        break;
+                    case EventType.PlayerCapturedBonusFlag:
+                        runningScore[team] += this.pointsPerBonusCap;
+                        isScoreEvent = true;
+                        break;
+                    case EventType.PlayerCapturedFlag:
+                        runningScore[team] += this.pointsPerCap;
+                        isScoreEvent = true;
+                        break;
+                    case EventType.PlayerThrewFlag:
+                        howFlagWasDropped = FlagDrop.Thrown;
+                        break;
+                    case EventType.PlayerFraggedPlayer:
+                        howFlagWasDropped = FlagDrop.Fragged;
+                        break;
+                    default:
+                        break;
+                }
+                const flagMovement: FlagMovement = {
+                    game_time_as_seconds: event.gameTimeAsSeconds!,
+                    player: player ? player.name : "<Team>",
+                    current_score: runningScore[team],
+                    how_dropped: howFlagWasDropped,
+                    // TODO: add _who/what_ they were fragged by.
+                }
+                flagMovements[team].push(flagMovement);
+
+                if (isScoreEvent && needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
+                    scores[team] = runningScore[team];
+                }
+            });
+        }
+
+        return [scores, flagMovements];
     }
 }

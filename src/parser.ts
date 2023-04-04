@@ -141,7 +141,7 @@ export class RoundParser {
 
 
         this.teamComp = ParserUtils.getPlayerTeams(this.events, roundState.players);
-        const [scores, flagMovements] = ParserUtils.getScoreAndFlagMovements(this.events);
+        const [scores, flagMovements] = roundState.scoreAndFlagMovements;
         for (const team in this.teamComp) {
             const teamPlayers = this.teamComp[team];
             const score = scores[team];
@@ -149,7 +149,7 @@ export class RoundParser {
         }
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
-        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, roundState.players, this.teamComp, this.filename);
+        this.summarizedStats = ParserUtils.generateOutputStats(roundState, this.events, playerStats, roundState.players, this.teamComp, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
     }
 }

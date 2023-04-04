@@ -1,6 +1,7 @@
 import PlayerList from "./playerList.js";
 import { Event, RoundParser } from "./parser.js";
 import Player from "./player.js";
+import { RoundState } from "./roundState.js";
 import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
 import EventType from "./eventType.js";
 
@@ -184,112 +185,6 @@ export default class ParserUtils {
     public static num<T>(arr: undefined | Array<T>): number {
         if (arr == null) return 0;
         return arr.length;
-    }
-
-    public static getScoreAndFlagMovements(events: Event[], teams?: TeamComposition): [TeamScore, TeamFlagMovements] {
-        const teamScoreEvents = events.filter(ev => ev.eventType === EventType.TeamScore);
-        let scores: TeamScore = {};
-        let flagMovements: TeamFlagMovements = {};
-
-        let needToComputeTeamScore = true;
-        teamScoreEvents.forEach(event => {
-            const team = event.data && event.data.team;
-            const score = event.data && event.data.value;
-            if (!team) throw "expected team with a teamScore event";
-            if (!score) throw "expected value with a teamScore event";
-            scores[team] = Number(score);
-            needToComputeTeamScore = false;
-        });
-
-        if (teams) {
-            const flagCapEvents = events.filter(
-                ev => ev.eventType === EventType.PlayerCapturedFlag
-                || ev.eventType === EventType.PlayerCapturedBonusFlag
-                || ev.eventType === EventType.TeamFlagHoldBonus);
-            let pointsPerCap = 10;
-            let pointsPerBonusCap = pointsPerCap;
-            const pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
-            if (!needToComputeTeamScore) {
-                const firstTeamFlagCapEvents = events.filter(ev => {
-                    return ev.eventType === EventType.PlayerCapturedFlag
-                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
-                });
-                const firstTeamBonusFlagCapEvents = events.filter(ev => {
-                    return ev.eventType === EventType.PlayerCapturedBonusFlag
-                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
-                });
-                const firstTeamFlagHoldBonusEvents = flagCapEvents.filter(ev => ev.eventType === EventType.TeamFlagHoldBonus && ev.data!.team == TeamColor.Blue);
-                const pointsFromFlagHoldBonuses = firstTeamFlagHoldBonusEvents.length * pointsPerTeamFlagHoldBonus;
-
-                if (scores[1] && firstTeamBonusFlagCapEvents.length > 0) {
-                    // This is a map with bonus caps, e.g. raiden6's coast-to-coast mechanic.
-                    // To estimate the values for a normal cap and a bonus cap, assume a normal cap value of 10.
-                    pointsPerCap = 10;
-                    const estimatedBonusPointsTotal = scores[1] - (pointsPerCap * (firstTeamFlagCapEvents.length + firstTeamBonusFlagCapEvents.length));
-                    pointsPerBonusCap = pointsPerCap + (estimatedBonusPointsTotal / firstTeamBonusFlagCapEvents.length);
-                    console.log(`Estimate points for a bonus cap is ${pointsPerBonusCap}`);
-                }
-                else {
-                    pointsPerCap = scores[1] ?
-                        (firstTeamFlagCapEvents.length > 0 ?
-                            ((scores[1] - pointsFromFlagHoldBonuses) / firstTeamFlagCapEvents.length) : pointsPerCap)
-                        : pointsPerCap;
-                }
-                if (pointsPerCap != 10) {
-                    console.warn(`Points per cap is ${pointsPerCap}`);
-                }
-            }
-
-            if (needToComputeTeamScore) { // maybe the server crashed before finishing the log?
-                console.warn("Can't find ending score, manually counting caps...");
-            }
-            let runningScore: TeamScore = {};
-            flagCapEvents.forEach(event => {
-                const player = event.playerFrom;
-
-                let team : number;
-                if (event.eventType == EventType.TeamFlagHoldBonus) {
-                    team = event.data!.team!;
-                }
-                else {
-                    team = ParserUtils.getTeamForPlayer(player!, teams);
-                }
-
-                if (!flagMovements[team]) {
-                    const teamFlagStats: FlagMovement[] = [];
-                    flagMovements[team] = teamFlagStats;
-                    runningScore[team] = 0;
-                }
-                if (!runningScore[team]) {
-                    runningScore[team] = 0;
-                }
-                switch (event.eventType) {
-                    case EventType.TeamFlagHoldBonus:
-                        runningScore[team] += pointsPerTeamFlagHoldBonus;
-                        break;
-                    case EventType.PlayerCapturedBonusFlag:
-                        runningScore[team] += pointsPerBonusCap;
-                        break;
-                    default:
-                        runningScore[team] += pointsPerCap;
-                        break;
-                }
-                const flagMovement: FlagMovement = {
-                    game_time_as_seconds: event.gameTimeAsSeconds!,
-                    player: player ? player.name : "<Team>",
-                    current_score: runningScore[team],
-                    how_dropped: FlagDrop.Captured,
-
-                }
-                flagMovements[team].push(flagMovement);
-
-                if (needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
-                    scores[team] = runningScore[team];
-                }
-            });
-        }
-
-        return [scores, flagMovements];
     }
 
     public static getPlayerStats(events: Event[], teams: TeamComposition): PlayersStats {
@@ -592,7 +487,7 @@ export default class ParserUtils {
         return foundPlayer;
     }
 
-    public static generateOutputStats(events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition, logfile: string): OutputStats {
+    public static generateOutputStats(roundState: RoundState, events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition, logfile: string): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
         const map = mapEvent && mapEvent.value || "(map not found)";
@@ -628,7 +523,7 @@ export default class ParserUtils {
             .format(matchEndEvent.timestamp.valueOf() - matchStartEvent.timestamp.valueOf());
 
         const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEndEvent.timestamp);
-        const [score, flagMovements] = this.getScoreAndFlagMovements(events, teamComp);
+        const [score, flagMovements] = roundState.scoreAndFlagMovements;
 
         let damageStatsExist = false;
         for (const teamId in teams) {
@@ -774,7 +669,11 @@ export default class ParserUtils {
                 }
 
                 // Flag statistics (requires holistic view of flag movement).
-                const [flag_time_in_seconds, toss_percent, touches_initial] = this.calculatePlayerFlagStats(thisPlayer, playerStats, teams, stats.flag, matchEnd);
+                const [flag_time_in_seconds, toss_percent, touches_initial] =  [
+                        thisPlayer.roundStats.flagCarryTimeInSeconds,
+                        thisPlayer.roundStats.flagThrows / thisPlayer.roundStats.flagCarries,
+                        thisPlayer.roundStats.flagInitialTouches];
+
                 this.ensureStat(poStats, 'objectives', 'flag_time_in_seconds').value = flag_time_in_seconds;
                 this.ensureStat(poStats, 'objectives', 'toss_percent').value = toss_percent;
                 this.ensureStat(poStats, 'objectives', 'touches_initial').value = touches_initial;
@@ -1140,123 +1039,6 @@ export default class ParserUtils {
         };
 
         return [offenseDiff, defenseDiff];
-    }
-
-    private static calculatePlayerFlagStats(thisPlayer: Player, playerEvents: Stats, teams: TeamComposition, flagEvents: Stats, matchEnd: Date): [number, number, number] {
-        // Capture and pickup events are passed in via flagEvents;
-        // also use 'team_death'/'death', and 'flag_thrown' events to calculate flag time.
-        const deaths = playerEvents['death'];
-        const team_deaths = playerEvents['team_death'];
-        const self_deaths = playerEvents['suicide'];
-        const flag_bonus_pickup = playerEvents['flag_bonus_pickup']; // e.g. raiden6 coast-to-coast
-        const flag_thrown = playerEvents['flag_throw'];
-
-        // combine and sort entries to calculate flag time
-        let flagCarries = 0;
-        let initialTouches = 0;
-        let flagThrows = 0;
-        let flagTimeMS = 0;
-
-        let flagSequence = new Array<Event>().concat(
-            deaths, team_deaths, self_deaths, flag_bonus_pickup, flag_thrown,
-            flagEvents['flag_capture'], flagEvents['flag_return'], flagEvents['flag_pickup']);
-        flagSequence.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-
-        const thisPlayerTeam = ParserUtils.getTeamForPlayer(thisPlayer, teams);
-        // accumulator is [boolean, Event], where
-        // * boolean is flag state: null = relay, false = dropped, true = carried
-        // * Event is the event from the flag pickup; unset if not carried by this player
-        let bonusActive = false;
-        let lastFlagSequence = flagSequence.reduce<[boolean | null, Event | undefined]>((flagStatus, thisEvent) => {
-            // ignore undefined events (occurs whenever an event category has no items)
-            if (thisEvent == null)
-                return flagStatus;
-
-            const eventType = thisEvent.eventType;
-
-            if (eventType === EventType.FlagReturn) {
-                // TODO: if there are more than two color teams, any flag return will be treated identically;
-                // more state would need to be tracked about the state of each individual flag to handle it.
-                if (!thisEvent.data || (thisEvent.data.team != thisPlayerTeam)) {
-                    // if the flag returned, set state to null
-                    bonusActive = false;
-                    return [null, undefined];
-                }
-                else {
-                    // this player's team flag returned (not the one they're trying to capture); ignore it
-                    return flagStatus;
-                }
-            }
-
-            if (thisEvent.eventType != EventType.PlayerFraggedPlayer && thisEvent.eventType != EventType.PlayerCommitSuicide
-                && !this.playersOnSameTeam(teams, thisPlayer, thisEvent.playerFrom!)) {
-                // this is a flag event associated with the other team; ignore it
-                return flagStatus;
-            }
-
-            // the flag was captured; record the time if it was this player and set state to null
-            if (eventType === EventType.PlayerCapturedFlag) {
-                if (thisEvent.playerFrom?.matches(thisPlayer)) {
-                    if (!flagStatus[1]!.playerFrom!.matches(thisPlayer)) {
-                        console.error("Flag cap seen by a player (" + thisPlayer.name +") which wasn't carrying the flag"
-                            + " (was carried by " + flagStatus[1]!.playerFrom!.name + ")");
-                    }
-                    flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.timestamp.valueOf();
-
-                    if (bonusActive) {
-                        thisEvent.eventType = EventType.PlayerCapturedBonusFlag;
-                    }
-                }
-                bonusActive = false;
-                return [null, undefined];
-            }
-            if (eventType === EventType.PlayerPickedUpFlag) {
-                // did this player pick up the flag?
-                if (thisEvent.playerFrom?.matches(thisPlayer)) {
-                    flagCarries++;
-                    // is this an initial touch?
-                    if (flagStatus[0] === null) initialTouches++;
-
-                    // record the time the flag was picked up, then continue
-                    bonusActive = false;
-                    return [true, thisEvent];
-                }
-                // otherwise, mark flag as moved
-                bonusActive = false;
-                return [false, undefined];
-            }
-            if (eventType === EventType.PlayerPickedUpBonusFlag) {
-                if (!flagStatus[1]!.playerFrom!.matches(thisPlayer)) {
-                    console.error("Bonus flag pickup seen by a player (" + thisPlayer.name +") which wasn't carrying the flag"
-                        + " (was carried by " + flagStatus[1]!.playerFrom!.name + ")");
-                }
-                bonusActive = true;
-                return flagStatus;
-            }
-
-            // if the flag isn't currently being carried, skip
-            if (!flagStatus[0] || flagStatus[1] === undefined)
-                return flagStatus;
-
-            // otherwise, the flag was dropped; reset flagStatus
-            flagTimeMS += thisEvent.timestamp.valueOf() - flagStatus[1]!.timestamp.valueOf();
-
-            if (eventType === EventType.PlayerThrewFlag)
-                flagThrows++;
-
-            bonusActive = false;
-            return [false, undefined];
-        }, [null, undefined]);
-
-        if (lastFlagSequence[0]) {
-            // The flag was being held when the game ended.
-            flagTimeMS += (matchEnd.valueOf() - lastFlagSequence[1]!.timestamp.valueOf());
-        }
-
-        const flagTimeInSeconds = flagTimeMS / 1000;
-        const tossPercent = flagCarries > 0 ? Math.round(flagThrows / flagCarries * 100) : 0;
-
-        return [flagTimeInSeconds, tossPercent, initialTouches];
     }
 
     private static calculateAndApplyPlayerClassOnAllEvents(player: Player, playerEvents: Stats, matchEnd: Date) {

@@ -40,10 +40,16 @@ export class RoundState {
     get currentTeams() {
         return this.playerTeamTracker.currentTeams;
     }
+    get teams() {
+        return this.playerTeamTracker.teams;
+    }
     get players() {
         return this.playerTeamTracker.players;
     }
     get classes() {
         return this.classTracker.classes;
+    }
+    get scoreAndFlagMovements() {
+        return this.flagMovementTracker.getScoreAndFlagMovements(this);
     }
 }
