@@ -49,7 +49,10 @@ export class RoundState {
     get classes() {
         return this.classTracker.classes;
     }
-    get scoreAndFlagMovements() {
-        return this.flagMovementTracker.getScoreAndFlagMovements(this);
+    get score() {
+        return this.flagMovementTracker.score;
+    }
+    get teamFlagMovements() {
+        return this.flagMovementTracker.teamFlagMovements;
     }
 }

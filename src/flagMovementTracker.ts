@@ -30,6 +30,16 @@ export class FlagMovementTracker extends EventSubscriber {
     private sawTeamScoresEvent: boolean = false;
     private flagRoundStatsByTeam: Record<TeamColor, TeamFlagRoundStats>;
 
+    private _score: TeamScore = {};
+    get score() {
+        return this._score;
+    }
+
+    private _teamFlagMovements: TeamFlagMovements = {};
+    get teamFlagMovements() {
+        return this._teamFlagMovements;
+    }
+
     private pointsPerCap = 10;
     private pointsPerBonusCap = this.pointsPerCap;
     private readonly pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
@@ -56,6 +66,7 @@ export class FlagMovementTracker extends EventSubscriber {
         };
     }
 
+
     phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {
         switch (phase) {
             case EventHandlingPhase.Main:
@@ -76,7 +87,7 @@ export class FlagMovementTracker extends EventSubscriber {
                     }
                     this.currentFlagStatusByTeam[team] = new FlagStatus();
                 }
-                this.computePointsPerCap();
+                this.computeScoreAndFlagMovements();
                 break;
             default:
                 throw "Unexpected phase";
@@ -205,7 +216,6 @@ export class FlagMovementTracker extends EventSubscriber {
         return HandlerRequest.None;
     }
 
-
     private computePointsPerCap() {
         if (this.sawTeamScoresEvent) {
             const blueTeamFlagRoundStats = this.flagRoundStatsByTeam[TeamColor.Blue];
@@ -233,7 +243,9 @@ export class FlagMovementTracker extends EventSubscriber {
         }
     }
 
-    public getScoreAndFlagMovements(roundState: RoundState): [TeamScore, TeamFlagMovements] {
+    private computeScoreAndFlagMovements() {
+        this.computePointsPerCap();
+    
         let scores: TeamScore = {};
         let flagMovements: TeamFlagMovements = {};
         const needToComputeTeamScore = !this.sawTeamScoresEvent;
@@ -294,13 +306,13 @@ export class FlagMovementTracker extends EventSubscriber {
                     // TODO: add _who/what_ they were fragged by.
                 }
                 flagMovements[team].push(flagMovement);
-
-                if (howFlagWasDropped === FlagDrop.Captured && needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
-                    scores[team] = runningScore[team];
-                }
             });
-        }
 
-        return [scores, flagMovements];
+            if (needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
+                scores[team] = runningScore[team];
+            }
+        }
+        this._score = scores;
+        this._teamFlagMovements = flagMovements;
     }
 }

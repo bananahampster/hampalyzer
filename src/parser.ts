@@ -139,11 +139,11 @@ export class RoundParser {
 
 
         this.teamComp = ParserUtils.getPlayerTeams(this.events, roundState.players);
-        const [scores, flagMovements] = roundState.scoreAndFlagMovements;
+        const score = roundState.score;
         for (const team in this.teamComp) {
             const teamPlayers = this.teamComp[team];
-            const score = scores[team];
-            console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
+            const teamScore = score[team];
+            console.log(`Team ${team} (score ${teamScore}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
         }
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);

@@ -523,7 +523,6 @@ export default class ParserUtils {
             .format(matchEndEvent.timestamp.valueOf() - matchStartEvent.timestamp.valueOf());
 
         const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEndEvent.timestamp);
-        const [score, flagMovements] = roundState.scoreAndFlagMovements;
 
         let damageStatsExist = false;
         for (const teamId in teams) {
@@ -545,9 +544,9 @@ export default class ParserUtils {
             game_time: gameTime,
             server,
             teams,
-            score,
+            score: roundState.score,
             scoring_activity: {
-                flag_movements: flagMovements,
+                flag_movements: roundState.teamFlagMovements,
                 game_time_as_seconds: matchEndEvent.gameTimeAsSeconds ? matchEndEvent.gameTimeAsSeconds : 0
             },
             damage_stats_exist: damageStatsExist
