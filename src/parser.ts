@@ -186,6 +186,8 @@ export class Event {
     public playerToTeam?: TeamColor;
     public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
+    public playerFromWasCarryingFlag: boolean;
+    public playerToWasCarryingFlag: boolean;
 
     constructor(options: EventCreationOptions) {
         // required fields
@@ -207,6 +209,8 @@ export class Event {
         // these items are filled in later
         this.gameTimeAsSeconds = -1;
         this.whileConced = false;
+        this.playerFromWasCarryingFlag = false;
+        this.playerToWasCarryingFlag = false;
     }
 
     // Breaks apart a line on spaces while preserving quoted substrings.

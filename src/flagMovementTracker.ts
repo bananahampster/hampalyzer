@@ -97,6 +97,12 @@ export class FlagMovementTracker extends EventSubscriber {
     handleEvent(event: Event, phase: EventHandlingPhase, roundState: RoundState): HandlerRequest {
         switch (phase) {
             case EventHandlingPhase.Main:
+                if (event.playerFrom && event.playerFrom.currentStatus.carryingFlag) {
+                    event.playerFromWasCarryingFlag = true;
+                }
+                if (event.playerTo && event.playerTo.currentStatus.carryingFlag) {
+                    event.playerToWasCarryingFlag = true;
+                }
                 switch (event.eventType) {
                     case EventType.TeamFlagHoldBonus:
                         this.flagRoundStatsByTeam[event.data!.team!].teamFlagHoldBonuses++;
@@ -123,6 +129,7 @@ export class FlagMovementTracker extends EventSubscriber {
                             let flagStatusToUpdate = this.currentFlagStatusByTeam[event.data!.team!]!;
                             let player = event.playerFrom!;
                             flagStatusToUpdate.carrier = player;
+                            player.currentStatus.carryingFlag = true;
                             player.roundStats.flagCarries++;
                             if (!flagStatusToUpdate.hasBeenTouched) {
                                 flagStatusToUpdate.hasBeenTouched = true;
@@ -143,6 +150,7 @@ export class FlagMovementTracker extends EventSubscriber {
                             }
                             else {
                                 flagStatusToUpdate.bonusActive = true;
+                                event.playerFrom!.currentStatus.carryingFlagBonus = true;
                             }
                         }
                         break;
@@ -162,6 +170,8 @@ export class FlagMovementTracker extends EventSubscriber {
                     case EventType.PlayerLeftServer:
                         {
                             let flagDropper = event.eventType === EventType.PlayerThrewFlag ? event.playerFrom! : event.playerTo!;
+                            flagDropper.currentStatus.carryingFlag = false;
+                            flagDropper.currentStatus.carryingFlagBonus = false;
                             if (event.eventType === EventType.PlayerThrewFlag) {
                                 flagDropper.roundStats.flagThrows++;
                             }
@@ -174,34 +184,39 @@ export class FlagMovementTracker extends EventSubscriber {
 
                                     this.currentFlagStatusByTeam[team].carrier = null;
                                     this.currentFlagStatusByTeam[team].bonusActive = false;
-                                    // TODO: add flag carrier kill tracking
                                 }
                             }
                         }
                         break;
                     case EventType.PlayerCapturedFlag:
                         let foundCarrierInFlagStatuses = false;
+                        let cappingPlayer = event.playerFrom!;
+
+                        cappingPlayer.currentStatus.carryingFlag = false;
+                        cappingPlayer.currentStatus.carryingFlagBonus = false;
+
                         for (let team in this.currentFlagStatusByTeam) {
                             let currentFlagStatus = this.currentFlagStatusByTeam[team];
-                            if (event.playerFrom?.isSamePlayer(currentFlagStatus.carrier)) {
+                            if (event.playerFrom!.isSamePlayer(currentFlagStatus.carrier)) {
                                 if (currentFlagStatus.bonusActive === true) {
                                     event.eventType = EventType.PlayerCapturedBonusFlag;
                                 }
-                                this.flagRoundStatsByTeam[event.playerFrom!.team].numberOfCaps++;
-                                this.flagRoundStatsByTeam[event.playerFrom!.team].flagEvents.push(event);
+                                this.flagRoundStatsByTeam[cappingPlayer.team].numberOfCaps++;
+                                this.flagRoundStatsByTeam[cappingPlayer.team].flagEvents.push(event);
 
-                                let flagTime = event.gameTimeAsSeconds! - currentFlagStatus.timeFlagWasPickedUpInGameSeconds;
+                                cappingPlayer.roundStats.flagCarryTimeInSeconds += event.gameTimeAsSeconds! - currentFlagStatus.timeFlagWasPickedUpInGameSeconds;
 
                                 this.currentFlagStatusByTeam[team] = new FlagStatus();
 
-                                // TODO: add flag carrier kill tracking
-
+                                if (foundCarrierInFlagStatuses) {
+                                    console.error(`Flag cap for player (${cappingPlayer.name}) was while carrying the flag of multiple teams`);
+                                }
                                 foundCarrierInFlagStatuses = true;
                                 break;
                             }
                         }
                         if (!foundCarrierInFlagStatuses) {
-                            console.error(`Flag cap seen by a player (${event.playerFrom!.name}) which wasn't carrying the flag (line ${event.lineNumber})`);
+                            console.error(`Flag cap seen by a player (${cappingPlayer.name}) which wasn't carrying the flag (line ${event.lineNumber})`);
                         }
                         break;
                     default:

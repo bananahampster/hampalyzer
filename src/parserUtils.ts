@@ -861,7 +861,7 @@ export default class ParserUtils {
                 switch (stat.title) {
                     case 'kill':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Killed ${e.playerTo?.name} at ${this.getTime(e)}`,
+                            (e) => `Killed ${e.playerToWasCarryingFlag ? "flag carrier " : ""}${e.playerTo?.name} at ${this.getTime(e)}`,
                             true);
                     case 'kill_while_conced':
                         return this.generateFacetedStats(stat.events!,
