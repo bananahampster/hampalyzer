@@ -247,9 +247,6 @@ export default class ParserUtils {
                     case EventType.PlayerChangeRole:
                         this.addStat(thisPlayerStats, 'role', event);
                         break;
-                    case EventType.PlayerCommitSuicide:
-                        this.addStat(thisPlayerStats, 'suicide', event);
-                        break;
                     case EventType.PlayerConced:
                         // This shouldn't be possible.
                         throw "Concussion grenade event didn't contain a second player";
@@ -297,7 +294,6 @@ export default class ParserUtils {
                         break;
                     case EventType.PlayerSpawn:
                     case EventType.PlayerJoinServer:
-                    case EventType.PlayerJoinTeam:
                     case EventType.PlayerChangedName:
                     case EventType.PlayerLeftServer:
                         // no-op
@@ -430,6 +426,12 @@ export default class ParserUtils {
                             this.addStat(thisPlayerStats, 'damager', event);
                             this.addStat(otherPlayerStats, 'damagee', event);
                         }
+                        break;
+                    case EventType.PlayerCommitSuicide:
+                        this.addStat(thisPlayerStats, 'suicide', event);
+                        break;
+                    case EventType.PlayerJoinTeam:
+                        // no-op
                         break;
                     default:
                         console.warn(`didn't count event id ${EventType[event.eventType]} for ${thisPlayer.name} against ${otherPlayer.name}`);
