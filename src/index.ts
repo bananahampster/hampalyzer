@@ -34,13 +34,14 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
     const appClass = new App(webserverRoot, outputRoot);
     const app = appClass.express;
 
-    app.listen(port, async err => {
-        if (err) return console.log(err);
+    app.listen(port, () => {
 
         if (reparse)
-            await appClass.reparseAllLogs();
+            appClass.reparseAllLogs();
 
         return console.log(`server is listening on ${port}.`);
+    }).on("error", (err) => {
+        return console.log(err);
     });
 }
 else {
