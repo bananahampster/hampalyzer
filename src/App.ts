@@ -7,6 +7,7 @@ import pg from 'pg';
 import { readFileSync } from 'fs';
 import path from 'path';
 
+import { FileCompression } from './fileCompression.js';
 import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { ParsedStats, Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
@@ -170,7 +171,8 @@ class App {
         return result && result.rows.length !== 0;
     }
 
-    private parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
+    private async parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
+        filenames = await FileCompression.ensureFilesCompressed(filenames, /*deleteOriginals=*/true);
         const parser = new Parser(...filenames)
 
         return parser.parseRounds()
