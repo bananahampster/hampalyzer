@@ -28,7 +28,7 @@
     "express": "^4.16.4",
     "handlebars": "^4.7.7",
     "jsdom": "^18.0.1",
-    "multer": "^1.4.3",
+    "multer": "^1.4.5-lts.1",
     "pg": "^8.5.1"
   },
   "devDependencies": {

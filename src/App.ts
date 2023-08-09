@@ -75,13 +75,13 @@ class App {
         });
 
         router.post('/parseGame', cors(), upload.array('logs[]', 2), async (req, res) => {
-            if (req?.files['logs']?.length < 2) {
+            if (req?.files!['logs']?.length < 2) {
                 console.error("expected two files");
             }
 
             let parsedResult = await this.parseLogs([
-                req.files[0].path,
-                req.files[1].path]);
+                req.files![0].path,
+                req.files![1].path]);
 
             if (parsedResult == null) {
                 res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
@@ -101,7 +101,7 @@ class App {
         router.post('/parseLog', cors(), upload.single('logs[]'), async (req, res) => {
             // res.status(500).json({ error: "Single log parsing is still a work in progress; try uploading two rounds of a game instead." });
 
-            let parsedResult = await this.parseLogs([req.file.path]);
+            let parsedResult = await this.parseLogs([req.file!.path]);
 
             if (parsedResult == null) {
                 res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
