@@ -23,7 +23,11 @@ export class FileCompression {
             await fs.promises.access(filePathWithBrotliExtension, fs.constants.R_OK);
             
             if (shouldCompress && deleteUncompressedFile) {
-                await fs.promises.unlink(filePath);
+                // Double check the file round trips correctly before proceeding with removing the original.
+                if (await this.verifyContentsIdentical(filePath, filePathWithBrotliExtension)) {
+                    console.log(`File was compressed; deleting original file (${filePath}))`)
+                    await fs.promises.unlink(filePath);
+                }
             }
             return filePathWithBrotliExtension;
         }
@@ -96,5 +100,21 @@ export class FileCompression {
             await streamPromises.finished(onDiskFileStream);
         }
         return output;
+    }
+
+    public static async verifyContentsIdentical(uncompressedFilePath: string, compressedFilePath: string) : Promise<boolean> {
+        const uncompressedFileContents = await this.getDecompressedContents(uncompressedFilePath);
+        if (uncompressedFileContents.length < 100) {
+            // Extra paranoia: confirm the uncompressed file is reasonably large before proceeding.
+            console.error(`verifyContentsIdentical: uncompressed file (${uncompressedFilePath}) smaller than expected (length=${uncompressedFileContents.length})`;
+            return false;
+        }
+        const compressedFileContents = await this.getDecompressedContents(compressedFilePath);
+
+        if (uncompressedFileContents != compressedFileContents) {
+            console.error(`verifyContentsIdentical: uncompressed file (${uncompressedFilePath}, length=${uncompressedFileContents.length}) contents different than compressed file (${compressedFileContents}, length=${uncompressedFileContents.length})`);
+            return false;
+        }
+        return true;
     }
 }
