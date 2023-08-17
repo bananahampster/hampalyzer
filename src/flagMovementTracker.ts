@@ -141,6 +141,7 @@ export class FlagMovementTracker extends EventSubscriber {
                             }
                             flagStatusToUpdate.bonusActive = false;
                             flagStatusToUpdate.timeFlagWasPickedUpInGameSeconds = event.gameTimeAsSeconds!;
+                            flagStatusToUpdate.timeFlagWasDroppedInGameSeconds = null;
                         }
                         break;
                     case EventType.PlayerPickedUpBonusFlag:
@@ -226,7 +227,7 @@ export class FlagMovementTracker extends EventSubscriber {
                         break;
                     default:
                         for (let team in this.currentFlagStatusByTeam) {
-                            if (this.currentFlagStatusByTeam[team].timeFlagWasDroppedInGameSeconds !== null) {
+                            if (this.currentFlagStatusByTeam[team].carrier == null && this.currentFlagStatusByTeam[team].timeFlagWasDroppedInGameSeconds !== null) {
                                 if ((event.gameTimeAsSeconds! - this.currentFlagStatusByTeam[team].timeFlagWasDroppedInGameSeconds) > this.defaultFlagReturnIntervalInSeconds) {
                                     // Assume flag returned.
                                     this.currentFlagStatusByTeam[team] = new FlagStatus();
