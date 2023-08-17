@@ -18,11 +18,15 @@ class TeamFlagRoundStats {
 class FlagStatus {
     public carrier: Player | null = null;
     public timeFlagWasPickedUpInGameSeconds: number | null = null;
+    public timeFlagWasDroppedInGameSeconds: number | null = null;
     public bonusActive: boolean = false;
     public hasBeenTouched: boolean = false;
 }
 
 export class FlagMovementTracker extends EventSubscriber {
+    // TODO: specify map-specific intervals for maps with lower return times.
+    private readonly defaultFlagReturnIntervalInSeconds: number = 65;
+
     // Tracks the player current carrying the flag of a given TeamColor.
     // For example, a blue player carrying the red flag would be tracked via
     // TeamColor.Red.
@@ -184,6 +188,7 @@ export class FlagMovementTracker extends EventSubscriber {
 
                                     this.currentFlagStatusByTeam[team].carrier = null;
                                     this.currentFlagStatusByTeam[team].bonusActive = false;
+                                    this.currentFlagStatusByTeam[team].timeFlagWasDroppedInGameSeconds = event.gameTimeAsSeconds;
                                 }
                             }
                         }
@@ -220,6 +225,14 @@ export class FlagMovementTracker extends EventSubscriber {
                         }
                         break;
                     default:
+                        for (let team in this.currentFlagStatusByTeam) {
+                            if (this.currentFlagStatusByTeam[team].timeFlagWasDroppedInGameSeconds !== null) {
+                                if ((event.gameTimeAsSeconds! - this.currentFlagStatusByTeam[team].timeFlagWasDroppedInGameSeconds) > this.defaultFlagReturnIntervalInSeconds) {
+                                    // Assume flag returned.
+                                    this.currentFlagStatusByTeam[team] = new FlagStatus();
+                                }
+                            }
+                        }
                         break;
                 }
                 break;
