@@ -21,7 +21,7 @@ export class FileCompression {
         // Check that we can actually access the brotli file before returning that path and/or deleting the original log.
         try {
             await fs.promises.access(filePathWithBrotliExtension, fs.constants.R_OK);
-            
+
             if (shouldCompress && deleteUncompressedFile) {
                 // Double check the file round trips correctly before proceeding with removing the original.
                 if (await this.verifyContentsIdentical(filePath, filePathWithBrotliExtension)) {
@@ -106,7 +106,7 @@ export class FileCompression {
         const uncompressedFileContents = await this.getDecompressedContents(uncompressedFilePath);
         if (uncompressedFileContents.length < 100) {
             // Extra paranoia: confirm the uncompressed file is reasonably large before proceeding.
-            console.error(`verifyContentsIdentical: uncompressed file (${uncompressedFilePath}) smaller than expected (length=${uncompressedFileContents.length})`;
+            console.error(`verifyContentsIdentical: uncompressed file (${uncompressedFilePath}) smaller than expected (length=${uncompressedFileContents.length})`);
             return false;
         }
         const compressedFileContents = await this.getDecompressedContents(compressedFilePath);
