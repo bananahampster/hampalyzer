@@ -187,6 +187,112 @@ export default class ParserUtils {
         return arr.length;
     }
 
+    public static getScoreAndFlagMovements(events: Event[], teams?: TeamComposition): [TeamScore, TeamFlagMovements] {
+        const teamScoreEvents = events.filter(ev => ev.eventType === EventType.TeamScore);
+        let scores: TeamScore = {};
+        let flagMovements: TeamFlagMovements = {};
+
+        let needToComputeTeamScore = true;
+        teamScoreEvents.forEach(event => {
+            const team = event.data && event.data.team;
+            const score = event.data && event.data.value;
+            if (!team) throw "expected team with a teamScore event";
+            if (!score) throw "expected value with a teamScore event";
+            scores[team] = Number(score);
+            needToComputeTeamScore = false;
+        });
+
+        if (teams) {
+            const flagCapEvents = events.filter(
+                ev => ev.eventType === EventType.PlayerCapturedFlag
+                || ev.eventType === EventType.PlayerCapturedBonusFlag
+                || ev.eventType === EventType.TeamFlagHoldBonus);
+            let pointsPerCap = 10;
+            let pointsPerBonusCap = pointsPerCap;
+            const pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
+            if (!needToComputeTeamScore) {
+                const firstTeamFlagCapEvents = events.filter(ev => {
+                    return ev.eventType === EventType.PlayerCapturedFlag
+                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
+                });
+                const firstTeamBonusFlagCapEvents = events.filter(ev => {
+                    return ev.eventType === EventType.PlayerCapturedBonusFlag
+                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
+                });
+                const firstTeamFlagHoldBonusEvents = flagCapEvents.filter(ev => ev.eventType === EventType.TeamFlagHoldBonus && ev.data!.team == TeamColor.Blue);
+                const pointsFromFlagHoldBonuses = firstTeamFlagHoldBonusEvents.length * pointsPerTeamFlagHoldBonus;
+
+                if (scores[1] && firstTeamBonusFlagCapEvents.length > 0) {
+                    // This is a map with bonus caps, e.g. raiden6's coast-to-coast mechanic.
+                    // To estimate the values for a normal cap and a bonus cap, assume a normal cap value of 10.
+                    pointsPerCap = 10;
+                    const estimatedBonusPointsTotal = scores[1] - (pointsPerCap * (firstTeamFlagCapEvents.length + firstTeamBonusFlagCapEvents.length));
+                    pointsPerBonusCap = pointsPerCap + (estimatedBonusPointsTotal / firstTeamBonusFlagCapEvents.length);
+                    console.log(`Estimate points for a bonus cap is ${pointsPerBonusCap}`);
+                }
+                else {
+                    pointsPerCap = scores[1] ?
+                        (firstTeamFlagCapEvents.length > 0 ?
+                            ((scores[1] - pointsFromFlagHoldBonuses) / firstTeamFlagCapEvents.length) : pointsPerCap)
+                        : pointsPerCap;
+                }
+                if (pointsPerCap != 10) {
+                    console.warn(`Points per cap is ${pointsPerCap}`);
+                }
+            }
+
+            if (needToComputeTeamScore) { // maybe the server crashed before finishing the log?
+                console.warn("Can't find ending score, manually counting caps...");
+            }
+            let runningScore: TeamScore = {};
+            flagCapEvents.forEach(event => {
+                const player = event.playerFrom;
+
+                let team : number;
+                if (event.eventType == EventType.TeamFlagHoldBonus) {
+                    team = event.data!.team!;
+                }
+                else {
+                    team = ParserUtils.getTeamForPlayer(player!, teams);
+                }
+
+                if (!flagMovements[team]) {
+                    const teamFlagStats: FlagMovement[] = [];
+                    flagMovements[team] = teamFlagStats;
+                    runningScore[team] = 0;
+                }
+                if (!runningScore[team]) {
+                    runningScore[team] = 0;
+                }
+                switch (event.eventType) {
+                    case EventType.TeamFlagHoldBonus:
+                        runningScore[team] += pointsPerTeamFlagHoldBonus;
+                        break;
+                    case EventType.PlayerCapturedBonusFlag:
+                        runningScore[team] += pointsPerBonusCap;
+                        break;
+                    default:
+                        runningScore[team] += pointsPerCap;
+                        break;
+                }
+                const flagMovement: FlagMovement = {
+                    game_time_as_seconds: event.gameTimeAsSeconds!,
+                    player: player ? player.name : "<Team>",
+                    current_score: runningScore[team],
+                    how_dropped: FlagDrop.Captured,
+
+                }
+                flagMovements[team].push(flagMovement);
+
+                if (needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
+                    scores[team] = runningScore[team];
+                }
+            });
+        }
+
+        return [scores, flagMovements];
+    }
+
     public static getPlayerStats(events: Event[], teams: TeamComposition): PlayersStats {
         // sort the events
         let playerStats: PlayersStats = { flag: {} };
@@ -578,7 +684,7 @@ export default class ParserUtils {
 
         // iterate through the players identified as playing on the teams of interest (for now, Blue and Red)
         [1, 2].forEach(team => {
-            const teamPlayerIDs = (teams[String(team)] as Player[]).map(player => player.steamID);
+            const teamPlayerIDs = (teams[String(team)] as Player[])?.map(player => player.steamID) || [];
             const teamPlayers: PlayerOutputStatsRound[] = [];
 
             for (const playerID of teamPlayerIDs) {

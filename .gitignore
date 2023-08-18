@@ -6,6 +6,7 @@ parsedlogs/
 !parsedlogs/hamp2.css
 !parsedlogs/assets/
 uploads/
+uploads-inhouse/
 secrets.txt
 backup/
 *.heapsnapshot
