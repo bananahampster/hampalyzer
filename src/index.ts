@@ -1,5 +1,6 @@
 import { Parser } from './parser.js';
 import fileParser from './fileParser.js';
+import { FileCompression } from './fileCompression.js';
 import App from './App.js';
 
 import { existsSync } from 'fs';
@@ -49,9 +50,6 @@ else {
     if (programArgs.length != 0) {
         const maxLogs = Math.min(2, programArgs.length);
         for (let i = 0; i < maxLogs; i++) {
-            if (!existsSync(programArgs[i]))
-                throw `unable to find logs at ${programArgs[i]}`;
-
             logs.push(programArgs[i]);
         }
     }
@@ -78,6 +76,8 @@ else {
     // let parser = new Parser('logs/L1120011.log');
     // let parser = new Parser('logs/L1120006.log', 'logs/L1120008.log');
     // let parser = new Parser('logs/L0526012.log', 'logs/L0526013.log');
+    
+    logs = await FileCompression.ensureFilesCompressed(logs, /*deleteOriginals=*/true);
     let parser = new Parser(...logs);
     // let parser = new Parser('logs/L0405005.log');
     // let parser = new Parser('logs/TSq9rtLa.log');
