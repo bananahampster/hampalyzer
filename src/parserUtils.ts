@@ -252,7 +252,7 @@ export default class ParserUtils {
             let runningScore: TeamScore = {};
             flagCapEvents.forEach(event => {
                 const player = event.playerFrom;
-                
+
                 let team : number;
                 if (event.eventType == EventType.TeamFlagHoldBonus) {
                     team = event.data!.team!;
@@ -687,7 +687,7 @@ export default class ParserUtils {
 
         // iterate through the players identified as playing on the teams of interest (for now, Blue and Red)
         [1, 2].forEach(team => {
-            const teamPlayerIDs = (teams[String(team)] as Player[]).map(player => player.steamID);
+            const teamPlayerIDs = (teams[String(team)] as Player[])?.map(player => player.steamID) || [];
             const teamPlayers: PlayerOutputStatsRound[] = [];
 
             for (const playerID of teamPlayerIDs) {

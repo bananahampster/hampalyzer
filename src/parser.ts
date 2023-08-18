@@ -174,7 +174,7 @@ export class RoundParser {
             // also cull suicides/dmg due to prematch end
             const prematchEndIndex = this.events.findIndex(event => event.lineNumber === matchStartLineNumber);
             let i = prematchEndIndex + 1;
-            while (this.events[i].gameTimeAsSeconds === 0) {
+            while (i < this.events.length && this.events[i].gameTimeAsSeconds === 0) {
                 const currentEvent = this.events[i];
                 if (currentEvent.eventType === EventType.PlayerCommitSuicide ||
                     currentEvent.eventType === EventType.PlayerDamage) {

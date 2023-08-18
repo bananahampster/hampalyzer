@@ -111,7 +111,7 @@ export default async function(
 
         // assemble every players' stats
         [1, 2].forEach(teamId => {
-            const team = players[teamId] as OutputPlayer[];
+            const team = players[teamId] || [] as OutputPlayer[];
             for (const player of team) {
                 let playerStats: PlayerOutputStatsRound[] = [];
                 for (let i = 0, len = allStats.stats.length; i < len; i++) {
