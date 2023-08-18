@@ -4,6 +4,7 @@ import Player from './player.js';
 import PlayerList from './playerList.js';
 import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
 import ParserUtils, { TeamComposition } from './parserUtils.js';
+import { FileCompression } from './fileCompression.js';
 
 type RoundStats = (OutputStats | undefined)[];
 export interface ParsedStats {
@@ -53,7 +54,6 @@ export class Parser {
 
 export class RoundParser {
     private rawLogData: string = "";
-    private doneReading: boolean = false;
     private players: PlayerList = new PlayerList();
 
     private allEvents: string[] = [];
@@ -69,28 +69,8 @@ export class RoundParser {
     }
 
     public async parseFile(): Promise<void> {
-        return this.parseRound(this.filename)
-            .catch(() => console.error(`failed to parse file ${this.filename}.`));
-    }
-
-    private async parseRound(filename: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const logStream = fs.createReadStream(filename);
-            logStream.on('data', chunk => {
-                this.rawLogData += chunk;
-            }).on('end', () => {
-                this.doneReading = true;
-                this.parseData();
-                resolve();
-            }).on('error', (error) => {
-                console.error(error);
-                reject(error);
-            });
-        });
-    }
-
-    public get done(): boolean {
-        return this.doneReading;
+        this.rawLogData = await FileCompression.getDecompressedContents(this.filename);
+        return this.parseData();
     }
 
     public data(): string {
