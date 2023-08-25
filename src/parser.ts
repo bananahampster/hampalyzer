@@ -5,6 +5,7 @@ import PlayerList from './playerList.js';
 import { EventHandlingPhase, EventSubscriber, EventSubscriberManager } from './eventSubscriberManager.js';
 import { PlayerTeamTracker } from './playerTeamTracker.js';
 import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import { MapLocation } from './mapLocation.js';
 import { RoundState } from './roundState.js';
 import ParserUtils, { TeamComposition } from './parserUtils.js';
 import { FileCompression } from './fileCompression.js';
@@ -560,6 +561,60 @@ export class Event {
                                     case "dropitems": // custom event for Inhouse
                                         eventType = EventType.PlayerThrewFlag;
                                         break;
+                                    case "dropitems_death": // custom event for Inhouse
+                                    case "gainitem": // custom event for Inhouse
+                                        switch (nonPlayerDataParts[1]) {
+                                            case "dropitems_death":
+                                                eventType = EventType.PlayerDroppedFlagViaDeathWithLocation;
+                                                break;
+                                            case "gainitem":
+                                                eventType = EventType.PlayerGainedFlagWithLocation;
+                                                break;
+                                            default:
+                                                throw "Unhandled case";
+                                        }
+
+                                        // Example: player_from triggered "dropitems_death" with "Blue Flag" at 1 2 3
+                                        // Non-player indices:      0           1            2        3      4  5 6 7
+                                        switch (nonPlayerDataParts[3]) {
+                                            case "Blue Flag":
+                                                data.team = TeamColor.Blue;
+                                                break;
+                                            case "Red Flag":
+                                                data.team = TeamColor.Red;
+                                                break;
+                                            case "Yellow Flag":
+                                                data.team = TeamColor.Yellow;
+                                                break;
+                                            case "Green Flag":
+                                                data.team = TeamColor.Green;
+                                                break;
+                                            default:
+                                                throw `Unknown item for ${nonPlayerDataParts[1]}: ${nonPlayerDataParts[3]}`;
+                                        }
+                                        data.mapLocation = new MapLocation(nonPlayerDataParts[5], nonPlayerDataParts[6], nonPlayerDataParts[7]);
+                                        break;
+                                    case "gainitem": // custom event for Inhouse
+                                        eventType = EventType.PlayerDroppedFlagViaDeathWithLocation;
+
+                                        // Example: player_from triggered "gainitem" with "Blue Flag" at 1 2 3
+                                        // Non-player indices:      0           1     2        3      4  5 6 7
+                                        switch (nonPlayerDataParts[3]) {
+                                            case "Blue Flag":
+                                                data.team = TeamColor.Blue;
+                                                break;
+                                            case "Red Flag":
+                                                data.team = TeamColor.Red;
+                                                break;
+                                            case "Yellow Flag":
+                                                data.team = TeamColor.Yellow;
+                                                break;
+                                            case "Green Flag":
+                                                data.team = TeamColor.Green;
+                                                break;
+                                        }
+                                        data.mapLocation = new MapLocation(nonPlayerDataParts[5], nonPlayerDataParts[6], nonPlayerDataParts[7]);
+                                        break;
                                     case "goalitem":
                                         if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerPickedUpFlag;
@@ -578,11 +633,11 @@ export class Event {
                                         break;
                                     case "Blue Capture Point Extra": // cranked capture after flag-through-the-water
                                         eventType = EventType.PlayerCapturedBonusFlag;
-                                        data.team = TeamColor.Red;
+                                        data.team = TeamColor.Blue;
                                         break;
                                     case "Red Capture Point Extra":
                                         eventType = EventType.PlayerCapturedBonusFlag;
-                                        data.team = TeamColor.Blue;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Capture Point":
                                         // TODO: what maps, if any, use this string which contains no team info?
@@ -1409,6 +1464,7 @@ interface ExtraData {
     level?: number;
     key?: string;
     value?: string;
+    mapLocation?: MapLocation;
 }
 
 export default Parser;

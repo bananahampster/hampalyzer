@@ -410,6 +410,10 @@ export default class ParserUtils {
                     case EventType.SecurityUp:
                         // dunno what to do with this event
                         break;
+                    case EventType.PlayerGainedFlagWithLocation:
+                    case EventType.PlayerDroppedFlagViaDeathWithLocation:
+                        // TODO: do something with these.
+                        break;
                     default:
                         console.log(`didn't log event id ${EventType[event.eventType]} for ${thisPlayer.name}.`)
                 }
