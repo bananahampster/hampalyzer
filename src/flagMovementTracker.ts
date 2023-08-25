@@ -195,6 +195,7 @@ export class FlagMovementTracker extends EventSubscriber {
                         }
                         break;
                     case EventType.PlayerCapturedFlag:
+                    case EventType.PlayerCapturedBonusFlag:
                         let foundCarrierInFlagStatuses = false;
                         let cappingPlayer = event.playerFrom!;
 
@@ -204,8 +205,9 @@ export class FlagMovementTracker extends EventSubscriber {
                         for (let team in this.currentFlagStatusByTeam) {
                             let currentFlagStatus = this.currentFlagStatusByTeam[team];
                             if (event.playerFrom!.isSamePlayer(currentFlagStatus.carrier)) {
-                                if (currentFlagStatus.bonusActive === true) {
+                                if (currentFlagStatus.bonusActive === true || event.eventType === EventType.PlayerCapturedBonusFlag) {
                                     event.eventType = EventType.PlayerCapturedBonusFlag;
+                                    this.flagRoundStatsByTeam[cappingPlayer.team].numberOfBonusCaps++;
                                 }
                                 this.flagRoundStatsByTeam[cappingPlayer.team].numberOfCaps++;
                                 this.flagRoundStatsByTeam[cappingPlayer.team].flagEvents.push(event);
@@ -250,15 +252,15 @@ export class FlagMovementTracker extends EventSubscriber {
             const blueTeamFlagRoundStats = this.flagRoundStatsByTeam[TeamColor.Blue];
 
             const firstTeamFlagHoldBonuses = blueTeamFlagRoundStats.teamFlagHoldBonuses;
-            const pointsFromFlagHoldBonuses = blueTeamFlagRoundStats.numberOfBonusCaps* this.pointsPerTeamFlagHoldBonus;
+            const pointsFromFlagHoldBonuses = blueTeamFlagRoundStats.numberOfBonusCaps * this.pointsPerTeamFlagHoldBonus;
 
             if (blueTeamFlagRoundStats.score > 0 && blueTeamFlagRoundStats.numberOfBonusCaps > 0) {
                 // This is a map with bonus caps, e.g. raiden6's coast-to-coast mechanic.
                 // To estimate the values for a normal cap and a bonus cap, assume a normal cap value of 10.
                 this.pointsPerCap = 10;
-                const estimatedBonusPointsTotal = blueTeamFlagRoundStats.score - (this.pointsPerCap * (blueTeamFlagRoundStats.numberOfCaps + blueTeamFlagRoundStats.numberOfBonusCaps));
-                this.pointsPerBonusCap = this.pointsPerCap + (estimatedBonusPointsTotal / blueTeamFlagRoundStats.numberOfCaps);
-                console.log(`Estimate points for a bonus cap is ${this.pointsPerBonusCap}`);
+                const estimatedBonusPointsTotal = blueTeamFlagRoundStats.score - (this.pointsPerCap * (blueTeamFlagRoundStats.numberOfCaps));
+                this.pointsPerBonusCap = this.pointsPerCap + (estimatedBonusPointsTotal / blueTeamFlagRoundStats.numberOfBonusCaps);
+                console.log(`Estimate points for a bonus cap is ${this.pointsPerBonusCap} (${blueTeamFlagRoundStats.numberOfCaps} caps and ${blueTeamFlagRoundStats.numberOfBonusCaps} bonus caps observed)`);
             }
             else {
                 this.pointsPerCap = blueTeamFlagRoundStats.score ?

@@ -58,7 +58,6 @@ Plan:
 - [ ] Handle player disconnects if they are in the middle of carrying flag (flag time / flag status)
 - [ ] If a player only plays one of two rounds, player stats doesn't format correctly (e.g., stats show in rd2 even though they only played rd1)
 - [ ] Classes may not be assigned correctly, e.g. http://app.hampalyzer.com/parsedlogs/Inhouse-2021-Jun-6-02-22/ (hamp rd2)
-- [ ] Update config to have dotenv file for env variables
 
 ## Building / Running
 

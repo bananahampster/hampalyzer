@@ -35,6 +35,11 @@ export class Parser {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
 
+                if (!this.rounds[0]!.teams) {
+                    // The log was bogus or failed to parse. Nothing more we can do.
+                    return undefined;
+                }
+
                 let comparison: TeamStatsComparison | undefined;
                 let teamComp: TeamComposition<OutputPlayer> = ParserUtils.teamCompToOutput(this.rounds[0]!.teams!);
                 if (this.rounds.length === 2) {
@@ -115,7 +120,7 @@ export class RoundParser {
         }
         catch (error: any) {
             console.error(error.message);
-            return;
+            throw error;
         }
 
 
@@ -564,14 +569,20 @@ export class Event {
                                             throw 'unknown player trigger "goalitem"';
                                         break;
                                     case "Blue Flag Plus": // raiden-style c2c entity pickup
-                                    case "Blue Capture Point Extra": // cranked
                                         eventType = EventType.PlayerPickedUpBonusFlag;
                                         data.team = TeamColor.Blue;
                                         break;
                                     case "Red Flag Plus":
-                                    case "Red Capture Point Extra":
                                         eventType = EventType.PlayerPickedUpBonusFlag;
                                         data.team = TeamColor.Red;
+                                        break;
+                                    case "Blue Capture Point Extra": // cranked capture after flag-through-the-water
+                                        eventType = EventType.PlayerCapturedBonusFlag;
+                                        data.team = TeamColor.Red;
+                                        break;
+                                    case "Red Capture Point Extra":
+                                        eventType = EventType.PlayerCapturedBonusFlag;
+                                        data.team = TeamColor.Blue;
                                         break;
                                     case "Capture Point":
                                         // TODO: what maps, if any, use this string which contains no team info?
@@ -982,6 +993,8 @@ export class Event {
                                 const otherPlayerSteamID = otherPlayerDataParts[3];
                                 playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
                                 playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
+                                playerFrom = playerTo;
+                                playerFromTeam = playerToTeam;
                             }
                             break;
                         case "World":

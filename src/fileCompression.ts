@@ -46,6 +46,15 @@ export class FileCompression {
         const filePathWithBrotliExtension = `${filePath}${FileCompression.compressedFileExtension}`;
         try {
             await fs.promises.access(filePathWithBrotliExtension, fs.constants.R_OK);
+            if (fs.statSync(filePathWithBrotliExtension).size === 0) {
+                // We may have failed to flush the compressed version to the disk if our process was
+                // previously terminated due to an exception in processing the log.
+                // Delete the 0 length compressed file here to recover and compress it again.
+                fs.promises.unlink(filePathWithBrotliExtension);
+
+                // Trigger an exception now that it's missing to fall into the catch statement.
+                await fs.promises.access(filePathWithBrotliExtension, fs.constants.R_OK);
+            }
             // Brotli path already exists.
             return false;
         }
@@ -76,6 +85,8 @@ export class FileCompression {
             }
         });
         await streamPromises.pipeline(fs.createReadStream(filePath), brotliCompressStream, fs.createWriteStream(compressedDestinationFilePath));
+        outputCompressedFileStream.close();
+
     }
 
     public static async getDecompressedContents(filePath: string) : Promise<string> {
@@ -91,7 +102,9 @@ export class FileCompression {
         streamToListenTo.on(
             "data", (chunk) => { chunks.push(Buffer.from(chunk)) }).on(
             "error", (err) => { console.log(`Failed to read ${filePath}`)}).on(
-            `${pathIsCompressed ? "finish" : "end"}`, () => { output = Buffer.concat(chunks).toString('utf8'); });
+            `${pathIsCompressed ? "finish" : "end"}`, () => {
+                output = Buffer.concat(chunks).toString('utf8');
+            });
 
         if (pathIsCompressed) {
             await streamPromises.pipeline(onDiskFileStream, brotliDecompress);

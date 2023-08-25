@@ -119,8 +119,10 @@ export default class ParserUtils {
         let mvpPoints: { [player_key: string]: number } = {};
 
         [1, 2].forEach(team => {
-            for (const player of teamComp[team])
-                mvpPoints[player.id] = 0;
+            if (teamComp[team]) {
+                for (const player of teamComp[team])
+                    mvpPoints[player.id] = 0;
+            }
         });
 
         for (const roundStats of stats) {
@@ -177,8 +179,8 @@ export default class ParserUtils {
 
     public static teamCompToOutput(teamComp: TeamComposition): TeamComposition<OutputPlayer> {
         return {
-            '1': teamComp[1]?.map(player => player.dumpOutput()),
-            '2': teamComp[2]?.map(player => player.dumpOutput()),
+            '1': teamComp[1] ? teamComp[1].map(player => player.dumpOutput()) : undefined,
+            '2': teamComp[2] ? teamComp[2].map(player => player.dumpOutput()) : undefined,
         };
     }
 
@@ -346,6 +348,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerCapturedFlag:
+                    case EventType.PlayerCapturedBonusFlag:
                     case EventType.PlayerCapturedPoint:
                         this.addStat(thisPlayerStats, 'flag_capture', event);
                         this.addStat(playerStats.flag, 'flag_capture', event);
@@ -618,7 +621,7 @@ export default class ParserUtils {
         // log name (server [up to 10 char or first word boundary], date string, time)
         let serverShortName = server.split(/\s+/)[0];
         // Remove reserved characters for Windows compat. The removal of slashes also eliminates the possibility of a path traversal attack.
-        serverShortName = serverShortName.replace(/[\?\\/\*\"<>\|]/g, "_");
+        serverShortName = serverShortName.replace(/[\?\\/\*\"<>\|:]/g, "_");
 
         if (serverShortName.length > 10) serverShortName = serverShortName.slice(0, 10);
         const parse_name = [serverShortName, year, month, dayOfMonth, time.replace(":", "-")].join("-");
