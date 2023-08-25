@@ -38,13 +38,11 @@ export class WhileConcedTracker extends EventSubscriber {
         // if this event has a playerFrom event,
         // mark it `whileConced` if within conc effect duration
         if (event.playerFrom != null) {
-            // TODO this isn't populated by this point; add stateTracker for this
-            const playerIsMedic = event.playerToClass === PlayerClass.Medic;
+            const playerIsMedic = event.playerFromClass === PlayerClass.Medic;
 
             const lastConced = this.whoIsConced[event.playerFrom.steamID];
             if (lastConced != null && !isNaN(lastConced) &&
                 (event.gameTimeAsSeconds - lastConced) <= (playerIsMedic ? 5 : 10)) {
-
                 event.whileConced = true;
             }
         }
