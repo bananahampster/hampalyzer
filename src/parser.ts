@@ -594,27 +594,6 @@ export class Event {
                                         }
                                         data.mapLocation = new MapLocation(nonPlayerDataParts[5], nonPlayerDataParts[6], nonPlayerDataParts[7]);
                                         break;
-                                    case "gainitem": // custom event for Inhouse
-                                        eventType = EventType.PlayerDroppedFlagViaDeathWithLocation;
-
-                                        // Example: player_from triggered "gainitem" with "Blue Flag" at 1 2 3
-                                        // Non-player indices:      0           1     2        3      4  5 6 7
-                                        switch (nonPlayerDataParts[3]) {
-                                            case "Blue Flag":
-                                                data.team = TeamColor.Blue;
-                                                break;
-                                            case "Red Flag":
-                                                data.team = TeamColor.Red;
-                                                break;
-                                            case "Yellow Flag":
-                                                data.team = TeamColor.Yellow;
-                                                break;
-                                            case "Green Flag":
-                                                data.team = TeamColor.Green;
-                                                break;
-                                        }
-                                        data.mapLocation = new MapLocation(nonPlayerDataParts[5], nonPlayerDataParts[6], nonPlayerDataParts[7]);
-                                        break;
                                     case "goalitem":
                                         if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerPickedUpFlag;
