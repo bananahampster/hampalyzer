@@ -11,3 +11,4 @@ secrets.txt
 backup/
 *.heapsnapshot
 .vscode/
+.env

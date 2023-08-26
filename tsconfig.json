@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
+        "module": "nodenext",
         "module": "ES2022",
-        "moduleResolution": "node",
+        "moduleResolution": "nodenext",
         "esModuleInterop": true,
         "target": "ES2022",
         "noImplicitAny": false,
         "sourceMap": true,
         "outDir": "./dist/",
-        "strict": true
+        "strict": true,
+        "noFallthroughCasesInSwitch": true
     },
     "files": [
         "./node_modules/@types/node/index.d.ts",
@@ -19,4 +21,5 @@
     "exclude": [
         "node_modules",
     ],
+    "forceConsistentCasingInFileNames": true,
 }

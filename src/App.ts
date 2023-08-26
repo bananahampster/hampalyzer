@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+import url from 'url';
 import cors from 'cors';
 import express from 'express';
 import Handlebars from 'handlebars';
@@ -11,6 +13,10 @@ import { FileCompression } from './fileCompression.js';
 import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { ParsedStats, Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
+
+const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
+dotenv.config({ path: envFilePath });
+
 // see https://github.com/expressjs/multer
 // and https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76
 // and ...?

@@ -1,14 +1,39 @@
-import { OutputPlayer } from "./constants";
+import { OutputPlayer } from "./constants.js";
+import { TeamColor } from "./constants.js";
+
+export class PlayerRoundStats {
+    public flagCarries = 0;
+    public flagInitialTouches = 0;
+    public flagThrows = 0;
+    public flagCarryTimeInSeconds = 0;
+}
+export class PlayerCurrentStatus {
+    public carryingFlag = false;
+    public carryingFlagBonus = false;
+}
 
 class Player {
     private steamNum: string;
     private names: string[];
     private playerNum: number;
+    private teamColor: TeamColor;
+    private _roundStats: PlayerRoundStats;
+    private _currentStatus: PlayerCurrentStatus;
 
-    constructor(steamID: string, name: string, playerID: number) {
+    constructor(steamID: string, name: string, playerID: number, team: TeamColor) {
         this.steamNum = steamID;
         this.names = [name];
         this.playerNum = playerID;
+        this.teamColor = team;
+        this._roundStats = new PlayerRoundStats();
+        this._currentStatus = new PlayerCurrentStatus();
+    }
+
+    public isSamePlayer(other: Player): boolean {
+        if (!other) {
+            return false;
+        }
+        return this.steamNum === other.steamNum && this.teamColor == other.teamColor;
     }
 
     public addName(name: string): void {
@@ -22,11 +47,23 @@ class Player {
     }
 
     public get steamID(): string {
-        return "STEAM_" + this.steamNum;
+        return this.steamNum;
     }
 
     public get playerID(): number { 
         return this.playerNum;
+    }
+
+    public get team(): TeamColor {
+        return this.teamColor;
+    }
+
+    public get roundStats(): PlayerRoundStats { 
+        return this._roundStats;
+    }
+
+    public get currentStatus(): PlayerCurrentStatus { 
+        return this._currentStatus;
     }
 
     public toString(): string {

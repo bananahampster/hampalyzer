@@ -42,7 +42,7 @@ export enum EventType {
     PlayerDetonatedBuilding, /* done (no teleporter) */
     PlayerDismantledBuilding, /* done (only sentrygun) */
     PlayerPickedUpFlag, /* TODO: will be very map-specific */
-    PlayerPickedUpBonusFlag, /* TODO: will be very map-specific */
+    PlayerPickedUpBonusFlag,
     PlayerThrewFlag,
     PlayerCapturedArenaOwn, /* scrummage */
     PlayerCapturedArenaCenter, /* scrummage */
@@ -53,6 +53,8 @@ export enum EventType {
     PlayerGotSecurity, /* TODO: will be very map-specific */
     PlayerOpenedDetpackEntrance, /* TODO: will be very map-specific */
     PlayerHeal, /* done */
+    PlayerGainedFlagWithLocation, /* custom Inhouse event */
+    PlayerDroppedFlagViaDeathWithLocation, /* custom Inhouse event */
     FlagReturn, /* done */
     SecurityUp, /* done */
     TeamScore, /* done */

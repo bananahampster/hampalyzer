@@ -2,7 +2,11 @@ import * as fs from 'fs';
 import EventType from './eventType.js';
 import Player from './player.js';
 import PlayerList from './playerList.js';
+import { EventHandlingPhase, EventSubscriber, EventSubscriberManager } from './eventSubscriberManager.js';
+import { PlayerTeamTracker } from './playerTeamTracker.js';
 import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import { MapLocation } from './mapLocation.js';
+import { RoundState } from './roundState.js';
 import ParserUtils, { TeamComposition } from './parserUtils.js';
 import { FileCompression } from './fileCompression.js';
 
@@ -31,6 +35,11 @@ export class Parser {
             .then(() => {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
+
+                if (!this.rounds[0]!.teams) {
+                    // The log was bogus or failed to parse. Nothing more we can do.
+                    return undefined;
+                }
 
                 let comparison: TeamStatsComparison | undefined;
                 let teamComp: TeamComposition<OutputPlayer> = ParserUtils.teamCompToOutput(this.rounds[0]!.teams!);
@@ -88,8 +97,10 @@ export class RoundParser {
     private parseData(): void {
         this.allEvents = this.rawLogData.split("\n");
 
+        const roundState = new RoundState();
+
         this.allEvents.forEach((event, lineNumber) => {
-            const newEvent = Event.createEvent(lineNumber + 1, event, this.players);
+            const newEvent = Event.createEvent(lineNumber + 1, event, roundState);
             if (newEvent) {
                 if (typeof newEvent === 'string') {
                     this.parsingErrors.push(newEvent);
@@ -100,19 +111,30 @@ export class RoundParser {
             }
         });
 
-        this.teamComp = ParserUtils.getPlayerTeams(this.events, this.players);
-        const [scores, flagMovements] = ParserUtils.getScoreAndFlagMovements(this.events);
-        for (const team in this.teamComp) {
-            const teamPlayers = this.teamComp[team];
-            const score = scores[team];
-            console.log(`Team ${team} (score ${score}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
+        //
+        // Work in progress: accumulate state by progressively evaluating events. Multiple phases are supported
+        // to enable ordering dependencies between event subscribers.
+        //
+        const eventSubscriberManager = new EventSubscriberManager(roundState.getEventSubscribers(), roundState);
+        try {
+            eventSubscriberManager.handleEvents(this.events);
+        }
+        catch (error: any) {
+            console.error(error.message);
+            throw error;
         }
 
-        // find prematch start and match end; ignore events outside that (except chat/class choice/team join?)
-        this.trimPreAndPostMatchEvents();
+
+        this.teamComp = ParserUtils.getPlayerTeams(this.events, roundState.players);
+        const score = roundState.score;
+        for (const team in this.teamComp) {
+            const teamPlayers = this.teamComp[team];
+            const teamScore = score[team];
+            console.log(`Team ${team} (score ${teamScore}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
+        }
 
         const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
-        this.summarizedStats = ParserUtils.generateOutputStats(this.events, playerStats, this.players, this.teamComp, this.filename);
+        this.summarizedStats = ParserUtils.generateOutputStats(roundState, this.events, playerStats, roundState.players, this.teamComp, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
     }
 
@@ -169,6 +191,7 @@ export class RoundParser {
 
 export interface EventCreationOptions {
     eventType: EventType;
+    rawLine: string;
     lineNumber: number;
     timestamp: Date;
     data?: ExtraData;
@@ -182,10 +205,15 @@ export interface EventCreationOptions {
 }
 
 export class Event {
+    // core required data
     public eventType: EventType;
+    public rawLine: string;
     public lineNumber: number;
     public timestamp: Date;
-    public gameTimeAsSeconds?: number;
+
+    // filled in by state trackers as required data for further parsing
+    public gameTimeAsSeconds: number; // filled in "EarlyFixups" phase
+    public whileConced: boolean; // filled in "Main" phase
 
     public data?: ExtraData;
     public playerFrom?: Player;
@@ -195,11 +223,13 @@ export class Event {
     public playerToTeam?: TeamColor;
     public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
-    public whileConced: boolean;
+    public playerFromWasCarryingFlag: boolean;
+    public playerToWasCarryingFlag: boolean;
 
     constructor(options: EventCreationOptions) {
         // required fields
         this.eventType = options.eventType;
+        this.rawLine = options.rawLine;
         this.lineNumber = options.lineNumber;
         this.timestamp = options.timestamp;
 
@@ -212,7 +242,12 @@ export class Event {
         this.playerToTeam = options.playerToTeam;
         this.playerToClass = options.playerToClass;
         this.withWeapon = options.withWeapon;
-        this.whileConced = false; // Filled in later.
+
+        // these items are filled in later
+        this.gameTimeAsSeconds = -1;
+        this.whileConced = false;
+        this.playerFromWasCarryingFlag = false;
+        this.playerToWasCarryingFlag = false;
     }
 
     // Breaks apart a line on spaces while preserving quoted substrings.
@@ -234,7 +269,7 @@ export class Event {
         return parts;
     }
 
-    public static createEvent(lineNumber: number, line: string, playerList: PlayerList): Event | string | undefined {
+    public static createEvent(lineNumber: number, line: string, roundState: RoundState): Event | string | undefined {
         let eventType: EventType | undefined;
         let timestamp: Date | undefined;
 
@@ -292,17 +327,17 @@ export class Event {
                     const playerName = fromPlayerDataParts[1];
                     const playerID = Number(fromPlayerDataParts[2]);
                     const playerSteamID = fromPlayerDataParts[3];
-                    playerFromTeam = fromPlayerDataParts[4] !== "" ? this.parseTeam(fromPlayerDataParts[4]) : undefined;
+                    playerFromTeam = this.parseTeam(fromPlayerDataParts[4]);
 
-                    playerFrom = playerList.getPlayer(playerSteamID, playerName, playerID);
+                    playerFrom = roundState.ensurePlayer(playerSteamID, playerName, playerID, playerFromTeam);
 
                     if (otherPlayerDataParts != null) { // Two players were affected.
                         const otherPlayerName = otherPlayerDataParts[1];
                         const otherPlayerID = Number(otherPlayerDataParts[2]);
                         const otherPlayerSteamID = otherPlayerDataParts[3];
-                        playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
+                        playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
 
-                        playerTo = playerList.getPlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                        playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
                         // do a switch based on the statement
                         switch (nonPlayerDataParts[0]) {
                             case "killed":
@@ -409,6 +444,7 @@ export class Event {
                                 break;
                             case "joined":
                                 eventType = EventType.PlayerJoinTeam;
+                                playerTo = playerFrom;
                                 data.team = Event.parseTeam(nonPlayerDataParts[2]);
                                 break;
                             case "entered":
@@ -421,6 +457,7 @@ export class Event {
                             case "disconnected":
                             case "disconnected\r":
                                 eventType = EventType.PlayerLeftServer;
+                                playerTo = playerFrom;
                                 break;
                             case "changed":
                                 if (nonPlayerDataParts[1] === "name") {
@@ -437,6 +474,7 @@ export class Event {
                             case "committed": // TODO: sometimes this line has extra data
                             /* e.g., L 11/20/2018 - 01:54:42: "phone<59><STEAM_0:0:44791068><Blue>" committed suicide with "trigger_hurt" (world); L 11/20/2018 - 01:46:41: "pheesh-L7<64><STEAM_0:0:64178><Red>" committed suicide with "train" (world); "tomaso<19><STEAM_0:0:7561319><Blue>" committed suicide with "the red team's lasers" (world) */
                                 eventType = EventType.PlayerCommitSuicide;
+                                playerTo = playerFrom;
                                 let weaponString = nonPlayerDataParts[3];
                                 if (nonPlayerDataParts.length >= 5 && nonPlayerDataParts[4] === "(world)") {
                                     weaponString += " (world)";
@@ -523,38 +561,93 @@ export class Event {
                                     case "dropitems": // custom event for Inhouse
                                         eventType = EventType.PlayerThrewFlag;
                                         break;
+                                    case "dropitems_death": // custom event for Inhouse
+                                    case "gainitem": // custom event for Inhouse
+                                        switch (nonPlayerDataParts[1]) {
+                                            case "dropitems_death":
+                                                eventType = EventType.PlayerDroppedFlagViaDeathWithLocation;
+                                                break;
+                                            case "gainitem":
+                                                eventType = EventType.PlayerGainedFlagWithLocation;
+                                                break;
+                                            default:
+                                                throw "Unhandled case";
+                                        }
+
+                                        // Example: player_from triggered "dropitems_death" with "Blue Flag" at 1 2 3
+                                        // Non-player indices:      0           1            2        3      4  5 6 7
+                                        switch (nonPlayerDataParts[3]) {
+                                            case "Blue Flag":
+                                                data.team = TeamColor.Blue;
+                                                break;
+                                            case "Red Flag":
+                                                data.team = TeamColor.Red;
+                                                break;
+                                            case "Yellow Flag":
+                                                data.team = TeamColor.Yellow;
+                                                break;
+                                            case "Green Flag":
+                                                data.team = TeamColor.Green;
+                                                break;
+                                            default:
+                                                throw `Unknown item for ${nonPlayerDataParts[1]}: ${nonPlayerDataParts[3]}`;
+                                        }
+                                        data.mapLocation = new MapLocation(nonPlayerDataParts[5], nonPlayerDataParts[6], nonPlayerDataParts[7]);
+                                        break;
                                     case "goalitem":
-                                        if (nonPlayerDataParts.length === 2)
+                                        if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerPickedUpFlag;
+                                            data.team = TeamColor.None;
+                                        }
                                         else
                                             throw 'unknown player trigger "goalitem"';
                                         break;
-                                    case "Red Flag":
-                                    case "Blue Flag":
-                                    case "Red_Flag": // proton_l
-                                    case "Blue_Flag":
-                                        eventType = EventType.PlayerPickedUpFlag;
-                                        break;
-                                    case "Red Flag Plus": // raiden-style c2c entity pickup
-                                    case "Blue Flag Plus":
+                                    case "Blue Flag Plus": // raiden-style c2c entity pickup
                                         eventType = EventType.PlayerPickedUpBonusFlag;
+                                        data.team = TeamColor.Blue;
                                         break;
-                                    case "Blue Capture Point Extra": // cranked
+                                    case "Red Flag Plus":
+                                        eventType = EventType.PlayerPickedUpBonusFlag;
+                                        data.team = TeamColor.Red;
+                                        break;
+                                    case "Blue Capture Point Extra": // cranked capture after flag-through-the-water
+                                        eventType = EventType.PlayerCapturedBonusFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
                                     case "Red Capture Point Extra":
                                         eventType = EventType.PlayerCapturedBonusFlag;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Capture Point":
+                                        // TODO: what maps, if any, use this string which contains no team info?
+                                        eventType = EventType.PlayerCapturedFlag;
+                                        data.team = playerFrom!.team;
+                                        break;
+                                    case "Blue Flag": // proton_l
+                                    case "Blue_Flag":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    case "Red Flag":
+                                    case "Red_Flag":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Red;
+                                        break;
                                     case "Blue Cap":
-                                    case "Red Cap":
                                     case "Blue_Cap":
-                                    case "Red_Cap":
                                     case "Blue Cap Point": // monkey_l
-                                    case "Red Cap Point":
                                     case "Blue Capture Point":
-                                    case "Red Capture Point":
                                     case "BlueCapture Point": // haste_r
+                                        eventType = EventType.PlayerCapturedFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
+                                    case "Red Cap":
+                                    case "Red_Cap":
+                                    case "Red Cap Point":
+                                    case "Red Capture Point":
                                     case "RedCapture Point":
                                         eventType = EventType.PlayerCapturedFlag;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Flag 1": // cornfield; e.g. "Flag 1", "Flag 2"
                                     case "Flag 2":
@@ -562,28 +655,35 @@ export class Event {
                                     case "Flag 4":
                                     case "Flag 5": // arendal
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Flag #1": // osaka
                                     case "Flag #2":
                                     case "Flag #3":
                                     case "Flag #4":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Blue Flag 1": // troy2
                                     case "Blue Flag 2":
                                     case "Blue Flag 3":
                                     case "Blue Flag 4":
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Blue;
+                                        break;
                                     case "Red Flag 1": // troy2
                                     case "Red Flag 2":
                                     case "Red Flag 3":
                                     case "Red Flag 4":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Red;
                                         break;
                                     case "Capture Point 1": // cornfield
                                     case "Capture Point 2":
                                     case "Capture Point 3":
                                     case "Capture Point 4":
                                         eventType = EventType.PlayerCapturedPoint;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "capture point 1": // magelli / arendal
                                     case "capture point 2": // magelli / arendal
@@ -591,6 +691,7 @@ export class Event {
                                     case "capture point 4": // magelli / arendal
                                     case "capture point 5": // arendal
                                         eventType = EventType.PlayerCapturedPoint;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Blue Capture Point 1": // troy2
                                     case "Blue Capture Point 2":
@@ -601,21 +702,26 @@ export class Event {
                                     case "Red Capture Point 3":
                                     case "Red Capture Point 4":
                                         eventType = EventType.PlayerCapturedPoint;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Team 1 dropoff":
                                     case "Team 2 dropoff":
                                     case "Team 3 dropoff":
                                     case "Team 4 dropoff":
                                         eventType = EventType.PlayerCapturedFlag;
+                                        data.team = playerFrom!.team;
                                         break;
                                     case "Flag1": // asti_r flags
                                     case "Flag2":
                                     case "Flag3":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.None;
                                         break;
                                     case "Capture":
-                                        if (nonPlayerDataParts[2] = "Point")
+                                        if (nonPlayerDataParts[2] = "Point") {
                                             eventType = EventType.PlayerCapturedFlag;
+                                            data.team = playerFrom!.team;
+                                        }
                                         else
                                             throw "unknown player trigger Capture";
                                         break;
@@ -627,6 +733,7 @@ export class Event {
                                         switch (nonPlayerDataParts[3]) {
                                             case 'dropoff':
                                                 eventType = EventType.PlayerCapturedFlag;
+                                                data.team = TeamColor.None;
                                                 break;
                                             default:
                                                 throw 'unknown player trigger Team (len 3)';
@@ -634,8 +741,10 @@ export class Event {
                                         break;
                                     case "t1df": // oppose2k1 flag dropoff (TODO: is this team-specific?)
                                     case "t2df":
-                                        if (nonPlayerDataParts.length === 2)
+                                        if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerCapturedFlag;
+                                            data.team = playerFrom!.team;
+                                        }
                                         else
                                             throw 'unknown t1df trigger';
                                         break;
@@ -652,15 +761,21 @@ export class Event {
                                         eventType = EventType.PlayerCapturedArenaOpponent;
                                         break;
                                     case "greenX": // run (the map) flag pickup
+                                        eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Green;
+                                        break;
                                     case "yellowX":
                                         eventType = EventType.PlayerPickedUpFlag;
+                                        data.team = TeamColor.Yellow;
                                         break;
                                     case "blueflag_point": // run (the map) flag capture
                                     case "blueflag_point2":
                                     case "redflag_point":
                                     case "redflag_point2":
-                                        if (nonPlayerDataParts.length === 2)
+                                        if (nonPlayerDataParts.length === 2) {
                                             eventType = EventType.PlayerCapturedFlag;
+                                            data.team = TeamColor.None;
+                                        }
                                         else
                                             throw 'unknown "run"-like trigger';
                                         break;
@@ -767,6 +882,66 @@ export class Event {
                                     case "10 Second Warning": // troy2 (becomes player trigger after first round)
                                     case "Start Scoring": // troy2
                                     case "Door Announcement": // troy2 (already handled by world trigger "The gates of Troy are open!")
+                                    case "AmmoB": // scrummage
+                                    case "AmmoB Tube": // scrummage
+                                    case "AmmoR": // scrummage
+                                    case "AmmoR Tube": // scrummage
+                                    case "CannonB": // scrummage
+                                    case "CannonR": // scrummage
+                                    case "Fort BNoTP": // scrummage
+                                    case "Fort RNoTP": // scrummage
+                                    case "GrenB": // scrummage
+                                    case "GrenR": // scrummage
+                                    case "SCRUMB Pad": // scrummage
+                                    case "SCRUM Red": // scrummage
+                                    case "BA BPad1": // scrummage
+                                    case "BA BPad2": // scrummage
+                                    case "BA RPad1": // scrummage
+                                    case "BA RPad2": // scrummage
+                                    case "BA bonb": // scrummage
+                                    case "BA bonr": // scrummage
+                                    case "BA btmn1": // scrummage
+                                    case "BA BTemp1": // scrummage
+                                    case "BA BTemp2": // scrummage
+                                    case "BA RTemp1": // scrummage
+                                    case "BA RTemp2": // scrummage
+                                    case "BA resupb": // scrummage
+                                    case "BA btmn2": // scrummage
+                                    case "BA rtmn1": // scrummage
+                                    case "BA rtmn2": // scrummage
+                                    case "CEN BPad1": // scrummage
+                                    case "CEN BPad2": // scrummage
+                                    case "CEN RPad1": // scrummage
+                                    case "CEN RPad2": // scrummage
+                                    case "CEN btmn1": // scrummage
+                                    case "CEN btmn2": // scrummage
+                                    case "CEN resupb": // scrummage
+                                    case "CEN resupr": // scrummage
+                                    case "CEN rtmn1": // scrummage
+                                    case "CEN rtmn2": // scrummage
+                                    case "CEN bonb": // scrummage
+                                    case "CEN bonr": // scrummage
+                                    case "CEN RNoTP": // scrummage
+                                    case "CEN BTemp1": // scrummage
+                                    case "CEN BTemp2": // scrummage
+                                    case "CEN RTemp1": // scrummage
+                                    case "CEN RTemp2": // scrummage
+                                    case "RA BPad1": // scrummage
+                                    case "RA BPad2": // scrummage
+                                    case "RA RPad1": // scrummage
+                                    case "RA RPad2": // scrummage
+                                    case "RA bonb": // scrummage
+                                    case "RA bonr": // scrummage
+                                    case "RA BTemp1": // scrummage
+                                    case "RA BTemp2": // scrummage
+                                    case "RA RTemp1": // scrummage
+                                    case "RA RTemp2": // scrummage
+                                    case "RA btmn1": // scrummage
+                                    case "RA btmn2": // scrummage
+                                    case "RA rtmn1": // scrummage
+                                    case "RA rtmn2": // scrummage
+                                    case "spawnarea1": // attac
+                                    case "spawnarea2": // attac
                                         return; // Ignore
                                     default:
                                         throw `unknown player trigger: ${nonPlayerDataParts[1]}`;
@@ -850,8 +1025,10 @@ export class Event {
                                 const otherPlayerName = otherPlayerDataParts[1];
                                 const otherPlayerID = Number(otherPlayerDataParts[2]);
                                 const otherPlayerSteamID = otherPlayerDataParts[3];
-                                playerToTeam = otherPlayerDataParts[4] !== "" ? this.parseTeam(otherPlayerDataParts[4]) : undefined;
-                                playerTo = playerList.getPlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID);
+                                playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
+                                playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
+                                playerFrom = playerTo;
+                                playerFromTeam = playerToTeam;
                             }
                             break;
                         case "World":
@@ -922,21 +1099,28 @@ export class Event {
                                         data.team = TeamColor.Red;
                                         break;
                                     }
+                                    return; // ignore
                                 case "Blue security has been deactivated!":
                                 case "Red security has been deactivated!":
                                 case "Blue Security has been Deactivated for 45s": // demolish
                                 case "Red Security has been Deactivated for 45s": // demolish
+                                case "Blue Security has been deactivate": // attac
+                                case "Red Security has been deactivated": // attac
                                     eventType = EventType.PlayerGotSecurity;
                                     break;
                                 case "Blue security will be operational in 30 seconds!": // schtop
                                 case "Red security will be operational in 30 seconds!": // schtop
                                 case "Blue Security will be Operational in 15 seconds!": // demolish
                                 case "Red Security will be Operational in 15 seconds!": // demolish
+                                case "Blue security will reactivate in 15 seconds": // attac
+                                case "Red security will reactivate in 15 seconds": // attac
                                     return; // ignore
                                 case "Blue security is now operating!":
                                 case "Red security is now operating!":
                                 case "Blue Security is now Operating": // demolish
                                 case "Red Security is now Operating": // demolish
+                                case "Blue security is now active": // attac
+                                case "Red security is now active": // attac
                                     eventType = EventType.SecurityUp;
                                     break;
                                 case "Blue_Flag_Vox":
@@ -974,9 +1158,19 @@ export class Event {
                                 case "The Temple has been breached!": // troy2 wall det message - TODO: figure out which player triggered this?
                                 case "New path to the delivery area is open!": // arendal (already handled by "det3detect")
                                 case "#dustbowl_flag_returned": // arendal (already handled by "Flag has returned Info") - TODO: research potential conflict with dustbowl?
+                                case "BA rest": // scrummage
+                                case "BA BFlag": // scrummage
+                                case "BA RFlag": // scrummage
+                                case "RA rest": // scrummage
+                                case "RA BFlag": // scrummage
+                                case "RA RFlag": // scrummage
+                                case "CEN BFlag": // scrummage
+                                case "CEN RFlag": // scrummage
+                                case "CEN rest": // scrummage
+                                case undefined: // scrummage first line of multi-line arena capture output
                                     return; // Ignore
                                 default:
-                                    throw 'unknown World trigger';
+                                    throw `unknown World trigger (${nonPlayerDataParts[2]})`;
                             }
                             break;
                         case "Team":
@@ -999,8 +1193,17 @@ export class Event {
                         case "<-1><><Yellow>":
                             // frags that happen after the round ends
                             return;
+                        case "<-1><><>":
+                            // scrummage Sentry_Malfunction
+                            return;
+                        case "[MATCH":
+                            // [MATCH RESULT] line on Coach's
+                            return;
+                        case "[GAMEND]":
+                            // Coach's "[GAMEND] RECORDING STATS]" line
+                            return;
                         default:
-                            throw 'unknown non-player log message';
+                            throw `unknown non-player log message (${nonPlayerDataParts[0]})`;
                     }
                 }
             }
@@ -1014,6 +1217,7 @@ export class Event {
             if (eventType != null && timestamp) {
                 return new Event({
                     eventType: eventType,
+                    rawLine: line,
                     lineNumber: lineNumber,
                     timestamp: timestamp,
                     data: data,
@@ -1076,6 +1280,8 @@ export class Event {
         team = team.trim().toLowerCase();
 
         switch (team) {
+            case "":
+                return TeamColor.None;
             case "blue":
             case "blue :d?": // destroy_l
             case "dustbowl_team1": // baconbowl
@@ -1237,6 +1443,7 @@ interface ExtraData {
     level?: number;
     key?: string;
     value?: string;
+    mapLocation?: MapLocation;
 }
 
 export default Parser;
