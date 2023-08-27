@@ -960,7 +960,7 @@ export default class ParserUtils {
             if (!facetedDetails[otherPlayer])
                 facetedDetails[otherPlayer] = [];
 
-            facetedDetails[otherPlayer].push({ value: playerDamage[1].toString(), whileConced: false, description: "" });
+            facetedDetails[otherPlayer].push({ value: playerDamage[1].toString(), whileConced: false, description: "", cssClassToAdd: "" });
         }
 
         return { details: facetedDetails };
@@ -980,11 +980,11 @@ export default class ParserUtils {
                             true);
                     case 'kill_while_conced':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Killed ${e.playerTo?.name} while conced at ${this.getTime(e)}`,
+                            (e) => `Killed ${e.playerToWasCarryingFlag ? "flag carrier " : ""}${e.playerTo?.name} while conced at ${this.getTime(e)}`,
                             true);
                     case 'teamkill':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Team killed ${e.playerTo?.name} at ${this.getTime(e)}`,
+                            (e) => `Team killed ${e.playerToWasCarryingFlag ? "flag carrier " : ""}${e.playerTo?.name} at ${this.getTime(e)}`,
                             true);
                     case 'sg':
                         return this.generateFacetedStats(stat.events!,
@@ -997,24 +997,24 @@ export default class ParserUtils {
                 switch (stat.title) {
                     case 'death':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Killed by ${e.playerFrom?.name} at ${this.getTime(e)}`);
+                            (e) => `Killed ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}by ${e.playerFrom?.name} at ${this.getTime(e)}`);
                     case 'by_team':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Team-killed by ${e.playerFrom?.name} at ${this.getTime(e)}`);
+                            (e) => `Team-killed ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}by ${e.playerFrom?.name} at ${this.getTime(e)}`);
                     case 'by_self':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Suicided at ${this.getTime(e)}`);
+                            (e) => `Suicided ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}at ${this.getTime(e)}`);
                 }
                 break;
             case 'weaponStats':
                 switch (stat.title) {
                     case 'airshot':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Airshot ${e.playerTo?.name} at ${this.getTime(e)} (${e.data?.value} meters)`,
+                            (e) => `Airshot ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}${e.playerTo?.name} at ${this.getTime(e)} (${e.data?.value} meters)`,
                             true);
                     case 'airshoted':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Airshoted by ${e.playerFrom?.name} at ${this.getTime(e)} (${e.data?.value} meters)`);
+                            (e) => `Airshoted ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}by ${e.playerFrom?.name} at ${this.getTime(e)} (${e.data?.value} meters)`);
                     default:
                         console.log(`generateStatDetails: not implemented: weaponStats > ${stat.title}`);
                 }
@@ -1032,6 +1032,7 @@ export default class ParserUtils {
         const facetedWeaponCounts: { [key in Weapon]?: number } = {};
         const allDetails = events.map(e => (<StatDetails>{
             description: descriptor(e),
+            cssClassToAdd: (e.playerFromTeam != e.playerToTeam && e.playerToWasCarryingFlag) ? "weapon-highlight-good" : e.playerToWasCarryingFlag ? "weapon-highlight-bad" : "",
             player: isByPlayer ? e.playerTo : e.playerFrom,
             weapon: e.withWeapon
         }));

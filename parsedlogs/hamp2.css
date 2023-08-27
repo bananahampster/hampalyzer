@@ -410,6 +410,13 @@ td.team-deaths, th.team-deaths,
 .weapon-30, .weapon-31, .weapon-32, .weapon-33 { background-position: -192px -240px; width: 36px; }
 .weapon-34 { background-position: 0px -176px; }
 
+.weapon-highlight-good {
+    filter: sepia(60%) saturate(7000%) hue-rotate(65deg) brightness(127%) contrast(129%);
+}
+
+.weapon-highlight-bad {
+    filter: sepia(60%) saturate(8000%) hue-rotate(340deg) brightness(90%);
+}
 
 /** navbar styles */
 

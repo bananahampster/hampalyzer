@@ -134,6 +134,7 @@ export type EventDescriptor = (ev: Event) => string;
 
 export interface StatDetails {
     description: string;
+    cssClassToAdd: string;
     player?: Player;
     weapon?: Weapon;
     whileConced: boolean;
