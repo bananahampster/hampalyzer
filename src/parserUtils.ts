@@ -1010,7 +1010,7 @@ export default class ParserUtils {
                 switch (stat.title) {
                     case 'airshot':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Airshot ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}${e.playerTo?.name} at ${this.getTime(e)} (${e.data?.value} meters)`,
+                            (e) => `Airshot ${e.playerToWasCarryingFlag ? "flag carrier " : ""}${e.playerTo?.name} at ${this.getTime(e)} (${e.data?.value} meters)`,
                             true);
                     case 'airshoted':
                         return this.generateFacetedStats(stat.events!,
