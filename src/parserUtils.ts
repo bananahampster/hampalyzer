@@ -1032,7 +1032,7 @@ export default class ParserUtils {
         const facetedWeaponCounts: { [key in Weapon]?: number } = {};
         const allDetails = events.map(e => (<StatDetails>{
             description: descriptor(e),
-            cssClassToAdd: (e.playerFromTeam != e.playerToTeam && e.playerToWasCarryingFlag) ? "weapon-highlight-good" : e.playerToWasCarryingFlag ? "weapon-highlight-bad" : "",
+            cssClassToAdd: (e.playerFrom?.team != e.playerTo?.team && e.playerToWasCarryingFlag) ? "weapon-highlight-good" : e.playerToWasCarryingFlag ? "weapon-highlight-bad" : "",
             player: isByPlayer ? e.playerTo : e.playerFrom,
             weapon: e.withWeapon
         }));

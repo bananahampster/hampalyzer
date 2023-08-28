@@ -196,10 +196,8 @@ export interface EventCreationOptions {
     timestamp: Date;
     data?: ExtraData;
     playerFrom?: Player;
-    playerFromTeam?: TeamColor;
     playerFromClass?: PlayerClass;
     playerTo?: Player;
-    playerToTeam?: TeamColor;
     playerToClass?: PlayerClass;
     withWeapon?: Weapon;
 }
@@ -217,10 +215,8 @@ export class Event {
 
     public data?: ExtraData;
     public playerFrom?: Player;
-    public playerFromTeam?: TeamColor;
     public playerFromClass?: PlayerClass;
     public playerTo?: Player;
-    public playerToTeam?: TeamColor;
     public playerToClass?: PlayerClass;
     public withWeapon?: Weapon;
     public playerFromWasCarryingFlag: boolean;
@@ -236,10 +232,8 @@ export class Event {
         // optional fields
         this.data = options.data;
         this.playerFrom = options.playerFrom;
-        this.playerFromTeam = options.playerFromTeam;
         this.playerFromClass = options.playerFromClass;
         this.playerTo = options.playerTo;
-        this.playerToTeam = options.playerToTeam;
         this.playerToClass = options.playerToClass;
         this.withWeapon = options.withWeapon;
 
@@ -275,9 +269,7 @@ export class Event {
 
         let withWeapon: Weapon | undefined;
         let playerFrom: Player | undefined;
-        let playerFromTeam: TeamColor | undefined;
         let playerTo: Player | undefined;
-        let playerToTeam: TeamColor | undefined;
         let data: ExtraData = {};
 
         // a valid log line must start with 'L'
@@ -327,7 +319,7 @@ export class Event {
                     const playerName = fromPlayerDataParts[1];
                     const playerID = Number(fromPlayerDataParts[2]);
                     const playerSteamID = fromPlayerDataParts[3];
-                    playerFromTeam = this.parseTeam(fromPlayerDataParts[4]);
+                    const playerFromTeam = this.parseTeam(fromPlayerDataParts[4]);
 
                     playerFrom = roundState.ensurePlayer(playerSteamID, playerName, playerID, playerFromTeam);
 
@@ -335,7 +327,7 @@ export class Event {
                         const otherPlayerName = otherPlayerDataParts[1];
                         const otherPlayerID = Number(otherPlayerDataParts[2]);
                         const otherPlayerSteamID = otherPlayerDataParts[3];
-                        playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
+                        const playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
 
                         playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
                         // do a switch based on the statement
@@ -1025,10 +1017,9 @@ export class Event {
                                 const otherPlayerName = otherPlayerDataParts[1];
                                 const otherPlayerID = Number(otherPlayerDataParts[2]);
                                 const otherPlayerSteamID = otherPlayerDataParts[3];
-                                playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
+                                const playerToTeam = this.parseTeam(otherPlayerDataParts[4]);
                                 playerTo = roundState.ensurePlayer(otherPlayerSteamID, otherPlayerName, otherPlayerID, playerToTeam);
                                 playerFrom = playerTo;
-                                playerFromTeam = playerToTeam;
                             }
                             break;
                         case "World":
@@ -1222,9 +1213,7 @@ export class Event {
                     timestamp: timestamp,
                     data: data,
                     playerFrom: playerFrom,
-                    playerFromTeam: playerFromTeam,
                     playerTo: playerTo,
-                    playerToTeam: playerToTeam,
                     withWeapon: withWeapon,
                 });
             }
