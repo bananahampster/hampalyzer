@@ -231,10 +231,12 @@ export enum Weapon {
     SniperRifle,
     AutoRifle,
     Infection,
+    WorldLift,
     WorldSpawn, /* can we distinguish between world/fall dmg? */
+    WorldDoor,
     Train,
     Lasers,
-    Pit,
+    WorldPit,
     Tranquilizer,
     BuildingTeleporter,
     BuildingTeleporterEntrance,
@@ -255,8 +257,9 @@ export enum PlayerClass {
     Random,
 };
 
-export namespace PlayerClass {
-    export function outputClass(playerClass: PlayerClass): string {
+
+export namespace DisplayStringHelper {
+    export function classToDisplayString(playerClass: PlayerClass): string {
         switch(playerClass) {
             case PlayerClass.Civilian:
                 return 'civilian';
@@ -284,6 +287,10 @@ export namespace PlayerClass {
                 console.error(`unknown playerClass: outputClass(${playerClass})`);
                 return 'unknown;'
         }
+    }
+    export function weaponToDisplayString(weapon: Weapon): string {
+        // splits `CamelCaseString` to `camel case string`
+        return Weapon[weapon].replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
     }
 }
 

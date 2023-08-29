@@ -2,7 +2,7 @@ import { EventHandlingPhase, EventSubscriber, HandlerRequest } from './eventSubs
 import { RoundState } from './roundState.js'
 import { Event } from './parser.js';
 import Player from './player.js';
-import { ClassTime, PlayerClass } from './constants.js';
+import { DisplayStringHelper, ClassTime } from './constants.js';
 import EventType from './eventType.js';
 
 type ClassTimeTracker = Omit<ClassTime, 'time'>;
@@ -41,7 +41,7 @@ export class ClassTracker extends EventSubscriber {
 
                     playerClasses.push({
                         class: playerClass,
-                        classAsString: PlayerClass.outputClass(playerClass),
+                        classAsString: DisplayStringHelper.classToDisplayString(playerClass),
                         startLineNumber: event.lineNumber,
                         endLineNumber: null,
                     });

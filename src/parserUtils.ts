@@ -2,7 +2,7 @@ import PlayerList from "./playerList.js";
 import { Event, RoundParser } from "./parser.js";
 import Player from "./player.js";
 import { RoundState } from "./roundState.js";
-import { TeamColor, OutputStats, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
+import { TeamColor, OutputStats, DisplayStringHelper, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
 import EventType from "./eventType.js";
 
 export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
@@ -1003,7 +1003,10 @@ export default class ParserUtils {
                             (e) => `Team-killed ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}by ${e.playerFrom?.name} at ${this.getTime(e)}`);
                     case 'by_self':
                         return this.generateFacetedStats(stat.events!,
-                            (e) => `Suicided ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}at ${this.getTime(e)}`);
+                            (e) => {
+                                const weaponString: string = e.withWeapon ? `with ${DisplayStringHelper.weaponToDisplayString(e.withWeapon)} ` : "";
+                                return `Suicided ${weaponString}${e.playerToWasCarryingFlag ? "while carrying flag " : ""}at ${this.getTime(e)}`;
+                            });
                 }
                 break;
             case 'weaponStats':
@@ -1176,7 +1179,7 @@ export default class ParserUtils {
 
                 classTimes.push({
                     class: lastClass,
-                    classAsString: PlayerClass.outputClass(lastClass),
+                    classAsString: DisplayStringHelper.classToDisplayString(lastClass),
                     time,
                     startLineNumber: lastChangeEvent.lineNumber,
                     endLineNumber: (roleChangedEvent.lineNumber - 1)
@@ -1195,7 +1198,7 @@ export default class ParserUtils {
 
             classTimes.push({
                 class: lastClass,
-                classAsString: PlayerClass.outputClass(lastClass),
+                classAsString: DisplayStringHelper.classToDisplayString(lastClass),
                 time,
                 startLineNumber: lastChangeEvent.lineNumber,
                 endLineNumber: null

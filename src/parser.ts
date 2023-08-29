@@ -1387,16 +1387,18 @@ export class Event {
                 return Weapon.AutoRifle;
             case "infection":
                 return Weapon.Infection;
-            case "teledeath": // TODO: is this a spawn telefrag?
-            case "teledeath (world)": // TODO: is this a spawn telefrag?
             case "door (world)": // TODO: door frag?
             case "door_rotating (world)": // haste_r
+                return Weapon.WorldDoor;
+            case "the red lift (world)": // openfire
+            case "the blue lift (world)": // openfire
+                return Weapon.WorldLift;
+            case "teledeath": // TODO: is this a spawn telefrag?
+            case "teledeath (world)": // TODO: is this a spawn telefrag?
             case "world":
             case "worldspawn":
             case "worldspawn (world)":
             case "miniturret (world)": // TODO: call this out?
-            case "the red lift (world)": // openfire
-            case "the blue lift (world)": // openfire
             case "timer (world)": // getting killed after round ends (e.g. infection kill after time)
             case "normalgrenade (world)": // getting killed after round ends (e.g. suicide via grenade):
             case "mirvgrenade (world)":
@@ -1416,7 +1418,7 @@ export class Event {
                 return Weapon.Train;
             case "rock_falling_death (world)": // 2mesa3
             case "#rock_falling_death (world)":
-                return Weapon.Pit;
+                return Weapon.WorldPit;
             case "timer":
                 return Weapon.None;
             default:
