@@ -22,7 +22,9 @@ export default class ParserUtils {
             if (players) {
                 players.forEach((player: Player) => {
                     const playerRoundTime = player.getTotalRoundTimeInSeconds(roundState.roundEndTimeInGameSeconds);
-                    if (player.team !== TeamColor.Spectator && playerRoundTime > 0) {
+                    // Require at least 5 seconds of game time to address players accidentally joining a team and then
+                    // switching to spectator.
+                    if (player.team !== TeamColor.Spectator && playerRoundTime > 5) {
                         if (!primaryPlayerForSteamID[player.steamID]) {
                             primaryPlayerForSteamID.set(player.steamID, { player: player, time: playerRoundTime });
                         }
