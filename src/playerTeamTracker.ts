@@ -34,7 +34,7 @@ export class PlayerTeamTracker extends EventSubscriber {
                 break;
             case EventType.PlayerLeftServer:
             case EventType.PlayerKicked:
-                this.setPlayerTeam(event.playerFrom!, TeamColor.None, event.gameTimeAsSeconds);
+                this.setPlayerTeam(event.playerFrom!, undefined, event.gameTimeAsSeconds);
                 break;
             default:
                 break;
