@@ -9,17 +9,34 @@ export type TeamScore = { [team in TeamColor]?: number; };
 export type PlayersStats = { [playerID: string]: Stats } & { 'flag': Stats };
 export type Stats = { [stat: string]: Event[] };
 
+interface PlayerAndTime {
+    player: Player,
+    time: number
+}
+
 export default class ParserUtils {
     public static getFilteredPlayers(roundState: RoundState): PlayerList {
-        const filteredList = new PlayerList();
+        // Determine the team each steam ID player was on for the longest.
+        const primaryPlayerForSteamID: Map<string, PlayerAndTime> = new Map<string, PlayerAndTime>();
         for (const [team, players] of Object.entries(roundState.players.teams)) {
             if (players) {
                 players.forEach((player: Player) => {
-                    if (player.team !== TeamColor.Spectator && player.getTotalRoundTimeInSeconds(roundState.roundEndTimeInGameSeconds) > 0) {
-                        filteredList.addPlayer(player);
+                    const playerRoundTime = player.getTotalRoundTimeInSeconds(roundState.roundEndTimeInGameSeconds);
+                    if (player.team !== TeamColor.Spectator && playerRoundTime > 0) {
+                        if (!primaryPlayerForSteamID[player.steamID]) {
+                            primaryPlayerForSteamID.set(player.steamID, { player: player, time: playerRoundTime });
+                        }
+                        else if (playerRoundTime > primaryPlayerForSteamID[player.steamID].time) {
+                            primaryPlayerForSteamID.set(player.steamID, { player: player, time: playerRoundTime });
+                        }
                     }
                 });
             }
+        }
+
+        const filteredList = new PlayerList();
+        for (let [steamID, playerAndTime] of primaryPlayerForSteamID) {
+            filteredList.addPlayer(playerAndTime.player);
         }
         return filteredList;
     }
