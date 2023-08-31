@@ -2,7 +2,7 @@ import { Event } from "./parser.js";
 import EventType from './eventType.js';
 import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
 import { RoundState } from "./roundState.js";
-import { TeamColor } from "./constants.js";
+import { TeamColor, TeamComposition } from "./constants.js";
 import Player from "./player.js";
 import PlayerList from "./playerList.js";
 
@@ -11,13 +11,13 @@ export class PlayerTeamTracker extends EventSubscriber {
     public players: PlayerList;
 
     // The current team composition.
-    public currentTeams: PlayerList;
+    public currentTeams: TeamComposition;
 
     constructor() {
         super();
 
         this.players = new PlayerList();
-        this.currentTeams = new PlayerList();
+        this.currentTeams = {};
     }
 
     phaseStart(phase: EventHandlingPhase, roundState: RoundState): void {}
@@ -34,7 +34,7 @@ export class PlayerTeamTracker extends EventSubscriber {
                 break;
             case EventType.PlayerLeftServer:
             case EventType.PlayerKicked:
-                this.setPlayerTeam(event.playerFrom!, undefined, event.gameTimeAsSeconds);
+                this.setPlayerTeam(event.playerFrom!, TeamColor.None, event.gameTimeAsSeconds);
                 break;
             default:
                 break;
@@ -61,7 +61,9 @@ export class PlayerTeamTracker extends EventSubscriber {
             throw "Couldn't get player: " + player.steamID;
         }
 
-        playerObj.recordJoinTeamTime(gameTimeAsSeconds);
+        if (team) {
+            playerObj.recordJoinTeamTime(gameTimeAsSeconds);
+        }
 
         if (playerObj) {
             if (team) {
@@ -71,7 +73,7 @@ export class PlayerTeamTracker extends EventSubscriber {
             }
         }
         // Update currentTeams
-        for (const [currentTeam, currentTeamMembers] of Object.entries(this.currentTeams.teams)) {
+        for (const [currentTeam, currentTeamMembers] of Object.entries(this.currentTeams)) {
             if (currentTeamMembers) {
                 if (team && currentTeam === team.toString()) {
                     // Duplicate join team events have been observed in actual logs.
@@ -81,7 +83,8 @@ export class PlayerTeamTracker extends EventSubscriber {
                 }
                 else {
                     // The player is not currently a part of this team.
-                    const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID == playerObj!.steamID);
+                    const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID === playerObj!.steamID);
+
                     if (indexOfPlayerInTeam !== -1) {
                         const removed: Player = currentTeamMembers.splice(indexOfPlayerInTeam, 1)[0];
                         removed.recordLeaveTeamTime(gameTimeAsSeconds);

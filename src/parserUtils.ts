@@ -156,10 +156,10 @@ export default class ParserUtils {
         }
     }
 
-    public static playerListToOutput(teamComp: PlayerList): TeamComposition<OutputPlayer> {
+    public static playerListToOutput(playerList: PlayerList): TeamComposition<OutputPlayer> {
         return {
-            '1': teamComp[1] ? teamComp[1].map(player => player.dumpOutput()) : undefined,
-            '2': teamComp[2] ? teamComp[2].map(player => player.dumpOutput()) : undefined,
+            '1': playerList.teams[1] ? playerList.teams[1].map(player => player.dumpOutput()) : undefined,
+            '2': playerList.teams[2] ? playerList.teams[2].map(player => player.dumpOutput()) : undefined,
         };
     }
 
@@ -523,6 +523,7 @@ export default class ParserUtils {
                         this.addStat(thisPlayerStats, 'suicide', event);
                         break;
                     case EventType.PlayerJoinTeam:
+                    case EventType.PlayerLeftServer:
                         // no-op
                         break;
                     default:
