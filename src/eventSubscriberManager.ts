@@ -4,6 +4,7 @@ import { RoundState } from './roundState.js';
 export enum EventHandlingPhase {
     Initial,
     EarlyFixups,
+    AfterGameTimeEpochEstablished,
     Main,
     PostMain
 }
@@ -32,6 +33,7 @@ export class EventSubscriberManager {
         this.eventSubscribersByPhase = {
             [EventHandlingPhase.Initial]: [],
             [EventHandlingPhase.EarlyFixups]: [],
+            [EventHandlingPhase.AfterGameTimeEpochEstablished]: [],
             [EventHandlingPhase.Main]: [],
             [EventHandlingPhase.PostMain]: [],
         };

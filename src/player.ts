@@ -71,12 +71,11 @@ class Player {
     }
 
     public recordJoinTeamTime(joinTeamTimeInGameSeconds: number) {
-        if (this.intervalsOnTeam.length > 0 && this.intervalsOnTeam[this.intervalsOnTeam.length -1].startTimeInSeconds === joinTeamTimeInGameSeconds) {
+        if (this.intervalsOnTeam.length > 0 &&
+            (this.intervalsOnTeam[this.intervalsOnTeam.length -1].startTimeInSeconds === joinTeamTimeInGameSeconds ||
+            this.intervalsOnTeam[this.intervalsOnTeam.length -1].endTimeInSeconds === undefined)) {
             // Duplicate join time.
             return;
-        }
-        else if (this.intervalsOnTeam.length > 0 && this.intervalsOnTeam[this.intervalsOnTeam.length -1].endTimeInSeconds === undefined) {
-            throw "Join team observed without seeing a prior leave event.";
         }
         this.intervalsOnTeam.push(new TimeInterval(joinTeamTimeInGameSeconds, undefined));
     }
