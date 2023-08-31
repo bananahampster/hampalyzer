@@ -11,7 +11,6 @@ export type Stats = { [stat: string]: Event[] };
 
 export default class ParserUtils {
     public static getFilteredPlayers(roundState: RoundState): PlayerList {
-        // TODO: filter out spectators and players with 0 round time on a team
         const filteredList = new PlayerList();
         for (const [team, players] of Object.entries(roundState.players.teams)) {
             if (players) {
@@ -22,7 +21,6 @@ export default class ParserUtils {
                 });
             }
         }
-
         return filteredList;
     }
 
