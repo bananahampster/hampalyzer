@@ -1,54 +1,33 @@
 import { EventHandlingPhase, EventSubscriber, HandlerRequest } from './eventSubscriberManager.js'
 import { RoundState } from './roundState.js'
 import { Event } from './parser.js';
-import Player from './player.js';
-import { DisplayStringHelper, ClassTime } from './constants.js';
 import EventType from './eventType.js';
 
-type ClassTimeTracker = Omit<ClassTime, 'time'>;
-export type PlayerClasses = Record<Player['steamID'], ClassTimeTracker[]>;
-
 export class ClassTracker extends EventSubscriber {
-    private playerClasses: PlayerClasses = {};
-
     public phaseStart(phase: EventHandlingPhase, _roundState: RoundState): void {
-        if (phase !== EventHandlingPhase.Initial)
+        if (phase !== EventHandlingPhase.AfterGameTimeEpochEstablished)
             throw "Unexpected phase";
     }
 
     public phaseEnd(phase: EventHandlingPhase, _roundState: RoundState): void {
-        if (phase !== EventHandlingPhase.Initial)
+        if (phase !== EventHandlingPhase.AfterGameTimeEpochEstablished)
             throw "Unexpected phase";
     }
 
     public handleEvent(event: Event, _phase: EventHandlingPhase, _roundState: RoundState): HandlerRequest {
         switch (event.eventType) {
             case EventType.PlayerChangeRole:
-                const playerId = event!.playerFrom!.steamID;
-                if (!this.playerClasses[playerId]) {
-                    this.playerClasses[playerId] = [];
-                }
-
                 const playerClass = event?.data?.class;
                 if (playerClass != null) {
-                    const playerClasses = this.playerClasses[playerId];
-                    const classLength = playerClasses.length;
-
-                    // set end of previous classTime, if available
-                    if (classLength !== 0) {
-                        playerClasses[playerClasses.length - 1].endLineNumber = event.lineNumber - 1;
-                    }
-
-                    playerClasses.push({
-                        class: playerClass,
-                        classAsString: DisplayStringHelper.classToDisplayString(playerClass),
-                        startLineNumber: event.lineNumber,
-                        endLineNumber: null,
-                    });
-
+                    event!.playerFrom!.recordClassStartTime(playerClass, event.gameTimeAsSeconds);
                 }
                 break;
-
+            case EventType.PlayerJoinTeam:
+            case EventType.PlayerLeftServer:
+            // @ts-expect-error: explicit fall through
+            case EventType.PlayerKicked:
+                event!.playerFrom!.recordClassEndTime(event.gameTimeAsSeconds);
+                // fall through
             default:
                 this.setPlayerClassOnEvent(event, 'from');
                 this.setPlayerClassOnEvent(event, 'to');
@@ -58,23 +37,18 @@ export class ClassTracker extends EventSubscriber {
         return HandlerRequest.None;
     }
 
-    public get classes(): PlayerClasses {
-        return this.playerClasses;
-    }
-
     private setPlayerClassOnEvent(event: Event, playerDirection: 'from' | 'to'): void {
         const player = playerDirection === 'from' ? event.playerFrom : event.playerTo;
-        const playerId = player?.steamID;
 
-        if (playerId != null) {
-            const playerClasses = this.playerClasses?.[playerId];
-            if (playerClasses) {
+        if (player) {
+            const currentClass = player.currentClass;
+            if (currentClass) {
                 switch (playerDirection) {
                     case 'from':
-                        event.playerFromClass = playerClasses[playerClasses.length - 1].class;
+                        event.playerFromClass = currentClass;
                         return;
                     case 'to':
-                        event.playerToClass = playerClasses[playerClasses.length - 1].class;
+                        event.playerToClass = currentClass;
                         return;
                     default:
                         throw 'unknown playerDirection';

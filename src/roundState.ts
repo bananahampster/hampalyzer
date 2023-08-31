@@ -25,8 +25,8 @@ export class RoundState {
 
     public getEventSubscribers(): SubscriberList {
         return {
-            classHandler: { subscriber: this.classTracker, phases: [EventHandlingPhase.Initial] },
             preAndPostMatchHandler: { subscriber: new PreAndPostMatchCuller(), phases: [EventHandlingPhase.Initial, EventHandlingPhase.EarlyFixups] },
+            classHandler: { subscriber: this.classTracker, phases: [EventHandlingPhase.AfterGameTimeEpochEstablished] },
             playerTeamStateHandler: { subscriber: this.playerTeamTracker, phases: [EventHandlingPhase.AfterGameTimeEpochEstablished] },
             flagMovementHandler: { subscriber: this.flagMovementTracker, phases: [EventHandlingPhase.Main] },
             whileConcedHandler: { subscriber: new WhileConcedTracker(), phases: [EventHandlingPhase.Main] },
@@ -42,9 +42,6 @@ export class RoundState {
     }
     get players() {
         return this.playerTeamTracker.players;
-    }
-    get classes() {
-        return this.classTracker.classes;
     }
     get score() {
         return this.flagMovementTracker.score;

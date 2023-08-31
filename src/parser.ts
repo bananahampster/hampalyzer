@@ -140,7 +140,7 @@ export class RoundParser {
 
     private trimPreAndPostMatchEvents() {
         const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
-        const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events[this.events.length - 1];
+        const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events.at(-1)!;
 
         const matchStartLineNumber = matchStartEvent.lineNumber;
         const matchEndLineNumber = matchEndEvent.lineNumber;
@@ -364,7 +364,7 @@ export class Event {
 
                                 } else if (nonPlayerDataParts[1].startsWith("Sentry_Upgrade")) {
                                     eventType = EventType.PlayerUpgradedOtherGun;
-                                    data.level = Number(nonPlayerDataParts[1][nonPlayerDataParts[1].length - 1]);
+                                    data.level = Number(nonPlayerDataParts[1].at(-1));
 
                                 } else if (nonPlayerDataParts[1] === `Sentry_Repair`) {
                                     eventType = EventType.PlayerRepairedBuilding;

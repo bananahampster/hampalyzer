@@ -43,7 +43,7 @@ export default class FlagPaceChart {
                         // Insert a terminal entry for time=game_time_as_seconds.
                         scoreUpdates.push({
                             gameTimeAsSeconds: scoringActivity.game_time_as_seconds,
-                            currentScore: teamFlagMovements[teamFlagMovements.length - 1].current_score,
+                            currentScore: teamFlagMovements.at(-1)!.current_score,
                             team: currentTeamLabel
                         });
                     }
@@ -105,7 +105,7 @@ export default class FlagPaceChart {
         const xScale = d3.scaleLinear(xDomain, xRange);
         const yScale = d3.scaleLinear(yDomain, yRange);
         const color = d3.scaleOrdinal(zDomain, colors);
-        const xAxis = d3.axisBottom(xScale).ticks(Math.round(this.data[this.data.length - 1].gameTimeAsSeconds / 20))
+        const xAxis = d3.axisBottom(xScale).ticks(Math.round(this.data.at(-1)!.gameTimeAsSeconds / 20))
             .tickFormat((domainValue, index) => {
                 if (domainValue.valueOf() % 60 == 0) {
                     return `${domainValue.valueOf() / 60}m`;

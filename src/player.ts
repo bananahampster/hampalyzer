@@ -1,6 +1,7 @@
-import { OutputPlayer } from "./constants.js";
-import { TeamColor } from "./constants.js";
+import { OutputPlayer, PlayerClass } from "./constants.js";
+import { ClassTime, DisplayStringHelper, TeamColor } from "./constants.js";
 import { TimeInterval } from "./timeInterval.js";
+import { TimeIntervalWithContext } from "./timeIntervalWithContext.js";
 
 export class PlayerRoundStats {
     public flagCarries = 0;
@@ -19,6 +20,7 @@ class Player {
     private playerNum: number;
     private teamColor: TeamColor;
     private intervalsOnTeam: TimeInterval[];
+    private classIntervals: TimeIntervalWithContext<PlayerClass>[];
     private leftTeamTimeInGameSeconds: number | undefined;
     private _roundStats: PlayerRoundStats;
     private _currentStatus: PlayerCurrentStatus;
@@ -29,6 +31,7 @@ class Player {
         this.playerNum = playerID;
         this.teamColor = team;
         this.intervalsOnTeam = [];
+        this.classIntervals = [];
         this._roundStats = new PlayerRoundStats();
         this._currentStatus = new PlayerCurrentStatus();
     }
@@ -72,16 +75,79 @@ class Player {
 
     public recordJoinTeamTime(joinTeamTimeInGameSeconds: number) {
         if (this.intervalsOnTeam.length > 0 &&
-            (this.intervalsOnTeam[this.intervalsOnTeam.length -1].startTimeInSeconds === joinTeamTimeInGameSeconds ||
-            this.intervalsOnTeam[this.intervalsOnTeam.length -1].endTimeInSeconds === undefined)) {
-            // Duplicate join time.
+            (this.intervalsOnTeam.at(-1)!.startTimeInSeconds === joinTeamTimeInGameSeconds ||
+            this.intervalsOnTeam.at(-1)!.endTimeInSeconds === undefined)) {
+            // Already on the team.
             return;
         }
         this.intervalsOnTeam.push(new TimeInterval(joinTeamTimeInGameSeconds, undefined));
     }
     public recordLeaveTeamTime(leaveTeamTimeInGameSeconds: number) {
-        this.intervalsOnTeam[this.intervalsOnTeam.length - 1].setEndTime(leaveTeamTimeInGameSeconds);
+        this.intervalsOnTeam.at(-1)!.setEndTime(leaveTeamTimeInGameSeconds);
     }
+
+    public get currentClass(): PlayerClass | undefined {
+        if (this.classIntervals.length > 0) {
+            return this.classIntervals.at(-1)?.context;
+        }
+        return undefined;
+    }
+    public recordClassStartTime(playerClass: PlayerClass, classStartTimeInGameSeconds: number) {
+        if (this.classIntervals.length > 0 &&
+            this.classIntervals.at(-1)!.endTimeInSeconds === undefined &&
+            this.classIntervals.at(-1)!.context === playerClass) {
+            // Already this class.
+            return;
+        }
+        if (this.classIntervals.length > 0) {
+            // End the prior interval.
+            this.classIntervals.at(-1)!.endTimeInSeconds = classStartTimeInGameSeconds;
+        }
+        this.classIntervals.push(new TimeIntervalWithContext<PlayerClass>(classStartTimeInGameSeconds, undefined, playerClass));
+    }
+    public recordClassEndTime(classEndTimeInGameSeconds: number) {
+        if (this.classIntervals.length > 0 &&
+            this.classIntervals.at(-1)!.endTimeInSeconds === undefined) {
+            this.classIntervals.at(-1)!.endTimeInSeconds = classEndTimeInGameSeconds;
+        }
+    }
+
+    public getPlayerClassTimes(gameEndTimeInGameSeconds: number): ClassTime[] {
+        let classTimes: ClassTime[] = [];
+
+        for (let i = 0; i < this.classIntervals.length; i++) {
+            const curInterval = this.classIntervals[i];
+            const classTime = curInterval.getClampedDuration(0, gameEndTimeInGameSeconds)!;
+            if (classTime > 0) {
+                classTimes.push({
+                    class: curInterval.context,
+                    classAsString: DisplayStringHelper.classToDisplayString(curInterval.context),
+                    timeInSeconds: curInterval.getClampedDuration(0, gameEndTimeInGameSeconds)!
+                });
+            }
+        }
+        return classTimes;
+    }
+    
+    public getPlayerClassesDisplayString(gameEndTimeInGameSeconds: number): string {
+        let classTimes: ClassTime[] = this.getPlayerClassTimes(gameEndTimeInGameSeconds);
+        let mergedClassTimes: ClassTime[] = [];
+
+        for (let i = 0; i < classTimes.length; i++) {
+            const curClassTime = classTimes[i];
+            let mergedClassEntry = mergedClassTimes.find((c) => c.class == curClassTime.class);
+            if (mergedClassEntry) {
+                mergedClassEntry.timeInSeconds += curClassTime.timeInSeconds;
+            }
+            else {
+                mergedClassTimes.push(curClassTime);
+            }
+        }
+        mergedClassTimes.sort((a, b) => a.timeInSeconds < b.timeInSeconds ? 1 : -1);
+
+        return mergedClassTimes.map(playerClass => PlayerClass[playerClass.class]).join(", ");
+    }
+
     public getTotalRoundTimeInSeconds(gameEndTimeInGameSeconds: number) {
         let time = 0;
         for (let i = 0; i < this.intervalsOnTeam.length; i++) {

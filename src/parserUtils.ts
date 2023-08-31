@@ -2,7 +2,7 @@ import PlayerList from "./playerList.js";
 import { Event, RoundParser } from "./parser.js";
 import Player from "./player.js";
 import { RoundState } from "./roundState.js";
-import { TeamColor, TeamComposition, OutputStats, DisplayStringHelper, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
+import { TeamColor, TeamComposition, OutputStats, DisplayStringHelper, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
 import EventType from "./eventType.js";
 
 export type TeamScore = { [team in TeamColor]?: number; };
@@ -23,7 +23,7 @@ export default class ParserUtils {
                 players.forEach((player: Player) => {
                     const playerRoundTime = player.getTotalRoundTimeInSeconds(roundState.roundEndTimeInGameSeconds);
                     // Require at least 5 seconds of game time to address players accidentally joining a team and then
-                    // switching to spectator.
+                    // switching to spectator. 
                     if (player.team !== TeamColor.Spectator && playerRoundTime > 5) {
                         if (!primaryPlayerForSteamID[player.steamID]) {
                             primaryPlayerForSteamID.set(player.steamID, { player: player, time: playerRoundTime });
@@ -605,12 +605,12 @@ export default class ParserUtils {
 
         // game time (should we calculate this somewhere else?)
         const matchStartEvent = events.find(event => event.eventType === EventType.PrematchEnd) || events[0];
-        const matchEndEvent = events.find(event => event.eventType === EventType.TeamScore) || events[events.length - 1];
+        const matchEndEvent = events.find(event => event.eventType === EventType.TeamScore) || events.at(-1)!;
 
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEndEvent.timestamp.valueOf() - matchStartEvent.timestamp.valueOf());
 
-        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, matchEndEvent.timestamp);
+        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, roundState.roundEndTimeInGameSeconds);
 
         let damageStatsExist = false;
         for (const teamId in teams) {
@@ -656,7 +656,7 @@ export default class ParserUtils {
     public static generateOutputTeamsStatsDetailed(
         stats: PlayersStats,
         players: PlayerList,
-        matchEnd: Date): TeamsOutputStatsDetailed {
+        gameEndTimeInGameSeconds: number): TeamsOutputStatsDetailed {
 
         // calculate stats per player
         let outputStats: TeamsOutputStatsDetailed = {};
@@ -674,13 +674,13 @@ export default class ParserUtils {
                 poStats.id = thisPlayer.steamID.split(":")[2];
 
                 const playerStats = stats[playerID];
-                poStats.classes = this.calculateAndApplyPlayerClassOnAllEvents(thisPlayer, playerStats, matchEnd);
+                poStats.classes = thisPlayer.getPlayerClassTimes(gameEndTimeInGameSeconds)
                 for (const stat in playerStats) {
                     const statEvents = playerStats[stat];
                     switch (stat) {
                         /** classes */
                         case 'role':
-                            poStats.roles = this.getPlayerClasses(statEvents, matchEnd); // TODO: Merge with applyPlayerRoleOnAllEvents
+                            poStats.roles = thisPlayer.getPlayerClassesDisplayString(gameEndTimeInGameSeconds);
                             break;
                         /** kills */
                         case 'kill':
@@ -1129,119 +1129,5 @@ export default class ParserUtils {
         };
 
         return [offenseDiff, defenseDiff];
-    }
-
-    private static calculateAndApplyPlayerClassOnAllEvents(player: Player, playerEvents: Stats, matchEnd: Date) {
-        let classTimes: ClassTime[] = [];
-
-        let roleChangedEvents = playerEvents['role'];
-        if (!roleChangedEvents) {
-            return classTimes;
-        }
-        roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-
-        let lastChangeEvent: Event | undefined;
-        let lastClass: PlayerClass | undefined;
-        for (const roleChangedEvent of roleChangedEvents) {
-            // skip the initial role if no timestamp set
-            if (lastChangeEvent !== undefined && lastClass !== undefined) {
-                // calculate the time for the last class and add entry
-                const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
-                    .format(roleChangedEvent.timestamp.valueOf() - lastChangeEvent.timestamp.valueOf());
-
-                classTimes.push({
-                    class: lastClass,
-                    classAsString: DisplayStringHelper.classToDisplayString(lastClass),
-                    time,
-                    startLineNumber: lastChangeEvent.lineNumber,
-                    endLineNumber: (roleChangedEvent.lineNumber - 1)
-                });
-            }
-
-            lastClass = roleChangedEvent.data!.class;
-            lastChangeEvent = roleChangedEvent;
-        }
-
-        // make sure to record the last class picked
-        if (lastClass && lastChangeEvent) {
-            // calculate the time for the last class and add entry
-            const time = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
-                .format(matchEnd.valueOf() - lastChangeEvent.timestamp.valueOf());
-
-            classTimes.push({
-                class: lastClass,
-                classAsString: DisplayStringHelper.classToDisplayString(lastClass),
-                time,
-                startLineNumber: lastChangeEvent.lineNumber,
-                endLineNumber: null
-            });
-        }
-
-        // apply the class on all of the player's events
-        for (const stat in playerEvents) {
-            let statEvents = playerEvents[stat];
-            statEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-
-            let curClassIndex = 0;
-            statEvents.forEach((statEvent) => {
-                // Advance through the array of class choices until we reach the one that started prior to this event.
-                while (curClassIndex < classTimes.length
-                    && classTimes[curClassIndex].endLineNumber != null
-                    && statEvent.lineNumber > classTimes[curClassIndex].endLineNumber!) {
-                    curClassIndex++;
-                }
-                if (curClassIndex < classTimes.length) {
-                    if (player == statEvent.playerFrom) {
-                        statEvent.playerFromClass = classTimes[curClassIndex].class;
-                    }
-                    if (player == statEvent.playerTo) {
-                        statEvent.playerToClass = classTimes[curClassIndex].class;
-                    }
-                }
-            });
-        }
-
-        return classTimes;
-    }
-
-    private static getPlayerClasses(roleChangedEvents: Event[], matchEnd: Date): string {
-        // collect times of classes; rank by most-played to least
-        roleChangedEvents.sort((a, b) => a.lineNumber > b.lineNumber ? 1 : -1);
-        let classTimes: Partial<{ [key in PlayerClass]: number}> = {};
-
-        let lastClass: PlayerClass | undefined;
-        const lastTimestamp = roleChangedEvents.reduce<Date | undefined>((lastTimestamp, roleChangedEvent) => {
-            lastClass = roleChangedEvent.data!.class;
-
-            // skip the initial role (no previous timestamp set)
-            if (lastTimestamp !== undefined && lastClass !== undefined) {
-                // calculate time for the last class
-                classTimes[lastClass] = classTimes[lastClass] || 0;
-                classTimes[lastClass]! += roleChangedEvent.timestamp.valueOf() - lastTimestamp.valueOf();
-            }
-
-            return roleChangedEvent.timestamp;
-        }, undefined);
-
-        // record last class
-        if (lastClass && lastTimestamp) {
-            classTimes[lastClass] = classTimes[lastClass] || 0;
-            classTimes[lastClass]! += matchEnd.valueOf() - lastTimestamp.valueOf();
-        } else
-            throw "player never picked a class";
-
-        // generate ranked class list
-        let rankedList: { role: PlayerClass, time: number }[] = [];
-        for (const classId in classTimes) {
-            // are you serious
-            const role = classId as unknown as PlayerClass;
-
-            const classStats = { role, time: classTimes[role] || 0 };
-            rankedList.push(classStats);
-        }
-        rankedList.sort((a, b) => a.time - b.time);
-
-        // print classes
-        return rankedList.map(role => PlayerClass[role.role]).join(', ');
     }
 }
