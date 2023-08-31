@@ -1,4 +1,4 @@
-import { TeamScore, TeamComposition } from "./parserUtils.js";
+import { TeamScore } from "./parserUtils.js";
 import { Event } from "./parser.js";
 import Player from "./player.js";
 
@@ -47,6 +47,8 @@ export interface TeamOutputStatsDetailed {
     players: PlayerOutputStatsRound[];
     teamStats?: TeamStats;
 }
+
+export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 
 export interface OutputPlayer {
     team: number;
