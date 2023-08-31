@@ -1,5 +1,6 @@
 import { OutputPlayer } from "./constants.js";
 import { TeamColor } from "./constants.js";
+import { TimeInterval } from "./timeInterval.js";
 
 export class PlayerRoundStats {
     public flagCarries = 0;
@@ -17,6 +18,8 @@ class Player {
     private names: string[];
     private playerNum: number;
     private teamColor: TeamColor;
+    private intervalsOnTeam: TimeInterval[];
+    private leftTeamTimeInGameSeconds: number | undefined;
     private _roundStats: PlayerRoundStats;
     private _currentStatus: PlayerCurrentStatus;
 
@@ -25,6 +28,7 @@ class Player {
         this.names = [name];
         this.playerNum = playerID;
         this.teamColor = team;
+        this.intervalsOnTeam = [];
         this._roundStats = new PlayerRoundStats();
         this._currentStatus = new PlayerCurrentStatus();
     }
@@ -64,6 +68,27 @@ class Player {
 
     public get currentStatus(): PlayerCurrentStatus { 
         return this._currentStatus;
+    }
+
+    public recordJoinTeamTime(joinTeamTimeInGameSeconds: number) {
+        if (this.intervalsOnTeam.length > 0 && this.intervalsOnTeam[this.intervalsOnTeam.length -1].startTimeInSeconds === joinTeamTimeInGameSeconds) {
+            // Duplicate join time.
+            return;
+        }
+        else if (this.intervalsOnTeam.length > 0 && this.intervalsOnTeam[this.intervalsOnTeam.length -1].endTimeInSeconds === undefined) {
+            throw "Join team observed without seeing a prior leave event.";
+        }
+        this.intervalsOnTeam.push(new TimeInterval(joinTeamTimeInGameSeconds, undefined));
+    }
+    public recordLeaveTeamTime(leaveTeamTimeInGameSeconds: number) {
+        this.intervalsOnTeam[this.intervalsOnTeam.length - 1].setEndTime(leaveTeamTimeInGameSeconds);
+    }
+    public getTotalRoundTimeInSeconds(gameEndTimeInGameSeconds: number) {
+        let time = 0;
+        for (let i = 0; i < this.intervalsOnTeam.length; i++) {
+            time += this.intervalsOnTeam[i].getClampedDuration(0, gameEndTimeInGameSeconds)!;
+        }
+        return time;
     }
 
     public toString(): string {

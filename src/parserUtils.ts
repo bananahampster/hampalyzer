@@ -2,75 +2,54 @@ import PlayerList from "./playerList.js";
 import { Event, RoundParser } from "./parser.js";
 import Player from "./player.js";
 import { RoundState } from "./roundState.js";
-import { TeamColor, OutputStats, DisplayStringHelper, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
+import { TeamColor, TeamComposition, OutputStats, DisplayStringHelper, PlayerClass, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, ClassTime, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
 import EventType from "./eventType.js";
 
-export type TeamComposition<TPlayer = Player> = { [team in TeamColor]?: TPlayer[]; };
 export type TeamScore = { [team in TeamColor]?: number; };
 export type PlayersStats = { [playerID: string]: Stats } & { 'flag': Stats };
 export type Stats = { [stat: string]: Event[] };
 
+interface PlayerAndTime {
+    player: Player,
+    time: number
+}
+
 export default class ParserUtils {
-    public static getPlayerTeams(events: Event[], playerList: PlayerList): TeamComposition {
-        let teams: TeamComposition = {};
-        const teamChangeEvents = events.filter(ev => ev.eventType === EventType.PlayerJoinTeam);
-
-        const playerTeams: { [playerID: string]: { lineNumber: number, gameTimeAsSeconds: number, team: TeamColor }[] } = {};
-        teamChangeEvents.forEach(event => {
-            // find the player in the team list; add if it isn't there
-            const player = event.playerFrom as Player;
-            let playerRecord = playerTeams[player.steamID]
-            if (!playerRecord)
-                playerRecord = playerTeams[player.steamID] = [];
-
-            const team = event.data && event.data.team;
-            if (!team) throw "expected team with a 'joined team' event";
-
-            playerRecord.push({ lineNumber: event.lineNumber, gameTimeAsSeconds: event.gameTimeAsSeconds!, team: team });
-        });
-
-        // get the end of the round as a reference
-        const endTime = events[events.length - 1].timestamp.getTime();
-
-        // calculate the longest time a player has been on the team, keep them there
-        // first appeared team is when they first joined a team, so use that as the start time
-        for (const player in playerTeams) {
-            const playerTimes = playerTeams[player];
-
-            let maxTime = 0;
-            let primaryTeam: TeamColor = TeamColor.Spectator;
-
-            const isLast = (i) => i >= playerTimes.length - 1;
-            playerTimes.forEach((event, i) => {
-                let thisTime = isLast(i) ? endTime - event.gameTimeAsSeconds : playerTimes[i + 1].gameTimeAsSeconds - event.gameTimeAsSeconds;
-
-                if (thisTime > maxTime || (event.team != TeamColor.Spectator && primaryTeam == TeamColor.Spectator && thisTime > 180)) {
-                    primaryTeam = event.team;
-                    maxTime = thisTime;
-                }
-            });
-
-            // add player to that winning team
-            if (!teams[primaryTeam])
-                teams[primaryTeam] = [];
-
-            const playerObj = playerList.ensurePlayer(player, undefined, undefined, primaryTeam);
-            if (playerObj)
-                teams[primaryTeam]!.push(playerObj);
+    public static getFilteredPlayers(roundState: RoundState): PlayerList {
+        // Determine the team each steam ID player was on for the longest.
+        const primaryPlayerForSteamID: Map<string, PlayerAndTime> = new Map<string, PlayerAndTime>();
+        for (const [team, players] of Object.entries(roundState.players.teams)) {
+            if (players) {
+                players.forEach((player: Player) => {
+                    const playerRoundTime = player.getTotalRoundTimeInSeconds(roundState.roundEndTimeInGameSeconds);
+                    if (player.team !== TeamColor.Spectator && playerRoundTime > 0) {
+                        if (!primaryPlayerForSteamID[player.steamID]) {
+                            primaryPlayerForSteamID.set(player.steamID, { player: player, time: playerRoundTime });
+                        }
+                        else if (playerRoundTime > primaryPlayerForSteamID[player.steamID].time) {
+                            primaryPlayerForSteamID.set(player.steamID, { player: player, time: playerRoundTime });
+                        }
+                    }
+                });
+            }
         }
 
-        return teams;
+        const filteredList = new PlayerList();
+        for (let [steamID, playerAndTime] of primaryPlayerForSteamID) {
+            filteredList.addPlayer(playerAndTime.player);
+        }
+        return filteredList;
     }
 
     // expecting round length of 2
     public static generateTeamComposition(rounds: RoundParser[]): TeamComposition<OutputPlayer> | undefined {
         // gather all team compositions
-        let teamComps = rounds.map(round => round.teams) as TeamComposition[];
+        let playerLists = rounds.map(round => round.playerList) as PlayerList[];
 
         // let's make the assumption that the team assignments should switch (blue -> red and vice versa)
         // arbitrary decision: make sure 50% of the players match
-        const numRd1BluePlayers = ParserUtils.num(teamComps[0][1]);
-        const numRd2BluePlayers = ParserUtils.num(teamComps[1][1]);
+        const numRd1BluePlayers = ParserUtils.num(playerLists[0].teams[1]);
+        const numRd2BluePlayers = ParserUtils.num(playerLists[1].teams[1]);
         const threshold = Math.floor(Math.max(numRd1BluePlayers, numRd2BluePlayers) / 2);
         if (Math.abs(numRd1BluePlayers - numRd2BluePlayers) > threshold) {
             return undefined;
@@ -93,19 +72,19 @@ export default class ParserUtils {
 
         // map all players together
         let teamComp: TeamComposition<OutputPlayer> = {
-            '1': teamComps[0][1]?.map(player => player.dumpOutput()),
-            '2': teamComps[0][2]?.map(player => player.dumpOutput()),
+            '1': playerLists[0].teams[1]?.map(player => player.dumpOutput()),
+            '2': playerLists[0].teams[2]?.map(player => player.dumpOutput()),
         };
 
         // fill in missing players
         // rd2RedPlayers?.forEach(player => {
-        teamComps[1][2]?.forEach(player => {
+        playerLists[1].teams[2]?.forEach(player => {
             // add missing players
             if (!teamComp[1]?.some(rd1Player => player.matches(rd1Player)))
                 teamComp[1]?.push(player.dumpOutput());
         });
 
-        teamComps[1][1]?.forEach(player => {
+        playerLists[1].teams[1]?.forEach(player => {
             // add missing players
             if (!teamComp[2]?.some(rd1Player => player.matches(rd1Player)))
                 teamComp[2]?.push(player.dumpOutput());
@@ -177,10 +156,10 @@ export default class ParserUtils {
         }
     }
 
-    public static teamCompToOutput(teamComp: TeamComposition): TeamComposition<OutputPlayer> {
+    public static playerListToOutput(playerList: PlayerList): TeamComposition<OutputPlayer> {
         return {
-            '1': teamComp[1] ? teamComp[1].map(player => player.dumpOutput()) : undefined,
-            '2': teamComp[2] ? teamComp[2].map(player => player.dumpOutput()) : undefined,
+            '1': playerList.teams[1] ? playerList.teams[1].map(player => player.dumpOutput()) : undefined,
+            '2': playerList.teams[2] ? playerList.teams[2].map(player => player.dumpOutput()) : undefined,
         };
     }
 
@@ -189,7 +168,7 @@ export default class ParserUtils {
         return arr.length;
     }
 
-    public static getScoreAndFlagMovements(events: Event[], teams?: TeamComposition): [TeamScore, TeamFlagMovements] {
+    public static getScoreAndFlagMovements(events: Event[], teams?: PlayerList): [TeamScore, TeamFlagMovements] {
         const teamScoreEvents = events.filter(ev => ev.eventType === EventType.TeamScore);
         let scores: TeamScore = {};
         let flagMovements: TeamFlagMovements = {};
@@ -295,7 +274,7 @@ export default class ParserUtils {
         return [scores, flagMovements];
     }
 
-    public static getPlayerStats(events: Event[], teams: TeamComposition): PlayersStats {
+    public static generatePlayerStats(events: Event[]): PlayersStats {
         // sort the events
         let playerStats: PlayersStats = { flag: {} };
         for (const event of events) {
@@ -429,7 +408,7 @@ export default class ParserUtils {
                             break;
 
                         // figure out if this was a team-kill/-death
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_kill', event);
                             this.addStat(otherPlayerStats, 'team_death', event);
                         } else {
@@ -438,7 +417,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerCaltroppedPlayer:
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_caltroper', event);
                             this.addStat(otherPlayerStats, 'team_caltroppee', event)
                         } else {
@@ -449,7 +428,7 @@ export default class ParserUtils {
                     case EventType.PlayerConced:
                         if (thisPlayer == otherPlayer) {
                             this.addStat(thisPlayerStats, 'conc_jump', event);
-                        } else if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        } else if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'conc_team', event);
                             this.addStat(otherPlayerStats, 'team_concee', event)
                         } else {
@@ -463,7 +442,7 @@ export default class ParserUtils {
                         this.addStat(otherPlayerStats, 'detpack_disarmee', event);
                         break;
                     case EventType.PlayerFraggedDispenser:
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_kill_disp', event);
                             this.addStat(otherPlayerStats, 'team_die_disp', event);
                         } else {
@@ -472,7 +451,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerFraggedGun:
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_kill_sg', event);
                             this.addStat(otherPlayerStats, 'team_die_sg', event);
                         } else {
@@ -481,7 +460,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerHallucinatedPlayer:
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_piller', event);
                             this.addStat(otherPlayerStats, 'team_pillee', event);
                         } else {
@@ -505,7 +484,7 @@ export default class ParserUtils {
                         this.addStat(otherPlayerStats, 'infectee', event);
                         break;
                     case EventType.PlayerPassedInfection:
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_pass_infecter', event);
                             this.addStat(otherPlayerStats, 'team_pass_infectee', event);
                         } else {
@@ -514,7 +493,7 @@ export default class ParserUtils {
                         }
                         break;
                     case EventType.PlayerTranqedPlayer:
-                        if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_tranqer', event);
                             this.addStat(otherPlayerStats, 'team_tranqee', event);
                         } else {
@@ -532,7 +511,7 @@ export default class ParserUtils {
                         if (thisPlayer == otherPlayer) {
                             this.addStat(thisPlayerStats, 'self_damage', event);
                         }
-                        else if (this.playersOnSameTeam(teams, thisPlayer, otherPlayer)) {
+                        else if (event.playerFrom.team === event.playerTo.team) {
                             this.addStat(thisPlayerStats, 'team_damager', event);
                             this.addStat(otherPlayerStats, 'team_damagee', event);
                         } else {
@@ -544,6 +523,7 @@ export default class ParserUtils {
                         this.addStat(thisPlayerStats, 'suicide', event);
                         break;
                     case EventType.PlayerJoinTeam:
+                    case EventType.PlayerLeftServer:
                         // no-op
                         break;
                     default:
@@ -570,16 +550,7 @@ export default class ParserUtils {
         return thisPlayerStats;
     }
 
-    private static playersOnSameTeam(teams: TeamComposition, player1: Player, player2: Player): boolean {
-        return Object.keys(teams).some((team) => {
-            const teamPlayers = teams[team] as Player[];
-            if (teamPlayers && teamPlayers.indexOf(player1) !== -1 && teamPlayers.indexOf(player2) !== -1)
-                return true;
-            return false;
-        });
-    }
-
-    private static getTeamForPlayer(player: Player, teams: TeamComposition): number {
+    private static getTeamForPlayer(player: Player, teams: PlayerList): number {
         for (const team in teams) {
             const foundPlayer = teams[team].findIndex(p => p === player);
             if (foundPlayer !== -1)
@@ -602,7 +573,7 @@ export default class ParserUtils {
         return foundPlayer;
     }
 
-    public static generateOutputStats(roundState: RoundState, events: Event[], stats: PlayersStats, playerList: PlayerList, teamComp: TeamComposition, logfile: string): OutputStats {
+    public static generateOutputStats(roundState: RoundState, events: Event[], stats: PlayersStats, playerList: PlayerList, logfile: string): OutputStats {
         // map
         const mapEvent = events.find(event => event.eventType === EventType.MapLoading);
         const map = mapEvent && mapEvent.value || "(map not found)";
@@ -637,7 +608,7 @@ export default class ParserUtils {
         const gameTime = Intl.DateTimeFormat('en-US', { minute: '2-digit', second: '2-digit' })
             .format(matchEndEvent.timestamp.valueOf() - matchStartEvent.timestamp.valueOf());
 
-        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, teamComp, matchEndEvent.timestamp);
+        const teams = this.generateOutputTeamsStatsDetailed(stats, playerList, matchEndEvent.timestamp);
 
         let damageStatsExist = false;
         for (const teamId in teams) {
@@ -683,7 +654,6 @@ export default class ParserUtils {
     public static generateOutputTeamsStatsDetailed(
         stats: PlayersStats,
         players: PlayerList,
-        teams: TeamComposition,
         matchEnd: Date): TeamsOutputStatsDetailed {
 
         // calculate stats per player
@@ -691,7 +661,7 @@ export default class ParserUtils {
 
         // iterate through the players identified as playing on the teams of interest (for now, Blue and Red)
         [1, 2].forEach(team => {
-            const teamPlayerIDs = (teams[String(team)] as Player[])?.map(player => player.steamID) || [];
+            const teamPlayerIDs = (players.teams[String(team)] as Player[])?.map(player => player.steamID) || [];
             const teamPlayers: PlayerOutputStatsRound[] = [];
 
             for (const playerID of teamPlayerIDs) {

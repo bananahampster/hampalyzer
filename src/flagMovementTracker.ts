@@ -2,7 +2,7 @@ import { Event } from "./parser.js";
 import EventType from './eventType.js';
 import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
 import { RoundState } from "./roundState.js";
-import { TeamScore, TeamComposition } from "./parserUtils.js";
+import { TeamScore } from "./parserUtils.js";
 import { FlagDrop, FlagMovement, PlayerClass, TeamColor, TeamFlagMovements } from "./constants.js";
 import Player from "./player.js";
 import { PlayerRoundStats } from "./player.js";

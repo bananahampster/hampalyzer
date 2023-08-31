@@ -4,10 +4,10 @@ import Player from './player.js';
 import PlayerList from './playerList.js';
 import { EventHandlingPhase, EventSubscriber, EventSubscriberManager } from './eventSubscriberManager.js';
 import { PlayerTeamTracker } from './playerTeamTracker.js';
-import { OutputStats, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import { OutputStats, TeamComposition, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
 import { MapLocation } from './mapLocation.js';
 import { RoundState } from './roundState.js';
-import ParserUtils, { TeamComposition } from './parserUtils.js';
+import ParserUtils from './parserUtils.js';
 import { FileCompression } from './fileCompression.js';
 
 type RoundStats = (OutputStats | undefined)[];
@@ -36,13 +36,13 @@ export class Parser {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
 
-                if (!this.rounds[0]!.teams) {
+                if (!this.rounds[0]!.playerList) {
                     // The log was bogus or failed to parse. Nothing more we can do.
                     return undefined;
                 }
 
                 let comparison: TeamStatsComparison | undefined;
-                let teamComp: TeamComposition<OutputPlayer> = ParserUtils.teamCompToOutput(this.rounds[0]!.teams!);
+                let teamComp: TeamComposition<OutputPlayer> = ParserUtils.playerListToOutput(this.rounds[0]!.playerList!);
                 if (this.rounds.length === 2) {
                     comparison = ParserUtils.generateTeamRoleComparison(stats as [OutputStats, OutputStats]);
                     teamComp = ParserUtils.generateTeamComposition(this.rounds) || teamComp;
@@ -63,12 +63,12 @@ export class Parser {
 
 export class RoundParser {
     private rawLogData: string = "";
+    private roundState = new RoundState();
     private players: PlayerList = new PlayerList();
 
     private allEvents: string[] = [];
     public events: Event[] = [];
 
-    private teamComp: TeamComposition | undefined;
     private summarizedStats: OutputStats | undefined;
 
     private parsingErrors: string[] = [];
@@ -90,17 +90,15 @@ export class RoundParser {
         return this.summarizedStats;
     }
 
-    public get teams(): TeamComposition | undefined {
-        return this.teamComp;
+    public get playerList(): PlayerList | undefined {
+        return this.players;
     }
 
     private parseData(): void {
         this.allEvents = this.rawLogData.split("\n");
 
-        const roundState = new RoundState();
-
         this.allEvents.forEach((event, lineNumber) => {
-            const newEvent = Event.createEvent(lineNumber + 1, event, roundState);
+            const newEvent = Event.createEvent(lineNumber + 1, event, this.roundState);
             if (newEvent) {
                 if (typeof newEvent === 'string') {
                     this.parsingErrors.push(newEvent);
@@ -112,10 +110,10 @@ export class RoundParser {
         });
 
         //
-        // Work in progress: accumulate state by progressively evaluating events. Multiple phases are supported
+        // Accumulate state by progressively evaluating events. Multiple phases are supported
         // to enable ordering dependencies between event subscribers.
         //
-        const eventSubscriberManager = new EventSubscriberManager(roundState.getEventSubscribers(), roundState);
+        const eventSubscriberManager = new EventSubscriberManager(this.roundState.getEventSubscribers(), this.roundState);
         try {
             eventSubscriberManager.handleEvents(this.events);
         }
@@ -125,16 +123,18 @@ export class RoundParser {
         }
 
 
-        this.teamComp = ParserUtils.getPlayerTeams(this.events, roundState.players);
-        const score = roundState.score;
-        for (const team in this.teamComp) {
-            const teamPlayers = this.teamComp[team];
-            const teamScore = score[team];
-            console.log(`Team ${team} (score ${teamScore}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
+        this.players = ParserUtils.getFilteredPlayers(this.roundState);
+        const score = this.roundState.score;
+        for (const team in this.roundState.players.teams) {
+            const teamPlayers = this.players.teams[team];
+            if (teamPlayers) {
+                const teamScore = score[team];
+                console.log(`Team ${team} (score ${teamScore}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
+            }
         }
 
-        const playerStats = ParserUtils.getPlayerStats(this.events, this.teamComp);
-        this.summarizedStats = ParserUtils.generateOutputStats(roundState, this.events, playerStats, roundState.players, this.teamComp, this.filename);
+        const playerStats = ParserUtils.generatePlayerStats(this.events);
+        this.summarizedStats = ParserUtils.generateOutputStats(this.roundState, this.events, playerStats, this.players, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
     }
 

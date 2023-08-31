@@ -1,18 +1,15 @@
 import { Event } from "./parser.js";
 import EventType from './eventType.js';
-import { TeamComposition } from "./parserUtils.js";
 import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
 import { RoundState } from "./roundState.js";
-import { TeamColor } from "./constants.js";
+import { TeamColor, TeamComposition } from "./constants.js";
 import Player from "./player.js";
 import PlayerList from "./playerList.js";
 
 export class PlayerTeamTracker extends EventSubscriber {
     // The players seen throughout the round.
     public players: PlayerList;
-    // The teams throughout the round.
-    // TODO: collapse with PlayerList which is now tracking based on team composition.
-    public teams: TeamComposition;
+
     // The current team composition.
     public currentTeams: TeamComposition;
 
@@ -20,7 +17,6 @@ export class PlayerTeamTracker extends EventSubscriber {
         super();
 
         this.players = new PlayerList();
-        this.teams = {};
         this.currentTeams = {};
     }
 
@@ -34,11 +30,11 @@ export class PlayerTeamTracker extends EventSubscriber {
                 if (!team) {
                     throw "expected team with a 'joined team' event";
                 }
-                this.setPlayerTeam(event.playerFrom!, team);
+                this.setPlayerTeam(event.playerFrom!, team, event.gameTimeAsSeconds);
                 break;
             case EventType.PlayerLeftServer:
             case EventType.PlayerKicked:
-                this.setPlayerTeam(event.playerFrom!, undefined);
+                this.setPlayerTeam(event.playerFrom!, undefined, event.gameTimeAsSeconds);
                 break;
             default:
                 break;
@@ -50,7 +46,7 @@ export class PlayerTeamTracker extends EventSubscriber {
         return this.players.ensurePlayer(steamID, name, playerID, team);
     }
 
-    public setPlayerTeam(player: Player, team: TeamColor | undefined) {
+    public setPlayerTeam(player: Player, team: TeamColor | undefined, gameTimeAsSeconds: number) {
         let playerObj: Player | undefined;
 
         // if a player has disconnected, we should take the player object as given and remove from current team
@@ -64,15 +60,16 @@ export class PlayerTeamTracker extends EventSubscriber {
         if (playerObj == null) {
             throw "Couldn't get player: " + player.steamID;
         }
+
+        if (team) {
+            playerObj.recordJoinTeamTime(gameTimeAsSeconds);
+        }
+
         if (playerObj) {
             if (team) {
-                if (!this.teams[team]) {
-                    this.teams[team] = [];
-                }
                 if (!this.currentTeams[team]) {
                     this.currentTeams[team] = [];
                 }
-                this.teams[team]!.push(playerObj);
             }
         }
         // Update currentTeams
@@ -86,9 +83,11 @@ export class PlayerTeamTracker extends EventSubscriber {
                 }
                 else {
                     // The player is not currently a part of this team.
-                    const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID == playerObj!.steamID);
+                    const indexOfPlayerInTeam = currentTeamMembers.findIndex(p => p.steamID === playerObj!.steamID);
+
                     if (indexOfPlayerInTeam !== -1) {
-                        currentTeamMembers.splice(indexOfPlayerInTeam, 1);
+                        const removed: Player = currentTeamMembers.splice(indexOfPlayerInTeam, 1)[0];
+                        removed.recordLeaveTeamTime(gameTimeAsSeconds);
                     }
                 }
             }
