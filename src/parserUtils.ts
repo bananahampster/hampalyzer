@@ -27,12 +27,12 @@ export default class ParserUtils {
     // expecting round length of 2
     public static generateTeamComposition(rounds: RoundParser[]): TeamComposition<OutputPlayer> | undefined {
         // gather all team compositions
-        let teamComps = rounds.map(round => round.playerList) as PlayerList[];
+        let playerLists = rounds.map(round => round.playerList) as PlayerList[];
 
         // let's make the assumption that the team assignments should switch (blue -> red and vice versa)
         // arbitrary decision: make sure 50% of the players match
-        const numRd1BluePlayers = ParserUtils.num(teamComps[0][1]);
-        const numRd2BluePlayers = ParserUtils.num(teamComps[1][1]);
+        const numRd1BluePlayers = ParserUtils.num(playerLists[0].teams[1]);
+        const numRd2BluePlayers = ParserUtils.num(playerLists[1].teams[1]);
         const threshold = Math.floor(Math.max(numRd1BluePlayers, numRd2BluePlayers) / 2);
         if (Math.abs(numRd1BluePlayers - numRd2BluePlayers) > threshold) {
             return undefined;
@@ -55,19 +55,19 @@ export default class ParserUtils {
 
         // map all players together
         let teamComp: TeamComposition<OutputPlayer> = {
-            '1': teamComps[0][1]?.map(player => player.dumpOutput()),
-            '2': teamComps[0][2]?.map(player => player.dumpOutput()),
+            '1': playerLists[0].teams[1]?.map(player => player.dumpOutput()),
+            '2': playerLists[0].teams[2]?.map(player => player.dumpOutput()),
         };
 
         // fill in missing players
         // rd2RedPlayers?.forEach(player => {
-        teamComps[1][2]?.forEach(player => {
+        playerLists[1].teams[2]?.forEach(player => {
             // add missing players
             if (!teamComp[1]?.some(rd1Player => player.matches(rd1Player)))
                 teamComp[1]?.push(player.dumpOutput());
         });
 
-        teamComps[1][1]?.forEach(player => {
+        playerLists[1].teams[1]?.forEach(player => {
             // add missing players
             if (!teamComp[2]?.some(rd1Player => player.matches(rd1Player)))
                 teamComp[2]?.push(player.dumpOutput());

@@ -91,7 +91,7 @@ export class RoundParser {
     }
 
     public get playerList(): PlayerList | undefined {
-        return this.roundState.players;
+        return this.players;
     }
 
     private parseData(): void {
@@ -123,10 +123,10 @@ export class RoundParser {
         }
 
 
-        const finalPlayerList = ParserUtils.getFilteredPlayers(this.roundState);
+        this.players = ParserUtils.getFilteredPlayers(this.roundState);
         const score = this.roundState.score;
         for (const team in this.roundState.players.teams) {
-            const teamPlayers = finalPlayerList.teams[team];
+            const teamPlayers = this.players.teams[team];
             if (teamPlayers) {
                 const teamScore = score[team];
                 console.log(`Team ${team} (score ${teamScore}) has ${teamPlayers.length} players: ${teamPlayers.join(', ')}.`);
@@ -134,7 +134,7 @@ export class RoundParser {
         }
 
         const playerStats = ParserUtils.generatePlayerStats(this.events);
-        this.summarizedStats = ParserUtils.generateOutputStats(this.roundState, this.events, playerStats, finalPlayerList, this.filename);
+        this.summarizedStats = ParserUtils.generateOutputStats(this.roundState, this.events, playerStats, this.players, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
     }
 
