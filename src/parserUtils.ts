@@ -170,112 +170,6 @@ export default class ParserUtils {
         return arr.length;
     }
 
-    public static getScoreAndFlagMovements(events: Event[], teams?: PlayerList): [TeamScore, TeamFlagMovements] {
-        const teamScoreEvents = events.filter(ev => ev.eventType === EventType.TeamScore);
-        let scores: TeamScore = {};
-        let flagMovements: TeamFlagMovements = {};
-
-        let needToComputeTeamScore = true;
-        teamScoreEvents.forEach(event => {
-            const team = event.data && event.data.team;
-            const score = event.data && event.data.value;
-            if (!team) throw "expected team with a teamScore event";
-            if (!score) throw "expected value with a teamScore event";
-            scores[team] = Number(score);
-            needToComputeTeamScore = false;
-        });
-
-        if (teams) {
-            const flagCapEvents = events.filter(
-                ev => ev.eventType === EventType.PlayerCapturedFlag
-                || ev.eventType === EventType.PlayerCapturedBonusFlag
-                || ev.eventType === EventType.TeamFlagHoldBonus);
-            let pointsPerCap = 10;
-            let pointsPerBonusCap = pointsPerCap;
-            const pointsPerTeamFlagHoldBonus = 5; // Assume 5 points for flag hold bonus (ss_nyx_ectfc).
-            if (!needToComputeTeamScore) {
-                const firstTeamFlagCapEvents = events.filter(ev => {
-                    return ev.eventType === EventType.PlayerCapturedFlag
-                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
-                });
-                const firstTeamBonusFlagCapEvents = events.filter(ev => {
-                    return ev.eventType === EventType.PlayerCapturedBonusFlag
-                        && (ParserUtils.getTeamForPlayer(ev.playerFrom!, teams) == 1)
-                });
-                const firstTeamFlagHoldBonusEvents = flagCapEvents.filter(ev => ev.eventType === EventType.TeamFlagHoldBonus && ev.data!.team == TeamColor.Blue);
-                const pointsFromFlagHoldBonuses = firstTeamFlagHoldBonusEvents.length * pointsPerTeamFlagHoldBonus;
-
-                if (scores[1] && firstTeamBonusFlagCapEvents.length > 0) {
-                    // This is a map with bonus caps, e.g. raiden6's coast-to-coast mechanic.
-                    // To estimate the values for a normal cap and a bonus cap, assume a normal cap value of 10.
-                    pointsPerCap = 10;
-                    const estimatedBonusPointsTotal = scores[1] - (pointsPerCap * (firstTeamFlagCapEvents.length + firstTeamBonusFlagCapEvents.length));
-                    pointsPerBonusCap = pointsPerCap + (estimatedBonusPointsTotal / firstTeamBonusFlagCapEvents.length);
-                    console.log(`Estimate points for a bonus cap is ${pointsPerBonusCap}`);
-                }
-                else {
-                    pointsPerCap = scores[1] ?
-                        (firstTeamFlagCapEvents.length > 0 ?
-                            ((scores[1] - pointsFromFlagHoldBonuses) / firstTeamFlagCapEvents.length) : pointsPerCap)
-                        : pointsPerCap;
-                }
-                if (pointsPerCap != 10) {
-                    console.warn(`Points per cap is ${pointsPerCap}`);
-                }
-            }
-
-            if (needToComputeTeamScore) { // maybe the server crashed before finishing the log?
-                console.warn("Can't find ending score, manually counting caps...");
-            }
-            let runningScore: TeamScore = {};
-            flagCapEvents.forEach(event => {
-                const player = event.playerFrom;
-
-                let team : number;
-                if (event.eventType == EventType.TeamFlagHoldBonus) {
-                    team = event.data!.team!;
-                }
-                else {
-                    team = ParserUtils.getTeamForPlayer(player!, teams);
-                }
-
-                if (!flagMovements[team]) {
-                    const teamFlagStats: FlagMovement[] = [];
-                    flagMovements[team] = teamFlagStats;
-                    runningScore[team] = 0;
-                }
-                if (!runningScore[team]) {
-                    runningScore[team] = 0;
-                }
-                switch (event.eventType) {
-                    case EventType.TeamFlagHoldBonus:
-                        runningScore[team] += pointsPerTeamFlagHoldBonus;
-                        break;
-                    case EventType.PlayerCapturedBonusFlag:
-                        runningScore[team] += pointsPerBonusCap;
-                        break;
-                    default:
-                        runningScore[team] += pointsPerCap;
-                        break;
-                }
-                const flagMovement: FlagMovement = {
-                    game_time_as_seconds: event.gameTimeAsSeconds!,
-                    player: player ? player.name : "<Team>",
-                    current_score: runningScore[team],
-                    how_dropped: FlagDrop.Captured,
-
-                }
-                flagMovements[team].push(flagMovement);
-
-                if (needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event
-                    scores[team] = runningScore[team];
-                }
-            });
-        }
-
-        return [scores, flagMovements];
-    }
-
     public static generatePlayerStats(events: Event[]): PlayersStats {
         // sort the events
         let playerStats: PlayersStats = { flag: {} };
@@ -552,16 +446,6 @@ export default class ParserUtils {
         return thisPlayerStats;
     }
 
-    private static getTeamForPlayer(player: Player, teams: PlayerList): number {
-        for (const team in teams) {
-            const foundPlayer = teams[team].findIndex(p => p === player);
-            if (foundPlayer !== -1)
-                return parseInt(team, 10);
-        }
-
-        return -1;
-    }
-
     public static getPlayerFromTeams(steamId: string, teams: TeamsOutputStatsDetailed): PlayerOutputStatsRound | undefined {
         let foundPlayer: PlayerOutputStatsRound | undefined;
         for (const teamId in teams) {
@@ -639,18 +523,6 @@ export default class ParserUtils {
             },
             damage_stats_exist: damageStatsExist
         };
-    }
-
-    public static getTeamScores(events: Event[], playerList: PlayerList): TeamScore {
-        const scoreEvents = events.filter(event => event.eventType === EventType.TeamScore);
-
-        // only dump score events for non-spectator teams (1, 2; that's what below does...]
-        let teamsScore: TeamScore = {};
-        for (const scoreEvent of scoreEvents) {
-            teamsScore[scoreEvent.key] = scoreEvent.value;
-        }
-
-        return teamsScore;
     }
 
     public static generateOutputTeamsStatsDetailed(
