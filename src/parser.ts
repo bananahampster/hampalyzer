@@ -1292,8 +1292,21 @@ export class Event {
             case "spectator":
                 return TeamColor.Spectator;
             default:
-                throw "unknown team: " + team;
+                break;
         }
+
+        // try to determine color based on inclusion of color string
+        if (team.indexOf('blue') > -1)
+            return TeamColor.Blue;
+        if (team.indexOf('red') > -1)
+            return TeamColor.Red;
+        if (team.indexOf('yellow') > -1)
+            return TeamColor.Yellow;
+        if (team.indexOf('green') > -1)
+            return TeamColor.Green;
+
+        // otherwise, throw
+        throw `unknown team: ${team}`;
     }
 
     public static parseWeapon(weapon: string): Weapon {
