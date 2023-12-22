@@ -13,6 +13,7 @@ import { FileCompression } from './fileCompression.js';
 import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { ParsedStats, Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
+import { ParseResponse } from './constants.js';
 
 const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
 dotenv.config({ path: envFilePath });
@@ -82,46 +83,44 @@ class App {
         });
 
         router.post('/parseGame', cors(), upload.array('logs[]', 2), async (req, res) => {
-            if (req?.files!['logs']?.length < 2) {
-                console.error("expected two files");
+            if (req.files && (req.files as Express.Multer.File[]).length < 2) {
+                res.status(400).json({ failure: { message: "expected two files in `logs[]`"}});
+                return;
             }
 
-            let parsedResult = await this.parseLogs([
+            const { message, success } = await this.parseLogs([
                 req.files![0].path,
                 req.files![1].path]);
 
-            if (parsedResult == null) {
-                res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
-            }
-            else {
+            if (success) {
                 // sanitize the outputPath by removing the webserverRoot path
                 // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
-                let outputPath = parsedResult;
+                let outputPath = message;
                 if (outputPath.startsWith(this.webserverRoot)) {
                     outputPath = outputPath.slice(this.webserverRoot.length);
                 }
 
                 res.status(200).json({ success: { path: outputPath }});
+            }
+            else {
+                res.status(400).json({ failure: { message } });
             }
         });
 
         router.post('/parseLog', cors(), upload.single('logs[]'), async (req, res) => {
-            // res.status(500).json({ error: "Single log parsing is still a work in progress; try uploading two rounds of a game instead." });
-
-            let parsedResult = await this.parseLogs([req.file!.path]);
-
-            if (parsedResult == null) {
-                res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
-            }
-            else {
+            const { success, message } = await this.parseLogs([req.file!.path]);
+            if (success) {
                 // sanitize the outputPath by removing the webserverRoot path
                 // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
-                let outputPath = parsedResult;
+                let outputPath = message;
                 if (outputPath.startsWith(this.webserverRoot)) {
                     outputPath = outputPath.slice(this.webserverRoot.length);
                 }
 
                 res.status(200).json({ success: { path: outputPath }});
+            }
+            else {
+                res.status(400).json({ failure: { message } });
             }
         });
 
@@ -177,12 +176,18 @@ class App {
         return result && result.rows.length !== 0;
     }
 
-    private async parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
+    private async parseLogs(filenames: string[], reparse?: boolean): Promise<ParseResponse> {
         filenames = await FileCompression.ensureFilesCompressed(filenames, /*deleteOriginals=*/true);
         const parser = new Parser(...filenames)
 
         return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse));
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse))
+            .catch((reason: string) => {
+                return <ParseResponse>{
+                    success: false,
+                    message: reason,
+                };
+            });
     }
 }
 

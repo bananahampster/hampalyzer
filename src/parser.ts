@@ -1,9 +1,7 @@
-import * as fs from 'fs';
 import EventType from './eventType.js';
 import Player from './player.js';
 import PlayerList from './playerList.js';
-import { EventHandlingPhase, EventSubscriber, EventSubscriberManager } from './eventSubscriberManager.js';
-import { PlayerTeamTracker } from './playerTeamTracker.js';
+import { EventSubscriberManager } from './eventSubscriberManager.js';
 import { OutputStats, TeamComposition, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
 import { MapLocation } from './mapLocation.js';
 import { RoundState } from './roundState.js';
@@ -30,7 +28,7 @@ export class Parser {
         return this.rounds.map(round => round.stats);
     }
 
-    public async parseRounds(): Promise<ParsedStats | undefined> {
+    public async parseRounds(): Promise<ParsedStats> {
         return Promise.all(this.rounds.map(round => round.parseFile()))
             .then(() => {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
@@ -38,7 +36,7 @@ export class Parser {
 
                 if (!this.rounds[0]!.playerList) {
                     // The log was bogus or failed to parse. Nothing more we can do.
-                    return undefined;
+                    throw 'Player list could not be parsed.';
                 }
 
                 let comparison: TeamStatsComparison | undefined;
@@ -109,10 +107,8 @@ export class RoundParser {
             }
         });
 
-        //
         // Accumulate state by progressively evaluating events. Multiple phases are supported
         // to enable ordering dependencies between event subscribers.
-        //
         const eventSubscriberManager = new EventSubscriberManager(this.roundState.getEventSubscribers(), this.roundState);
         try {
             eventSubscriberManager.handleEvents(this.events);
@@ -136,56 +132,6 @@ export class RoundParser {
         const playerStats = ParserUtils.generatePlayerStats(this.events);
         this.summarizedStats = ParserUtils.generateOutputStats(this.roundState, this.events, playerStats, this.players, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
-    }
-
-    private trimPreAndPostMatchEvents() {
-        const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
-        const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events.at(-1)!;
-
-        const matchStartLineNumber = matchStartEvent.lineNumber;
-        const matchEndLineNumber = matchEndEvent.lineNumber;
-        if (matchStartEvent) {
-            const eventsNotToCull = [
-                EventType.MapLoading,
-                EventType.ServerName,
-                EventType.PlayerJoinTeam,
-                EventType.PlayerChangeRole,
-                EventType.PlayerMM1,
-                EventType.PlayerMM2,
-                EventType.ServerSay,
-                EventType.ServerCvar,
-                EventType.PrematchEnd,
-                EventType.TeamScore
-            ];
-
-            // iterate through events, but skip culling chat, role, and team messages
-            for (let i = 0; i < this.events.length; i++) {
-                const e = this.events[i];
-
-                // Will be negative if a pre-match event (see eventsNotToCull).
-                e.gameTimeAsSeconds = Math.round((e.timestamp.getTime() - matchStartEvent.timestamp.getTime()) / 1000);
-
-                if (e.lineNumber < matchStartLineNumber || e.lineNumber > matchEndLineNumber) {
-                    if (eventsNotToCull.indexOf(e.eventType) === -1) {
-                        this.events.splice(i, 1);
-                        i--;
-                    }
-                }
-            }
-
-            // also cull suicides/dmg due to prematch end
-            const prematchEndIndex = this.events.findIndex(event => event.lineNumber === matchStartLineNumber);
-            let i = prematchEndIndex + 1;
-            while (i < this.events.length && this.events[i].gameTimeAsSeconds === 0) {
-                const currentEvent = this.events[i];
-                if (currentEvent.eventType === EventType.PlayerCommitSuicide ||
-                    currentEvent.eventType === EventType.PlayerDamage) {
-                    this.events.splice(i, 1);
-                }
-                else
-                    i++;
-            }
-        }
     }
 }
 

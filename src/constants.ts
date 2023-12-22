@@ -2,6 +2,12 @@ import { TeamScore } from "./parserUtils.js";
 import { Event } from "./parser.js";
 import Player from "./player.js";
 
+export interface ParseResponse {
+    /** if success, expect HTTP 200 and parsedlog slug.  if failure, expect HTTP 400 and descriptive error */
+    success: boolean;
+    message: string;
+}
+
 export interface OutputStats {
     parse_name: string;  // 'user-friendly' URI slug
     log_name: string; // original log name as uploaded
