@@ -2,7 +2,7 @@ import EventType from './eventType.js';
 import Player from './player.js';
 import PlayerList from './playerList.js';
 import { EventSubscriberManager } from './eventSubscriberManager.js';
-import { OutputStats, TeamComposition, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import { OutputStats, TeamComposition, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer, ParsingError } from './constants.js';
 import { MapLocation } from './mapLocation.js';
 import { RoundState } from './roundState.js';
 import ParserUtils from './parserUtils.js';
@@ -14,6 +14,7 @@ export interface ParsedStats {
     players: TeamComposition<OutputPlayer>;
     parsing_errors: (string[] | undefined)[];
     comparison?: TeamStatsComparison;
+    isValid: boolean;
 }
 
 export class Parser {
@@ -28,15 +29,20 @@ export class Parser {
         return this.rounds.map(round => round.stats);
     }
 
-    public async parseRounds(): Promise<ParsedStats> {
+    public async parseRounds(skipValidation?: boolean): Promise<ParsedStats> {
         return Promise.all(this.rounds.map(round => round.parseFile()))
             .then(() => {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
 
+                const isValid = skipValidation || this.validateGame();
+
                 if (!this.rounds[0]!.playerList) {
                     // The log was bogus or failed to parse. Nothing more we can do.
-                    throw 'Player list could not be parsed.';
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: 'Player list could not be parsed.'
+                    });
                 }
 
                 let comparison: TeamStatsComparison | undefined;
@@ -54,8 +60,63 @@ export class Parser {
                     stats,
                     parsing_errors: stats.map(round => round?.parsing_errors),
                     comparison,
+                    isValid,
                 };
             });
+    }
+
+    private validateGame(): boolean {
+        if (this.rounds.length < 1 || this.rounds[0].stats == null || this.rounds[0].playerList == null) 
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: 'Validation failure: could not find one good round to parse.'
+            });
+
+        if (this.rounds.length === 1) 
+            return true;
+
+        const firstRound = this.rounds[0].stats;
+        let gameTime = firstRound.scoring_activity?.game_time_as_seconds || 0;
+        let map = firstRound.map;
+        let players = this.rounds[0].playerList.players;
+
+        if (this.rounds.length > 2 || this.rounds[1].stats == null || this.rounds[1].playerList == null) 
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: 'Validation failure: parsed two rounds but second was not parsed.'
+            });
+        
+        const secondRound = this.rounds[1].stats;
+        if (secondRound.map != map)
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: 'Validation failure: map does not match between two rounds.'
+            });
+
+        const secondGameTime = secondRound.scoring_activity?.game_time_as_seconds || 0;
+        if (Math.abs(secondGameTime - gameTime) > 300)
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: `Validation failure: game time between two rounds does not match within tolerance of 5 minutes (first round: ${gameTime}s, second: ${secondGameTime}s).`
+            });
+        
+        // verify at least 50% of players from first round match
+        const secondPlayers = this.rounds[1].playerList.players;
+        const maxDiff = Math.ceil(players.length / 2);        
+        const countDiff = players.reduce((countDiff, player) => {
+            if (!secondPlayers.some(secondPlayer => player.matches(secondPlayer)))
+                countDiff++;
+
+            return countDiff;
+        }, 0);
+
+        if (countDiff > maxDiff)    
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: `Validation failure: several players from first round not found in second round (found ${countDiff} missing, threshold is ${maxDiff}).`
+            });
+
+        return true;
     }
 }
 
@@ -115,7 +176,14 @@ export class RoundParser {
         }
         catch (error: any) {
             console.error(error.message);
-            throw error;
+
+            if (error instanceof ParsingError)
+                throw error;
+            else
+                throw new ParsingError({
+                    name: "PARSING_FAILURE",
+                    message: error,
+                });
         }
 
 

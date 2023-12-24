@@ -3,7 +3,7 @@ import { copyFile, readFileSync, writeFile, mkdir } from 'fs';
 import Handlebars from 'handlebars';
 import * as pg from 'pg';
 
-import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats, ParseResponse } from './constants.js';
+import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats, ParseResponse, ParsingError } from './constants.js';
 import { ParsedStats } from "./parser.js";
 import ParserUtils from './parserUtils.js';
 import TemplateUtils from './templateUtils.js';
@@ -75,7 +75,16 @@ export default async function(
         const outputDir = `${outputRoot}/${logName}`;
 
         // ensure directory exists; create if it doesn't
-        mkdir(outputDir, { mode: 0o775, recursive: true, }, err => { if (err && err.code !== "EEXIST") throw err; });
+        mkdir(
+            outputDir, 
+            { mode: 0o775, recursive: true, }, 
+            err => {
+                if (err && err.code !== "EEXIST") 
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: err.message,
+                    }); 
+            });
 
         // generate the summary output
         let flagPaceChartMarkup = "";
@@ -162,6 +171,7 @@ export default async function(
         } else {
             return {
                 success: false,
+                error_reason: 'DATABASE_FAILURE',
                 message: "Failed to communicate to database.  The logs have been rejected.",
             }
         }
@@ -169,6 +179,7 @@ export default async function(
 
     return {
         success: false,
+        error_reason: 'PARSING_FAILURE',
         message: 'No stats found to write! Unhandled exception likely resulted in this error.'
     };
 }

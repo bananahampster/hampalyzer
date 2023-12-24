@@ -1,3 +1,4 @@
+import { ParsingError } from './constants.js';
 import { Event } from './parser.js';
 import { RoundState } from './roundState.js';
 
@@ -69,7 +70,11 @@ export class EventSubscriberManager {
                     }
                     catch (error: any) {
                         console.error(`[subscriber=${subscriber.constructor.name}, phase=${EventHandlingPhase[phase]}] failed (error=${error.message}) when handling line ${event.lineNumber}: ${event.rawLine}`);
-                        throw error;
+                        
+                        throw new ParsingError({
+                            name: 'LOGIC_FAILURE',
+                            message: error,
+                        });
                     }
                 });
                 if (shouldRemoveEvent) {
