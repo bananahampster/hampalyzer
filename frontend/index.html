@@ -48,6 +48,10 @@
                             <div class="invalid-feedback">You must select one or two .log files.</div>
                         </div>
                     </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" name="force" id="force">
+                        <label class="form-check-label" for="force"><abbr title="will skip validation that map matches, players nearly match between rounds, and match lengths are within 5 minutes">Force-parse logs</abbr></label>
+                    </div>
                     <div class="form-group">
                         <input class="btn btn-primary" type="submit" value="Submit">
                     </div>
@@ -137,17 +141,22 @@
                 cache: false,
             });
 
-            let handler = function(data) {
-                if (data.success) {
+            let handler = function(response) {
+                if (response.success) {
                     $('#formResponse').attr('class', 'alert alert-primary')
-                        .html(`Your game has been parsed and is available at <a href="${ data.success.path }">${ data.success.path }</a>!`);
-                } else {
+                        .html(`Your game has been parsed and is available at <a href="${ response.success.path }">${ response.success.path }</a>!`);
+                } 
+                else if (response.failure) {
                     $('#formResponse').attr('class', 'alert alert-danger')
-                        .html("There was an error parsing the logs.  More info: &laquo;" + (data.responseJSON || { error: "no additional info" }).error + "&raquo;");
+                        .html(`There was an error parsing the logs: <strong>${response.failure.error_reason}</strong>.<br />${response.failure.message}`);
+                } 
+                else {
+                    $('#formResponse').attr('class', 'alert alert-danger')
+                        .html(`An unknown error occured: either the server did not respond or it talked funny to us.`);
                 }
             }
 
-            request.done(handler).fail(handler);
+            request.done(handler).fail((data) => handler(data.responseJSON));
         });
     </script>
 </body>

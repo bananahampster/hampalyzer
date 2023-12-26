@@ -88,8 +88,7 @@ class App {
                 return;
             }
 
-            // TODO: expose `skipValidation` parameter in request
-            const skipValidation = false;
+            const skipValidation = !!req.body.force;
             const parserResponse = await this.parseLogs([
                 req.files![0].path,
                 req.files![1].path],
@@ -112,8 +111,7 @@ class App {
         });
 
         router.post('/parseLog', cors(), upload.single('logs[]'), async (req, res) => {
-            // TODO: expose `skipValidation` parameter in request
-            const skipValidation = false;
+            const skipValidation = !!req.body.force;
             const parserResponse = await this.parseLogs([req.file!.path], { skipValidation });
             if (parserResponse.success) {
                 // sanitize the outputPath by removing the webserverRoot path

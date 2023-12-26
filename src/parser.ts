@@ -168,6 +168,14 @@ export class RoundParser {
             }
         });
 
+        // abort early if no events found
+        if (this.events.length === 0) {
+            throw new ParsingError({
+                name: 'PARSING_FAILURE',
+                message: 'No events found in given log.',
+            });
+        }
+
         // Accumulate state by progressively evaluating events. Multiple phases are supported
         // to enable ordering dependencies between event subscribers.
         const eventSubscriberManager = new EventSubscriberManager(this.roundState.getEventSubscribers(), this.roundState);
@@ -182,7 +190,7 @@ export class RoundParser {
             else
                 throw new ParsingError({
                     name: "PARSING_FAILURE",
-                    message: error,
+                    message: error.stack || error.message,
                 });
         }
 
