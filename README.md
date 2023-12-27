@@ -24,6 +24,12 @@ When the server is running, you can POST two log files to the "/parseGame" route
 curl -X POST -F 'logs[]=@logs/L0526012.log' -F 'logs[]=@logs/L0526013.log' http://127.0.0.1:3000/parseGame
 ```
 
+If the log fails validation, you can add a "force" form body parameter with any non-null value (e.g., "on") to force-parse the log files anyway.
+
+```
+curl -X POST -F force=on -F 'logs[]=@logs/L0526012.log' -F 'logs[]=@logs/L0526013.log' http://127.0.0.1:3000/parseGame
+```
+
 ### Immediate to-do:
 
 - [ ] Sort summary view by # kills (or some other score metric)
@@ -42,7 +48,7 @@ Plan:
         - ngnix and node.js process should run in non-privileged context
     - Use [jQuery POST](https://api.jquery.com/jquery.post/) and [this tutorial](https://attacomsian.com/blog/xhr-node-file-upload) to do front-end call
 
-    - [ ] Set up reverse proxy for hampalyzer script and shove under /api/
+    - [x] Set up reverse proxy for hampalyzer script and shove under /api/
     - [x] Move "frontend" code to /var/www/app.hampalyzer.com
     - [x] Remove manual file parsing
     - [x] Force uploaded files to be local
@@ -57,7 +63,7 @@ Plan:
 
 - [ ] Handle player disconnects if they are in the middle of carrying flag (flag time / flag status)
 - [ ] If a player only plays one of two rounds, player stats doesn't format correctly (e.g., stats show in rd2 even though they only played rd1)
-- [ ] Classes may not be assigned correctly, e.g. http://app.hampalyzer.com/parsedlogs/Inhouse-2021-Jun-6-02-22/ (hamp rd2)
+- [x] Classes may not be assigned correctly, e.g. http://app.hampalyzer.com/parsedlogs/Inhouse-2021-Jun-6-02-22/ (hamp rd2)
 
 ## Building / Running
 

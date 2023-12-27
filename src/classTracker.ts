@@ -2,16 +2,23 @@ import { EventHandlingPhase, EventSubscriber, HandlerRequest } from './eventSubs
 import { RoundState } from './roundState.js'
 import { Event } from './parser.js';
 import EventType from './eventType.js';
+import { ParsingError } from './constants.js';
 
 export class ClassTracker extends EventSubscriber {
     public phaseStart(phase: EventHandlingPhase, _roundState: RoundState): void {
         if (phase !== EventHandlingPhase.AfterGameTimeEpochEstablished)
-            throw "Unexpected phase";
+            throw new ParsingError({
+                name: 'LOGIC_FAILURE',
+                message: "Unexpected phase"
+            });
     }
 
     public phaseEnd(phase: EventHandlingPhase, _roundState: RoundState): void {
         if (phase !== EventHandlingPhase.AfterGameTimeEpochEstablished)
-            throw "Unexpected phase";
+            throw new ParsingError({
+                name: 'LOGIC_FAILURE',
+                message: "Unexpected phase"
+            });
     }
 
     public handleEvent(event: Event, _phase: EventHandlingPhase, _roundState: RoundState): HandlerRequest {
@@ -51,7 +58,10 @@ export class ClassTracker extends EventSubscriber {
                         event.playerToClass = currentClass;
                         return;
                     default:
-                        throw 'unknown playerDirection';
+                        throw new ParsingError({
+                            name: 'LOGIC_FAILURE',
+                            message: 'unknown playerDirection'
+                        });
                 }
             }
         }

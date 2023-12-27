@@ -1,10 +1,8 @@
-import * as fs from 'fs';
 import EventType from './eventType.js';
 import Player from './player.js';
 import PlayerList from './playerList.js';
-import { EventHandlingPhase, EventSubscriber, EventSubscriberManager } from './eventSubscriberManager.js';
-import { PlayerTeamTracker } from './playerTeamTracker.js';
-import { OutputStats, TeamComposition, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer } from './constants.js';
+import { EventSubscriberManager } from './eventSubscriberManager.js';
+import { OutputStats, TeamComposition, PlayerClass, TeamColor, Weapon, TeamStatsComparison, OutputPlayer, ParsingError } from './constants.js';
 import { MapLocation } from './mapLocation.js';
 import { RoundState } from './roundState.js';
 import ParserUtils from './parserUtils.js';
@@ -16,6 +14,7 @@ export interface ParsedStats {
     players: TeamComposition<OutputPlayer>;
     parsing_errors: (string[] | undefined)[];
     comparison?: TeamStatsComparison;
+    isValid: boolean;
 }
 
 export class Parser {
@@ -30,15 +29,20 @@ export class Parser {
         return this.rounds.map(round => round.stats);
     }
 
-    public async parseRounds(): Promise<ParsedStats | undefined> {
+    public async parseRounds(skipValidation?: boolean): Promise<ParsedStats> {
         return Promise.all(this.rounds.map(round => round.parseFile()))
             .then(() => {
                 // TODO: be smarter about ensuring team composition matches, map matches, etc. between rounds
                 const stats = this.rounds.map(round => round.stats);
 
+                const isValid = skipValidation || this.validateGame();
+
                 if (!this.rounds[0]!.playerList) {
                     // The log was bogus or failed to parse. Nothing more we can do.
-                    return undefined;
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: 'Player list could not be parsed.'
+                    });
                 }
 
                 let comparison: TeamStatsComparison | undefined;
@@ -56,8 +60,63 @@ export class Parser {
                     stats,
                     parsing_errors: stats.map(round => round?.parsing_errors),
                     comparison,
+                    isValid,
                 };
             });
+    }
+
+    private validateGame(): boolean {
+        if (this.rounds.length < 1 || this.rounds[0].stats == null || this.rounds[0].playerList == null) 
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: 'Validation failure: could not find one good round to parse.'
+            });
+
+        if (this.rounds.length === 1) 
+            return true;
+
+        const firstRound = this.rounds[0].stats;
+        let gameTime = firstRound.scoring_activity?.game_time_as_seconds || 0;
+        let map = firstRound.map;
+        let players = this.rounds[0].playerList.players;
+
+        if (this.rounds.length > 2 || this.rounds[1].stats == null || this.rounds[1].playerList == null) 
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: 'Validation failure: parsed two rounds but second was not parsed.'
+            });
+        
+        const secondRound = this.rounds[1].stats;
+        if (secondRound.map != map)
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: 'Validation failure: map does not match between two rounds.'
+            });
+
+        const secondGameTime = secondRound.scoring_activity?.game_time_as_seconds || 0;
+        if (Math.abs(secondGameTime - gameTime) > 300)
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: `Validation failure: game time between two rounds does not match within tolerance of 5 minutes (first round: ${gameTime}s, second: ${secondGameTime}s).`
+            });
+        
+        // verify at least 50% of players from first round match
+        const secondPlayers = this.rounds[1].playerList.players;
+        const maxDiff = Math.ceil(players.length / 2);        
+        const countDiff = players.reduce((countDiff, player) => {
+            if (!secondPlayers.some(secondPlayer => player.matches(secondPlayer)))
+                countDiff++;
+
+            return countDiff;
+        }, 0);
+
+        if (countDiff > maxDiff)    
+            throw new ParsingError({
+                name: 'MATCH_INVALID',
+                message: `Validation failure: several players from first round not found in second round (found ${countDiff} missing, threshold is ${maxDiff}).`
+            });
+
+        return true;
     }
 }
 
@@ -109,17 +168,30 @@ export class RoundParser {
             }
         });
 
-        //
+        // abort early if no events found
+        if (this.events.length === 0) {
+            throw new ParsingError({
+                name: 'PARSING_FAILURE',
+                message: 'No events found in given log.',
+            });
+        }
+
         // Accumulate state by progressively evaluating events. Multiple phases are supported
         // to enable ordering dependencies between event subscribers.
-        //
         const eventSubscriberManager = new EventSubscriberManager(this.roundState.getEventSubscribers(), this.roundState);
         try {
             eventSubscriberManager.handleEvents(this.events);
         }
         catch (error: any) {
             console.error(error.message);
-            throw error;
+
+            if (error instanceof ParsingError)
+                throw error;
+            else
+                throw new ParsingError({
+                    name: "PARSING_FAILURE",
+                    message: error.stack || error.message,
+                });
         }
 
 
@@ -136,56 +208,6 @@ export class RoundParser {
         const playerStats = ParserUtils.generatePlayerStats(this.events);
         this.summarizedStats = ParserUtils.generateOutputStats(this.roundState, this.events, playerStats, this.players, this.filename);
         this.summarizedStats.parsing_errors = this.parsingErrors;
-    }
-
-    private trimPreAndPostMatchEvents() {
-        const matchStartEvent = this.events.find(event => event.eventType === EventType.PrematchEnd) || this.events[0];
-        const matchEndEvent = this.events.find(event => event.eventType === EventType.TeamScore) || this.events.at(-1)!;
-
-        const matchStartLineNumber = matchStartEvent.lineNumber;
-        const matchEndLineNumber = matchEndEvent.lineNumber;
-        if (matchStartEvent) {
-            const eventsNotToCull = [
-                EventType.MapLoading,
-                EventType.ServerName,
-                EventType.PlayerJoinTeam,
-                EventType.PlayerChangeRole,
-                EventType.PlayerMM1,
-                EventType.PlayerMM2,
-                EventType.ServerSay,
-                EventType.ServerCvar,
-                EventType.PrematchEnd,
-                EventType.TeamScore
-            ];
-
-            // iterate through events, but skip culling chat, role, and team messages
-            for (let i = 0; i < this.events.length; i++) {
-                const e = this.events[i];
-
-                // Will be negative if a pre-match event (see eventsNotToCull).
-                e.gameTimeAsSeconds = Math.round((e.timestamp.getTime() - matchStartEvent.timestamp.getTime()) / 1000);
-
-                if (e.lineNumber < matchStartLineNumber || e.lineNumber > matchEndLineNumber) {
-                    if (eventsNotToCull.indexOf(e.eventType) === -1) {
-                        this.events.splice(i, 1);
-                        i--;
-                    }
-                }
-            }
-
-            // also cull suicides/dmg due to prematch end
-            const prematchEndIndex = this.events.findIndex(event => event.lineNumber === matchStartLineNumber);
-            let i = prematchEndIndex + 1;
-            while (i < this.events.length && this.events[i].gameTimeAsSeconds === 0) {
-                const currentEvent = this.events[i];
-                if (currentEvent.eventType === EventType.PlayerCommitSuicide ||
-                    currentEvent.eventType === EventType.PlayerDamage) {
-                    this.events.splice(i, 1);
-                }
-                else
-                    i++;
-            }
-        }
     }
 }
 

@@ -53,6 +53,15 @@ class PlayerList {
     public get teams() {
         return this._teams;
     }
+
+    public get players() {
+        const players: Player[] = [];
+        for (const team in this._teams) {
+            players.push(...this._teams[team])
+        }
+
+        return players;
+    }
 }
 
 export default PlayerList;

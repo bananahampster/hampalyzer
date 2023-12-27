@@ -2,6 +2,22 @@ import { TeamScore } from "./parserUtils.js";
 import { Event } from "./parser.js";
 import Player from "./player.js";
 
+export type ParseResponse = ParseResponseSuccess | ParseResponseFailure;
+
+interface ParseResponseSuccess {
+    success: true;
+    /** parsedlog slug */
+    message: string;
+};
+
+interface ParseResponseFailure {
+    success: false;
+    /** failure type */
+    error_reason: ParsingErrorName;
+    /** detail about what went wrong */
+    message: string;
+}
+
 export interface OutputStats {
     parse_name: string;  // 'user-friendly' URI slug
     log_name: string; // original log name as uploaded
@@ -323,5 +339,24 @@ export namespace TeamColor {
     }
     export function toString(teamColor: TeamColor): string {
         return (TeamColor as any)[teamColor];
+    }
+}
+
+export interface ParsingOptions {
+    reparse?: boolean;
+    skipValidation?: boolean;
+}
+
+export type ParsingErrorName = 'MATCH_INVALID' | 'PARSING_FAILURE' | 'DATABASE_FAILURE' | 'LOGIC_FAILURE';
+export class ParsingError extends Error {
+    name: ParsingErrorName;
+    message: string;
+    cause: any; // unused
+    
+    constructor({ name, message, cause}: { name: ParsingErrorName, message: string, cause?: any }) {
+        super();
+        this.name = name;
+        this.message = message;
+        this.cause = cause;
     }
 }

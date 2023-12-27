@@ -3,7 +3,7 @@ import { copyFile, readFileSync, writeFile, mkdir } from 'fs';
 import Handlebars from 'handlebars';
 import * as pg from 'pg';
 
-import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats } from './constants.js';
+import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats, ParseResponse, ParsingError } from './constants.js';
 import { ParsedStats } from "./parser.js";
 import ParserUtils from './parserUtils.js';
 import TemplateUtils from './templateUtils.js';
@@ -30,7 +30,7 @@ export default async function(
     templates?: HampalyzerTemplates,
     pool?: pg.Pool,
     reparse?: boolean,
-    ): Promise<string | undefined> {
+    ): Promise<ParseResponse> {
 
     if (allStats) {
         const matchMeta: MatchMetadata = {
@@ -62,7 +62,10 @@ export default async function(
             const isDuplicate = await checkHasDuplicate(pool, matchMeta);
             console.log('isDuplicate', isDuplicate);
             if (isDuplicate) {
-                return `${outputRoot}/${matchMeta.logName}`;
+                return {
+                    success: true,
+                    message: `${outputRoot}/${matchMeta.logName}`
+                };
             }
         }
 
@@ -72,7 +75,16 @@ export default async function(
         const outputDir = `${outputRoot}/${logName}`;
 
         // ensure directory exists; create if it doesn't
-        mkdir(outputDir, { mode: 0o775, recursive: true, }, err => { if (err && err.code !== "EEXIST") throw err; });
+        mkdir(
+            outputDir, 
+            { mode: 0o775, recursive: true, }, 
+            err => {
+                if (err && err.code !== "EEXIST") 
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: err.message,
+                    }); 
+            });
 
         // generate the summary output
         let flagPaceChartMarkup = "";
@@ -152,11 +164,24 @@ export default async function(
         // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
         if (dbSuccess || reparse) {
             console.log(`writing log to ${outputDir}`);
-            return `${outputDir}/`;
+            return {
+                success: true,
+                message: `${outputDir}/`
+            };
+        } else {
+            return {
+                success: false,
+                error_reason: 'DATABASE_FAILURE',
+                message: "Failed to communicate to database.  The logs have been rejected.",
+            }
         }
     }
-    else
-        console.error('no stats found to write!');
+
+    return {
+        success: false,
+        error_reason: 'PARSING_FAILURE',
+        message: 'No stats found to write! Unhandled exception likely resulted in this error.'
+    };
 }
 
 async function checkHasDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {

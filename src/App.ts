@@ -13,6 +13,7 @@ import { FileCompression } from './fileCompression.js';
 import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { ParsedStats, Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
+import { ParseResponse, ParsingError, ParsingOptions } from './constants.js';
 
 const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
 dotenv.config({ path: envFilePath });
@@ -82,46 +83,49 @@ class App {
         });
 
         router.post('/parseGame', cors(), upload.array('logs[]', 2), async (req, res) => {
-            if (req?.files!['logs']?.length < 2) {
-                console.error("expected two files");
+            if (req.files && (req.files as Express.Multer.File[]).length < 2) {
+                res.status(400).json({ failure: { message: "expected two files in `logs[]`"}});
+                return;
             }
 
-            let parsedResult = await this.parseLogs([
+            const skipValidation = !!req.body.force;
+            const parserResponse = await this.parseLogs([
                 req.files![0].path,
-                req.files![1].path]);
+                req.files![1].path],
+                { skipValidation });
 
-            if (parsedResult == null) {
-                res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
-            }
-            else {
+            if (parserResponse.success) {
                 // sanitize the outputPath by removing the webserverRoot path
                 // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
-                let outputPath = parsedResult;
+                let outputPath = parserResponse.message;
                 if (outputPath.startsWith(this.webserverRoot)) {
                     outputPath = outputPath.slice(this.webserverRoot.length);
                 }
 
                 res.status(200).json({ success: { path: outputPath }});
+            }
+            else {
+                const { error_reason, message } = parserResponse;
+                res.status(400).json({ failure: { error_reason, message } });
             }
         });
 
         router.post('/parseLog', cors(), upload.single('logs[]'), async (req, res) => {
-            // res.status(500).json({ error: "Single log parsing is still a work in progress; try uploading two rounds of a game instead." });
-
-            let parsedResult = await this.parseLogs([req.file!.path]);
-
-            if (parsedResult == null) {
-                res.status(500).json({ error: "Failed to parse file (please pass logs to Hampster)" });
-            }
-            else {
+            const skipValidation = !!req.body.force;
+            const parserResponse = await this.parseLogs([req.file!.path], { skipValidation });
+            if (parserResponse.success) {
                 // sanitize the outputPath by removing the webserverRoot path
                 // (e.g., remove /var/www/app.hampalyzer.com/html prefix)
-                let outputPath = parsedResult;
+                let outputPath = parserResponse.message;
                 if (outputPath.startsWith(this.webserverRoot)) {
                     outputPath = outputPath.slice(this.webserverRoot.length);
                 }
 
                 res.status(200).json({ success: { path: outputPath }});
+            }
+            else {
+                const { error_reason, message } = parserResponse;
+                res.status(400).json({ failure: { error_reason, message } });
             }
         });
 
@@ -150,8 +154,7 @@ class App {
     private async reparseLogs(): Promise<boolean> {
         let result;
         try {
-            result = await this.pool.query('SELECT log_file1, log_file2 FROM logs WHERE id > 42'); // before 42, wrong log filenames
-            // for (const game of result.rows) {
+            result = await this.pool.query('SELECT id, log_file1, log_file2 FROM logs WHERE id > 42'); // before 42, wrong log filenames
             for (let i = 0, len = result.rows.length; i < len; i++) {
                 const game = result.rows[i];
 
@@ -161,28 +164,52 @@ class App {
                     filenames.push(game.log_file2);
                 }
 
-                console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" +  ")}`);
+                console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" + ")}`);
 
-                const parsedLog = await this.parseLogs(filenames, true /* reparse */);
-                if (!parsedLog) {
-                    console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
-                    return false;
+                const parsedLog = await this.parseLogs(filenames, { reparse: true });
+                if (!parsedLog.success) {
+                    // if it is a validation failure, mark it and move on to the next log.
+                    if (parsedLog.error_reason === 'MATCH_INVALID') {
+                        console.error(`LOG ${game.id} invalid: ${parsedLog.message}`);
+                        this.pool.query('UPDATE logs SET is_valid = FALSE WHERE id = $1', [game.id]);
+                        continue;
+                    }
+                    else {
+                        console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
+                        return false;
+                    }
                 }
             }
         } catch (error: any) {
-            console.error("critical error: failed to connect to DB to reparse logs: " + error?.message);
+            console.error("critical error: failed to connect to DB to reparse logs: " + error?.message || error);
         }
 
         // at least some logs must have been reparsed
         return result && result.rows.length !== 0;
     }
 
-    private async parseLogs(filenames: string[], reparse?: boolean): Promise<string | undefined> {
+    private async parseLogs(filenames: string[], { reparse, skipValidation }: ParsingOptions): Promise<ParseResponse> {
         filenames = await FileCompression.ensureFilesCompressed(filenames, /*deleteOriginals=*/true);
         const parser = new Parser(...filenames)
 
-        return parser.parseRounds()
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse));
+        return parser.parseRounds(skipValidation)
+            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse))
+            .catch((error) => {
+                if (error instanceof ParsingError) {
+                    return <ParseResponse>{
+                        success: false,
+                        error_reason: error.name,
+                        message: error.message,
+                    };
+                }
+                else {
+                    return <ParseResponse>{
+                        success: false,
+                        error_reason: 'PARSING_FAILURE',
+                        message: error,
+                    }
+                }
+            });
     }
 }
 

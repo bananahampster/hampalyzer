@@ -64,7 +64,9 @@ else {
         // logs = ['logs/schtopr1.log', 'logs/schtopr2.log']; // incomplete
         // logs = ['logs/1641109721918-L0102072.log', 'logs/1641109721922-L0102073.log']; // siden
         // logs = ['dist/uploads/1647142313653-L0313008.log', 'dist/uploads/1647142313653-L0313009.log']; // teams fucked?
-        logs = ['dist/uploads/1654325677960-L0604008.log', 'dist/uploads/1654325677973-L0604009.log']; // dmg not counted?
+        // logs = ['dist/uploads/1654325677960-L0604008.log', 'dist/uploads/1654325677973-L0604009.log']; // dmg not counted?
+        logs = ['backup/uploads/uploads/1702675375064-L1215064-coacheast.log.br', 'backup/uploads/uploads/1702675375069-L1215067-coacheast.log.br'];
+
 
     console.log(`parsing logs ${logs.join(" and ")} ...`);
 
@@ -81,6 +83,11 @@ else {
     let parser = new Parser(...logs);
     // let parser = new Parser('logs/L0405005.log');
     // let parser = new Parser('logs/TSq9rtLa.log');
-    let parsePromise = parser.parseRounds();
-    parsePromise.then(fileParser);
+    
+    parser.parseRounds(/* skipValidation */)
+        .then(fileParser)
+        .catch((reason: string) => {
+            console.error('Failed to parse log, message follows:');
+            console.error(reason);
+        });
 }
