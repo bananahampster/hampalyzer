@@ -19,22 +19,61 @@ EVENT table (table is new)
 | playerFromFlag  | bool     |         | default false              |
 | playerToFlag    | bool     |         | default false              |
 
+CREATE TABLE event (
+  id serial,
+  logId integer NOT NULL,
+  isFirstLog boolean NOT NULL DEFAULT TRUE,
+  eventType smallint NOT NULL,
+  rawLine character varying(1024),
+  lineNumber smallint NOT NULL,
+  timestamp timestamp without time zone NOT NULL,
+  gameTime smallint NOT NULL,
+  extraData character varying(512),
+  playerFrom integer,
+  playerFromClass smallint,
+  playerTo integer,
+  playerToClass smallint,
+  withWeapon smallint,
+  playerFromFlag boolean DEFAULT false,
+  playerToFlag boolean DEFAULT false,
+  PRIMARY KEY(id),
+  CONSTRAINT fk_log
+    FOREIGN KEY(logId)
+      REFERENCES logs(id)
+      ON DELETE NO ACTION,
+  CONSTRAINT fk_playerFrom
+    FOREIGN KEY(playerFrom)
+      REFERENCES player(id)
+      ON DELETE NO ACTION,
+  CONSTRAINT fk_playerTo
+    FOREIGN KEY(playerTo)
+      REFERENCES player(id)
+      ON DELETE NO ACTION
+);
+
 
 PLAYER table (table is new)
 
 | name            | type     | desc    | notes                      |
 |-----------------|----------|---------|----------------------------|
-| playerId        |          |         | auto-increment, NOT NULL   |
-| playerName      | string   |         | NOT NULL                   |
-| playerAlias     | string   |         |                            |
+| id              |          |         | auto-increment, NOT NULL   |
+| name            | string   |         | NOT NULL                   |
+| alias           | string   |         |                            |
 | steamId         | number   |         | see [SteamID doc](https://developer.valvesoftware.com/wiki/SteamID) |
 
+CREATE TABLE player (
+  id serial,
+  name character varying(32),
+  alias character varying(32),
+  steamId integer,
+  PRIMARY KEY(id)
+);
 
 LOGS table (* are new columns)
 
 | name            | type     | values   | notes                      |
 |-----------------|----------|----------|----------------------------|
-| * logId         |          |          | auto-increment, NOT NULL   |
+| id              |          |          | auto-increment, NOT NULL   |
 | parsedlog       | string   |          | output URI slug            |
 | log_file1       | string   |          | matches name in uploads/   |
 | log_file2       | string   |          | matches name in uploads/   |

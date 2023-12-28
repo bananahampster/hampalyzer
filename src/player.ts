@@ -15,7 +15,10 @@ export class PlayerCurrentStatus {
 }
 
 class Player {
+    /** steamID (globally unique) */
     private steamNum: string;
+    /** database player id (should be unique) */
+    private _id?: number;    
     private names: string[];
     private playerNum: number;
     private teamColor: TeamColor;
@@ -48,6 +51,10 @@ class Player {
             this.names.push(name);
     }
 
+    public updateDbId(id: number) {
+        this._id = id;
+    }
+
     // return the last name??
     public get name(): string {
         return this.names[this.names.length - 1];
@@ -55,6 +62,10 @@ class Player {
 
     public get steamID(): string {
         return this.steamNum;
+    }
+
+    public get id(): number {
+        return this._id || -1;
     }
 
     public get playerID(): number { 

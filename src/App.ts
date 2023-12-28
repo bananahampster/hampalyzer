@@ -4,16 +4,15 @@ import cors from 'cors';
 import express from 'express';
 import Handlebars from 'handlebars';
 import multer from 'multer';
-import pg from 'pg';
 
 import { readFileSync } from 'fs';
 import path from 'path';
 
 import { FileCompression } from './fileCompression.js';
 import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
-import { ParsedStats, Parser } from './parser.js';
+import { Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
-import { ParseResponse, ParsingError, ParsingOptions } from './constants.js';
+import { ParseResponse, ParsingError, ParsingOptions, ParsingOptionsReparse } from './constants.js';
 import { DB } from './database.js';
 
 const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
@@ -154,7 +153,7 @@ class App {
 
             console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" + ")}`);
 
-            const parsedLog = await this.parseLogs(filenames, { reparse: true });
+            const parsedLog = await this.parseLogs(filenames, { logId: game.id, skipValidation: false });
             if (!parsedLog.success) {
                 // if it is a validation failure, mark it and move on to the next log.
                 if (parsedLog.error_reason === 'MATCH_INVALID') {
@@ -175,7 +174,10 @@ class App {
         return logs && logs.length !== 0;
     }
 
-    private async parseLogs(filenames: string[], { reparse, skipValidation }: ParsingOptions): Promise<ParseResponse> {
+    private async parseLogs(filenames: string[], options: ParsingOptions): Promise<ParseResponse> {
+        const { skipValidation } = options;
+        const logId: number | undefined = (options as ParsingOptionsReparse).logId;
+
         filenames = await FileCompression.ensureFilesCompressed(filenames, /*deleteOriginals=*/true);
         const parser = new Parser(...filenames);
 
@@ -186,8 +188,9 @@ class App {
                     path.join(this.webserverRoot, this.outputRoot),
                     this.templates, 
                     this.database, 
-                    reparse)
+                    logId)
                 )
+                // TODO: chain database additions here? need playerList and events[][] from parser
             .catch(error => {
                 if (error instanceof ParsingError) {
                     return <ParseResponse>{

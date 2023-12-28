@@ -20,7 +20,7 @@ export default async function(
     outputRoot: string = 'parsedlogs',
     templates?: HampalyzerTemplates,
     database?: DB,
-    reparse?: boolean,
+    logId?: number,
 ): Promise<ParseResponse> {
 
     const useDB = !!database;
@@ -52,7 +52,7 @@ export default async function(
 
         if (useDB) {
             // if initial parse of this log, check for duplicate match: just return that URL if so
-            if (!reparse) {
+            if (!logId) {
                 const isDuplicate = await database.checkLogDuplicate(matchMeta);
                 if (isDuplicate) {
                     return {
@@ -63,7 +63,7 @@ export default async function(
             }
 
             // guarantee unique log name for URI slug
-            matchMeta.logName = await database.getUniqueLogName(matchMeta.logName, reparse);
+            matchMeta.logName = await database.getUniqueLogName(matchMeta.logName, !!logId);
         }
 
         const outputDir = `${outputRoot}/${matchMeta.logName}`;
@@ -160,14 +160,14 @@ export default async function(
         let dbSuccess = !useDB;
         
         // skip publishing to DB if this is a reparsed log
-        if (useDB && !reparse) {
+        if (useDB && !logId) {
             // if everything is successful up to this point, log into the database
-            dbSuccess = await database.recordLog(matchMeta);
+            dbSuccess = !!(await database.recordLog(matchMeta));
         }
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
         // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
-        if (dbSuccess || reparse) {
+        if (dbSuccess || !logId) {
             console.log(`writing log to ${outputDir}`);
             return {
                 success: true,
