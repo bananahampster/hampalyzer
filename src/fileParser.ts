@@ -1,4 +1,4 @@
-import { copyFile, readFileSync, writeFile, mkdir } from 'fs';
+import { readFileSync, writeFile, mkdir } from 'fs';
 
 import Handlebars from 'handlebars';
 import * as pg from 'pg';
@@ -8,16 +8,7 @@ import { ParsedStats } from "./parser.js";
 import ParserUtils from './parserUtils.js';
 import TemplateUtils from './templateUtils.js';
 import FlagPaceChart from './flagPace.js';
-
-interface MatchMetadata {
-    logName: string;
-    logFile_1: string;
-    logFile_2: string | undefined;
-    date_match: Date;
-    map: string | undefined;
-    server: string | undefined;
-    num_players: number | undefined;
-}
+import { DB, MatchMetadata } from './database.js';
 
 export interface HampalyzerTemplates {
     summary: HandlebarsTemplateDelegate<any>;
@@ -28,9 +19,11 @@ export default async function(
     allStats: ParsedStats | undefined,
     outputRoot: string = 'parsedlogs',
     templates?: HampalyzerTemplates,
-    pool?: pg.Pool,
+    database?: DB,
     reparse?: boolean,
-    ): Promise<ParseResponse> {
+): Promise<ParseResponse> {
+
+    const useDB = !!database;
 
     if (allStats) {
         const matchMeta: MatchMetadata = {
@@ -57,22 +50,23 @@ export default async function(
             }
         }
 
-        // check for duplicate match; just return that URL if so
-        if (!reparse) {
-            const isDuplicate = await checkHasDuplicate(pool, matchMeta);
-            console.log('isDuplicate', isDuplicate);
-            if (isDuplicate) {
-                return {
-                    success: true,
-                    message: `${outputRoot}/${matchMeta.logName}`
-                };
+        if (useDB) {
+            // if initial parse of this log, check for duplicate match: just return that URL if so
+            if (!reparse) {
+                const isDuplicate = await database.checkLogDuplicate(matchMeta);
+                if (isDuplicate) {
+                    return {
+                        success: true,
+                        message: `${outputRoot}/${matchMeta.logName}`
+                    };
+                }
             }
+
+            // guarantee unique log name for URI slug
+            matchMeta.logName = await database.getUniqueLogName(matchMeta.logName, reparse);
         }
 
-        const logName = await getLogName(pool, allStats.stats[0]!.parse_name, reparse);
-        matchMeta.logName = logName;
-
-        const outputDir = `${outputRoot}/${logName}`;
+        const outputDir = `${outputRoot}/${matchMeta.logName}`;
 
         // ensure directory exists; create if it doesn't
         mkdir(
@@ -101,11 +95,15 @@ export default async function(
         });
 
         writeFile(summaryOutput, html, err => {
-            if (err) console.error(`failed to write output: ${err}`);
-            // console.log(`saved file ${summaryOutput}`);
+            if (err) {
+                console.error(`failed to write output: ${err}`);
+                throw new ParsingError({
+                    name: 'PARSING_FAILURE',
+                    message: `Failed to write output: ${err}`,
+                });
+            }
         });
 
-        // TODO: logic for generating player pages
         // * collect each player (allStats.players[team][index])
         // * for each player, collect their stats from available rounds and combine into
         //    { player, round: stats[] }  (see PlayerOutputStats)
@@ -149,15 +147,22 @@ export default async function(
             const playerOutput = `${outputDir}/p${playerStats.id}.html`;
 
             writeFile(playerOutput, html, err => {
-                if (err) console.error(`failed to write output: ${err}`);
+                if (err) {
+                    console.error(`failed to write output: ${err}`);
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: `Failed to write output: ${err}`,
+                    });
+                }
             });
         }
 
+        let dbSuccess = !useDB;
+        
         // skip publishing to DB if this is a reparsed log
-        let dbSuccess = false;
-        if (!reparse) {
+        if (useDB && !reparse) {
             // if everything is successful up to this point, log into the database
-            dbSuccess = await recordLog(pool, matchMeta);
+            dbSuccess = await database.recordLog(matchMeta);
         }
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
@@ -182,80 +187,4 @@ export default async function(
         error_reason: 'PARSING_FAILURE',
         message: 'No stats found to write! Unhandled exception likely resulted in this error.'
     };
-}
-
-async function checkHasDuplicate(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {
-    if (!pool) return false;
-
-    return new Promise(function(resolve, reject) {
-        pool.query(
-            "SELECT COUNT(1) as cnt FROM logs WHERE parsedlog = $1 AND map = $2 AND server = $3 AND num_players = $4",
-            [matchMeta.logName, matchMeta.map, matchMeta.server, matchMeta.num_players],
-            (error, result) => {
-                if (error)
-                    console.error(`Failed to check for duplicates for ${matchMeta.logName}, proceeding anyway...`);
-                    resolve(false);
-
-                console.log("row is: ", result.rows[0]);
-                console.log("cnt result", result.rows[0].cnt == 0);
-
-                if (result.rows[0].cnt == 0)
-                    resolve(false);
-
-                console.log('resolving with logname: ', matchMeta.logName);
-                resolve(true);
-            }
-        )
-    });
-}
-
-async function getLogName(pool: pg.Pool | undefined, parse_name: string, reparse?: boolean): Promise<string> {
-    if (!pool || !!reparse) return parse_name;
-
-    return new Promise(function(resolve, reject) {
-        pool.query(
-            "SELECT COUNT(1) as cnt FROM logs WHERE parsedlog = $1",
-            [parse_name],
-            (error, result) => {
-                if (error) {
-                    console.error("Failed checking for logname collision: " + error);
-                    reject("");
-                }
-
-                if (result.rows[0].cnt == 0)
-                    resolve(parse_name);
-
-                // otherwise, add some junk
-                const junk = Math.random().toString(36).substr(2, 5); // 5-char string
-                resolve(parse_name + '-' + junk);
-            }
-        );
-    });
-}
-
-async function recordLog(pool: pg.Pool | undefined, matchMeta: MatchMetadata): Promise<boolean> {
-    if (!pool) return true;
-
-    return new Promise(function(resolve, reject) {
-        pool.query(
-        "INSERT INTO logs(parsedlog, log_file1, log_file2, date_parsed, date_match, map, server, num_players) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-        [
-            matchMeta.logName,
-            matchMeta.logFile_1,
-            matchMeta.logFile_2,
-            new Date(),
-            matchMeta.date_match,
-            matchMeta.map,
-            matchMeta.server,
-            matchMeta.num_players
-        ],
-        (error, result) => {
-            if (error) {
-                console.error("Failed pushing new match log entry: " + error);
-                return reject(false);
-            }
-
-            resolve(true);
-        });
-    });
 }

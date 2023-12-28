@@ -45,6 +45,7 @@ LOGS table (* are new columns)
 | num_players     | int      |          |                            |
 | * is_valid      | bool     |          | default false              |
 
+alter table logs add column "is_valid" boolean not null deafult true;
 
 PARSEDLOGS table (table is new)
 
@@ -70,3 +71,5 @@ WHERE ST_3DIntersects(
     'POINT Z($x, $y, $z)'::geometry
 )
 LIMIT 1;
+
+ALTER TABLE logs 

@@ -14,6 +14,7 @@ import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { ParsedStats, Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
 import { ParseResponse, ParsingError, ParsingOptions } from './constants.js';
+import { DB } from './database.js';
 
 const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
 dotenv.config({ path: envFilePath });
@@ -37,7 +38,7 @@ let upload = multer({
 
 class App {
     public express: express.Express;
-    private pool: pg.Pool;
+    private database: DB;
     private templates: HampalyzerTemplates;
     private readonly PAGE_SIZE: number = 20;
 
@@ -46,13 +47,7 @@ class App {
         this.mountRoutes();
 
         // create database connection pool
-        this.pool = new pg.Pool({
-            user: process.env.HAMPALYZER_DB_USER,
-            password: process.env.HAMPALYZER_DB_PASSWORD,
-            host: 'localhost',
-            database: 'hampalyzer',
-            port: 5432,
-        });
+        this.database = new DB();
 
         // initialize the handlebars templates to be used globally
         const templateDir = new URL('./templates/', import.meta.url);
@@ -130,71 +125,70 @@ class App {
         });
 
         router.get('/logs/:page_num', async (req, res) => {
-            const page_num = req.params['page_num'] || 1;
+            let page_num = +req.params['page_num'] || 1;
+            
+            if (isNaN(page_num)) 
+                page_num = 1;
 
-            this.pool.query(
-                'SELECT * FROM logs ORDER BY date_parsed DESC LIMIT $1 OFFSET (($2 - 1) * $1)',
-                [this.PAGE_SIZE, page_num],
-                (error, result) => {
-                    if (error)
-                        res.status(500).json({ error: "Database failure: " + error });
-                    else
-                        res.status(200).json(result.rows);
-                }
-            );
+            this.database.getLogs(page_num);
         });
 
         this.express.use('/', router);
     }
 
-    /** Attempts to re-parse all the successfully-parsed logs present in the database.
+    /** 
+     * Attempts to re-parse all the successfully-parsed logs present in the database.
      * Succeeds if there are no errors, and if the source log files are missing, skips them.
      * Fails if any previous log fails to parse.
      **/
     private async reparseLogs(): Promise<boolean> {
-        let result;
-        try {
-            result = await this.pool.query('SELECT id, log_file1, log_file2 FROM logs WHERE id > 42'); // before 42, wrong log filenames
-            for (let i = 0, len = result.rows.length; i < len; i++) {
-                const game = result.rows[i];
+        const logs = await this.database.getReparseLogs(); 
+        for (let i = 0, len = logs.length; i < len; i++) {
+            const game = logs[i];
 
-                const filenames: string[] = [];
-                filenames.push(game.log_file1);
-                if (game.log_file2 != null && game.log_file2 != "") {
-                    filenames.push(game.log_file2);
+            const filenames: string[] = [];
+            filenames.push(game.log_file1);
+            if (game.log_file2 != null && game.log_file2 != "") {
+                filenames.push(game.log_file2);
+            }
+
+            console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" + ")}`);
+
+            const parsedLog = await this.parseLogs(filenames, { reparse: true });
+            if (!parsedLog.success) {
+                // if it is a validation failure, mark it and move on to the next log.
+                if (parsedLog.error_reason === 'MATCH_INVALID') {
+                    console.error(`LOG ${game.id} invalid: ${parsedLog.message}`);
+
+                    // fire and forget
+                    this.database.updateLogInvalid(game.id);
+                    continue;
                 }
-
-                console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" + ")}`);
-
-                const parsedLog = await this.parseLogs(filenames, { reparse: true });
-                if (!parsedLog.success) {
-                    // if it is a validation failure, mark it and move on to the next log.
-                    if (parsedLog.error_reason === 'MATCH_INVALID') {
-                        console.error(`LOG ${game.id} invalid: ${parsedLog.message}`);
-                        this.pool.query('UPDATE logs SET is_valid = FALSE WHERE id = $1', [game.id]);
-                        continue;
-                    }
-                    else {
-                        console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
-                        return false;
-                    }
+                else {
+                    console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
+                    return false;
                 }
             }
-        } catch (error: any) {
-            console.error("critical error: failed to connect to DB to reparse logs: " + error?.message || error);
         }
 
         // at least some logs must have been reparsed
-        return result && result.rows.length !== 0;
+        return logs && logs.length !== 0;
     }
 
     private async parseLogs(filenames: string[], { reparse, skipValidation }: ParsingOptions): Promise<ParseResponse> {
         filenames = await FileCompression.ensureFilesCompressed(filenames, /*deleteOriginals=*/true);
-        const parser = new Parser(...filenames)
+        const parser = new Parser(...filenames);
 
         return parser.parseRounds(skipValidation)
-            .then(allStats => fileParser(allStats, path.join(this.webserverRoot, this.outputRoot), this.templates, this.pool, reparse))
-            .catch((error) => {
+            .then(allStats => 
+                fileParser(
+                    allStats, 
+                    path.join(this.webserverRoot, this.outputRoot),
+                    this.templates, 
+                    this.database, 
+                    reparse)
+                )
+            .catch(error => {
                 if (error instanceof ParsingError) {
                     return <ParseResponse>{
                         success: false,

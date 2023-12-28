@@ -1,14 +1,23 @@
+# building
 dist/
 logs/
 node_modules/
 src/html/
+
+# front-end files
 parsedlogs/
 !parsedlogs/hamp2.css
 !parsedlogs/assets/
-uploads/
-uploads-inhouse/
-secrets.txt
+
+# debug files
 backup/
+uploads/
+uploads-sample/
+uploads-inhouse/
 *.heapsnapshot
-.vscode/
+
+# local environment
 .env
+.vscode/
+secrets.txt
+update-history.sh
