@@ -64,8 +64,8 @@ class Player {
         return this.steamNum;
     }
 
-    public get id(): number {
-        return this._id || -1;
+    public get id(): number | null {
+        return this._id || null;
     }
 
     public get playerID(): number { 

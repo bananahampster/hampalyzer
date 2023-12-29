@@ -165,7 +165,10 @@ class App {
                 }
                 else {
                     console.error(`failed to parse logs ${filenames.join(" + ")}; aborting`);
-                    return false;
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: `Failed to reparse.\nReason: ${parsedLog.error_reason}\nMessage: ${parsedLog.message}`,
+                    });
                 }
             }
         }
@@ -188,9 +191,9 @@ class App {
                     path.join(this.webserverRoot, this.outputRoot),
                     this.templates, 
                     this.database, 
-                    logId)
+                    logId
                 )
-                // TODO: chain database additions here? need playerList and events[][] from parser
+            )
             .catch(error => {
                 if (error instanceof ParsingError) {
                     return <ParseResponse>{

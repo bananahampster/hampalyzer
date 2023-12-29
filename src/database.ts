@@ -1,7 +1,8 @@
 import pg from 'pg';
 import { ParsingError } from './constants.js';
-import { Event } from './parser.js';
+import { Event, ParsedStats } from './parser.js';
 import PlayerList from './playerList.js';
+import Player from './player.js';
 
 export class DB {
     private pool: pg.Pool;
@@ -41,9 +42,14 @@ export class DB {
 
     /** Gets all the logs to reparse on server start */
     public async getReparseLogs(): Promise<ReparseMetadata[]> {
-        return await this.query<any>(
+        const logs = await this.query<ReparseMetadata>(
             'SELECT id, log_file1, log_file2 FROM logs WHERE id > 42' // before 42, wrong log filenames
         );
+
+        await this.query('TRUNCATE TABLE event RESTART IDENTITY');
+        await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE');
+
+        return logs;
     }
 
     /** Updates the given log to be invalid */
@@ -127,12 +133,12 @@ export class DB {
     }
 
     public async matchTransaction(
-        events: Event[][],
-        players: PlayerList,
+        parsedStats: ParsedStats,
         matchMeta: MatchMetadata,
         logId?: number): Promise<boolean> {
 
         const client = await this.pool.connect();
+        const { players, events } = parsedStats.rawStats;
 
         try {
             await client.query('BEGIN');
@@ -144,7 +150,7 @@ export class DB {
 
             await this.ensurePlayers(client, players);
             
-            for (let roundNum = 0; roundNum < 2; roundNum++) {
+            for (let roundNum = 0; roundNum < events.length; roundNum++) {
                 const round = events[roundNum];
                 const isFirstRound = roundNum === 0;
                 for (const event of round) {
@@ -168,58 +174,73 @@ export class DB {
         return true;
     }
 
-    private async ensurePlayers(client: pg.PoolClient, playerList: PlayerList): Promise<void> {
-        const players = playerList.players;
-        const steamIds = players.map(player => player.steamID);
+    private async ensurePlayers(client: pg.PoolClient, playerLists: PlayerList[]): Promise<void> {
+        let players: Player[] = [];
+        for (const playerList of playerLists)
+            players.push(...playerList.players);
 
-        const idMapping = await client.query<{ id: number, steamId: string }>(
-            `SELECT id, steamId FROM player where steamId = ANY ($1)`,
-            steamIds);
+        const steamIds = players.map(player => player.steamID);
+        const idMapping = await client.query<{ id: number, steamid: string }>(
+            `SELECT DISTINCT id, steamid FROM player where steamid = ANY ($1::varchar[])`,
+            [steamIds]);
 
         for (const entry of idMapping.rows) {
-            const player = players.find(player => player.steamID === entry.steamId);
+            const matchedPlayers = players.filter(player => player.steamID === entry.steamid);
 
-            if (player == null) 
+            if (matchedPlayers.length === 0) 
                 throw new ParsingError({
                     name: 'LOGIC_FAILURE',
                     message: 'expected to find player we just queried for',
                 });
 
-            player?.updateDbId(entry.id);
+            for (const player of matchedPlayers) 
+                player?.updateDbId(entry.id);
         }
 
         // collect all other players and insert them
-        const newPlayers = playerList.players.filter(player => player.id == null);
-        for (const player of newPlayers) {
-            const newPlayerResult = await client.query(
+        const newUniqSteamIds = [
+            ...new Set(
+                players
+                    .filter(player => player.id == null)
+                    .map(player => player.steamID)
+            )
+        ];
+        const newUniqPlayers = newUniqSteamIds.map(steamID => ({ 
+            steamID, 
+            name: players.find(player => player.steamID == steamID)?.name,
+        }));
+        
+        for (const newPlayer of newUniqPlayers) {
+            const newPlayerResult = await client.query<{ id: number }>(
                 `INSERT INTO player(name, steamId) VALUES ($1, $2) RETURNING id`,
                 [
-                    player.name,
-                    player.steamID,
+                    newPlayer.name,
+                    newPlayer.steamID,
                 ]
             );
 
-            const playerId = newPlayerResult.rows?.[0];
+            const playerId = newPlayerResult.rows?.[0].id;
             if (playerId == null)
                 throw new ParsingError({
                     name: 'LOGIC_FAILURE',
                     message: 'unable to add new player to DB',
                 });
 
-            player.updateDbId(playerId);
+            const matchingPlayers = players.filter(player => player.steamID == newPlayer.steamID);
+            for (const player of matchingPlayers)
+                player.updateDbId(playerId);
         }
     }
     
     private async addEvent(client: pg.PoolClient, logId: number, event: Event, isFirstRound: boolean): Promise<void> {
         client.query(
             `INSERT INTO 
-                event(logId, isFirstLog, eventType, rawLine, lineNumber, timestamp, gameTime, extraData, playerFrom, playerFromClass, playerTo, playerToClass, withWeapon, playerFromFlag, playerToFlag) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+                event(logId, isFirstLog, eventType, lineNumber, timestamp, gameTime, extraData, playerFrom, playerFromClass, playerTo, playerToClass, withWeapon, playerFromFlag, playerToFlag) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
             [
                 logId,
                 isFirstRound,
                 event.eventType,
-                event.rawLine,
                 event.lineNumber,
                 event.timestamp,
                 event.gameTimeAsSeconds,

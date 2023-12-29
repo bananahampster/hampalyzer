@@ -6,7 +6,6 @@ EVENT table (table is new)
 | logId           |          |         | log table id ref, NOT NULL |
 | isFirstLog      | bool     |         | default true               |
 | eventType       | enum     | 0-71    | NOT NULL                   |
-| rawLine         | string   |         | NOT NULL                   |
 | lineNumber      | number   |         | NOT NULL                   |
 | timestamp       | datetime |         | NOT NULL                   |
 | gameTime        | number   | seconds | NOT NULL                   |
@@ -24,7 +23,6 @@ CREATE TABLE event (
   logId integer NOT NULL,
   isFirstLog boolean NOT NULL DEFAULT TRUE,
   eventType smallint NOT NULL,
-  rawLine character varying(1024),
   lineNumber smallint NOT NULL,
   timestamp timestamp without time zone NOT NULL,
   gameTime smallint NOT NULL,
@@ -65,7 +63,7 @@ CREATE TABLE player (
   id serial,
   name character varying(32),
   alias character varying(32),
-  steamId integer,
+  steamId character varying(32),
   PRIMARY KEY(id)
 );
 
@@ -112,3 +110,7 @@ WHERE ST_3DIntersects(
 LIMIT 1;
 
 ALTER TABLE logs 
+
+# get column sizes in a table filled with data
+https://dbfiddle.uk/wtnwh8v7
+select *, pg_size_pretty(column_size) from column_sizes('event');

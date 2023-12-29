@@ -11,6 +11,10 @@ import { FileCompression } from './fileCompression.js';
 type RoundStats = (OutputStats | undefined)[];
 export interface ParsedStats {
     stats: RoundStats;
+    rawStats: {
+        events: Event[][],
+        players: PlayerList[],
+    },
     players: TeamComposition<OutputPlayer>;
     parsing_errors: (string[] | undefined)[];
     comparison?: TeamStatsComparison;
@@ -57,6 +61,10 @@ export class Parser {
 
                 return <ParsedStats> {
                     players: teamComp,
+                    rawStats: {
+                        events: this.rounds.map(round => round.events),
+                        players: this.rounds.map(round => round.playerList),
+                    },
                     stats,
                     parsing_errors: stats.map(round => round?.parsing_errors),
                     comparison,
@@ -91,13 +99,6 @@ export class Parser {
             throw new ParsingError({
                 name: 'MATCH_INVALID',
                 message: 'Validation failure: map does not match between two rounds.'
-            });
-
-        const secondGameTime = secondRound.scoring_activity?.game_time_as_seconds || 0;
-        if (Math.abs(secondGameTime - gameTime) > 300)
-            throw new ParsingError({
-                name: 'MATCH_INVALID',
-                message: `Validation failure: game time between two rounds does not match within tolerance of 5 minutes (first round: ${gameTime}s, second: ${secondGameTime}s).`
             });
         
         // verify at least 50% of players from first round match
@@ -1233,7 +1234,7 @@ export class Event {
                     rawLine: line,
                     lineNumber: lineNumber,
                     timestamp: timestamp,
-                    data: data,
+                    data: Object.keys(data).length === 0 ? undefined : data,
                     playerFrom: playerFrom,
                     playerTo: playerTo,
                     withWeapon: withWeapon,
