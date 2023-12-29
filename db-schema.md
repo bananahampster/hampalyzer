@@ -67,6 +67,28 @@ CREATE TABLE player (
   PRIMARY KEY(id)
 );
 
+MATCH table (table is new)
+
+| name            | type     | desc    | notes                      |
+|-----------------|----------|---------|----------------------------|
+| logid           | int      |         | log table id ref           |
+| playerid        | int      |         | player table id ref        |
+| team            | smallint | 0-4     | NOT NULL (players are 1-2) |
+
+CREATE TABLE match (
+  logid integer NOT NULL,
+  playerid integer NOT NULL,
+  team smallint NOT NULL,
+  CONSTRAINT fk_log
+    FOREIGN KEY(logId)
+      REFERENCES logs(id)
+      ON DELETE NO ACTION,
+  CONSTRAINT fk_player
+    FOREIGN KEY(playerid)
+      REFERENCES player(id)
+      ON DELETE NO ACTION
+);
+
 LOGS table (* are new columns)
 
 | name            | type     | values   | notes                      |
@@ -81,8 +103,13 @@ LOGS table (* are new columns)
 | server          | string   |          |                            |
 | num_players     | int      |          |                            |
 | * is_valid      | bool     |          | default false              |
+| * score_team1   | smallint |          | default 0                  |
+| * score_team2   | smallint |          | default 0                  |
 
-alter table logs add column "is_valid" boolean not null deafult true;
+alter table logs add column "is_valid" boolean not null default true;
+alter table logs add column "score_team1" integer default 0;
+alter table logs add column "score_team2" integer default 0;
+
 
 PARSEDLOGS table (table is new)
 

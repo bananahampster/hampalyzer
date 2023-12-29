@@ -1,8 +1,9 @@
 import pg from 'pg';
-import { ParsingError } from './constants.js';
+import { OutputPlayer, ParsingError, TeamComposition } from './constants.js';
 import { Event, ParsedStats } from './parser.js';
 import PlayerList from './playerList.js';
 import Player from './player.js';
+import { TeamScore } from './parserUtils.js';
 
 export class DB {
     private pool: pg.Pool;
@@ -46,6 +47,7 @@ export class DB {
             'SELECT id, log_file1, log_file2 FROM logs WHERE id > 42' // before 42, wrong log filenames
         );
 
+        await this.query('TRUNCATE TABLE match');
         await this.query('TRUNCATE TABLE event RESTART IDENTITY');
         await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE');
 
@@ -148,7 +150,9 @@ export class DB {
             if (logId == null)
                 logId = await this.recordLog(matchMeta, client);
 
-            await this.ensurePlayers(client, players);
+            const playerMapping = await this.ensurePlayers(client, players);
+            await this.saveTeams(client, parsedStats.players, logId, playerMapping);
+            await this.saveScore(client, matchMeta.score, logId);
             
             for (let roundNum = 0; roundNum < events.length; roundNum++) {
                 const round = events[roundNum];
@@ -174,7 +178,7 @@ export class DB {
         return true;
     }
 
-    private async ensurePlayers(client: pg.PoolClient, playerLists: PlayerList[]): Promise<void> {
+    private async ensurePlayers(client: pg.PoolClient, playerLists: PlayerList[]): Promise<Record<string, number>> {
         let players: Player[] = [];
         for (const playerList of playerLists)
             players.push(...playerList.players);
@@ -230,6 +234,44 @@ export class DB {
             for (const player of matchingPlayers)
                 player.updateDbId(playerId);
         }
+
+        // return steamid to id mapping
+        const playerToId: Record<string, number> = {};
+        for (const player of players) {
+            playerToId[player.steamID] = player.id as number;
+        }
+        return playerToId;
+    }
+
+    private async saveTeams(client: pg.PoolClient, players: TeamComposition<OutputPlayer>, logId: number, playerMapping: Record<string, number>): Promise<void> {
+        for (const team in players) {
+            const teamPlayers = players[team] as OutputPlayer[];
+            for (const player of teamPlayers) {
+                const playerId = playerMapping[player.steamID];
+
+                client.query(
+                    `INSERT INTO match(logid, playerid, team) VALUES ($1, $2, $3)`,
+                    [
+                        logId,
+                        playerId,
+                        +team
+                    ]
+                );
+            }
+        }
+    }
+
+    private async saveScore(client: pg.PoolClient, score: TeamScore, logId: number): Promise<void> {
+        await client.query(
+            `UPDATE logs
+                SET score_team1 = $1, score_team2 = $2
+              WHERE id = $3`,
+            [
+                score[1],
+                score[2],
+                logId,
+            ]
+        );
     }
     
     private async addEvent(client: pg.PoolClient, logId: number, event: Event, isFirstRound: boolean): Promise<void> {
@@ -271,4 +313,5 @@ export interface MatchMetadata {
     map: string | undefined;
     server: string | undefined;
     num_players: number | undefined;
+    score: TeamScore;
 }

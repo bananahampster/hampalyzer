@@ -26,12 +26,23 @@ export default async function(
     const useDB = !!database;
 
     if (allStats) {
+        // collect team scores; assume that blue/red switch between rounds
+        let teamScore = {
+            1: allStats.stats[0]?.score[1] || 0,
+            2: allStats.stats[0]?.score[2] || 0,
+        };
+        if (allStats.stats[1]) {
+            teamScore[1] += allStats.stats[1].score[2] || 0;
+            teamScore[2] += allStats.stats[1].score[1] || 0;
+        }
+
         const matchMeta: MatchMetadata = {
             logName: allStats.stats[0]!.parse_name,
             logFile_1: allStats.stats[0]!.log_name,
             logFile_2: allStats.stats[1]?.log_name,
             date_match: allStats.stats[0]!.timestamp,
             map: allStats.stats[0]!.map,
+            score: teamScore,
             server: allStats.stats[0]!.server,
             num_players: (allStats.players[1]?.length ?? 0) + (allStats.players[2]?.length ?? 0)
         };
