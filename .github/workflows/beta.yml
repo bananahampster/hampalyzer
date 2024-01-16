@@ -1,0 +1,40 @@
+# The following script assumes the following:
+#
+# Depencencies installed on the destination machine: npm, node, pm2, tsc
+# * `~/hampalyzer` is this cloned repo in the user's home directory
+# * `pm2 start dist/index.js --name hampalyzer` was previously run
+
+name: Deploy Hampalyzer BETA
+
+# Controls when the action will run.
+on:
+  push:
+    branches: [ db-cleanup, beta ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: deploy script
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.BETA_SERVER_NAME }}
+        username: ${{ secrets.DEPLOY_USER }}
+        password: ${{ secrets.BETA_DEPLOY_PASSWORD }}
+        script: |
+          cd ~/hampalyzer
+          git reset --hard origin/master
+          git pull origin master
+          npm install
+          tsc
+          cp -rfL ~/hampalyzer/frontend/* -t /var/www/beta.hampalyzer.com/html
+          cp -rf ~/hampalyzer/parsedlogs/assets/ -t /var/www/beta.hampalyzer.com/html/
+          cd ~/hampalyzer/dist
+          pm2 restart hampalyzer -- server parsedlogs /var/www/beta.hampalyzer.com/html --reparse
+

@@ -49,7 +49,7 @@ export class DB {
 
         await this.query('TRUNCATE TABLE match');
         await this.query('TRUNCATE TABLE event RESTART IDENTITY');
-        await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE');
+        // await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE'); // no need to truncate this
 
         return logs;
     }
@@ -75,7 +75,7 @@ export class DB {
                 message: "Expected one row from DB when querying for duplicates"
             });
 
-        return result[0].cnt !== 0;
+        return result[0].cnt != 0;
     }
 
     /** Returns a unique log name */
@@ -95,7 +95,7 @@ export class DB {
             });
 
 
-        if (hasName[0].cnt === 0)
+        if (hasName[0].cnt == 0)
             return parse_name;
 
         // otherwise, add some junk
@@ -246,17 +246,19 @@ export class DB {
     private async saveTeams(client: pg.PoolClient, players: TeamComposition<OutputPlayer>, logId: number, playerMapping: Record<string, number>): Promise<void> {
         for (const team in players) {
             const teamPlayers = players[team] as OutputPlayer[];
-            for (const player of teamPlayers) {
-                const playerId = playerMapping[player.steamID];
+            if (teamPlayers != null) {
+                for (const player of teamPlayers) {
+                    const playerId = playerMapping[player.steamID];
 
-                client.query(
-                    `INSERT INTO match(logid, playerid, team) VALUES ($1, $2, $3)`,
-                    [
-                        logId,
-                        playerId,
-                        +team
-                    ]
-                );
+                    client.query(
+                        `INSERT INTO match(logid, playerid, team) VALUES ($1, $2, $3)`,
+                        [
+                            logId,
+                            playerId,
+                            +team
+                        ]
+                    );
+                }
             }
         }
     }
