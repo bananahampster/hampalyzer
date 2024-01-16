@@ -26,7 +26,7 @@ jobs:
       with:
         host: ${{ secrets.BETA_SERVER_NAME }}
         username: ${{ secrets.DEPLOY_USER }}
-        password: ${{ secrets.BETA_DEPLOY_PASSWORD }}
+        key: ${{ secrets.BETA_DEPLOY_KEY }}
         script: |
           cd ~/hampalyzer
           git reset --hard origin/master
