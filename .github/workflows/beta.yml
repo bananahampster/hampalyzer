@@ -23,14 +23,17 @@ jobs:
     steps:
     - name: deploy script
       uses: appleboy/ssh-action@master
+      env:
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
       with:
         host: ${{ secrets.BETA_SERVER_NAME }}
         username: ${{ secrets.DEPLOY_USER }}
         key: ${{ secrets.BETA_DEPLOY_KEY }}
         script: |
           cd ~/hampalyzer
-          git reset --hard origin/master
-          git pull origin master
+          git reset --hard HEAD
+          git pull
+          git checkout $BRANCH_NAME
           npm install
           tsc
           cp -rfL ~/hampalyzer/frontend/* -t /var/www/beta.hampalyzer.com/html
