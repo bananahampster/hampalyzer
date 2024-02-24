@@ -342,9 +342,15 @@ export namespace TeamColor {
     }
 }
 
-export interface ParsingOptions {
-    reparse?: boolean;
+export type ParsingOptions = ParsingOptionsSkipValidation | ParsingOptionsReparse;
+
+export interface ParsingOptionsSkipValidation {
     skipValidation?: boolean;
+}
+
+export interface ParsingOptionsReparse {
+    skipValidation: false,
+    logId: number,
 }
 
 export type ParsingErrorName = 'MATCH_INVALID' | 'PARSING_FAILURE' | 'DATABASE_FAILURE' | 'LOGIC_FAILURE';
