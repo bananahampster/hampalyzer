@@ -129,7 +129,17 @@ class App {
             if (isNaN(page_num)) 
                 page_num = 1;
 
-            this.database.getLogs(page_num);
+            try {
+                const result = await this.database.getLogs(page_num);
+                res.status(200).json(result);
+            }
+            catch (e: any) {
+                const error = e as ParsingError;
+                if (error.name)
+                    res.status(500).json({ error: `${error.name}: ${error.message}`});
+                else
+                    res.status(500).json({ error: e });
+            }
         });
 
         this.express.use('/', router);

@@ -49,6 +49,10 @@ CREATE TABLE event (
       ON DELETE NO ACTION
 );
 
+CREATE INDEX idx_event_logid on event (logid)
+CREATE INDEX idx_event_playerfrom on event(playerFrom);
+CREATE INDEX idx_event_playerto on event(playerTo);
+CREATE INDEX idx_event_eventtype on event(eventType);
 
 PLAYER table (table is new)
 
@@ -88,6 +92,9 @@ CREATE TABLE match (
       REFERENCES player(id)
       ON DELETE NO ACTION
 );
+
+CREATE INDEX idx_match_logid ON match (logid)
+
 
 LOGS table (* are new columns)
 

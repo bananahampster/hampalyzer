@@ -33,8 +33,8 @@ export class DB {
     }
 
     /** Gets a list of logs, limited to a 20-log limit */
-    public async getLogs(pageNumber = 1): Promise<any[]> {
-        return await this.query<any>(
+    public async getLogs(pageNumber = 1): Promise<MatchMetadata[]> {
+        return await this.query<MatchMetadata>(
             'SELECT * FROM logs ORDER BY date_parsed DESC LIMIT $1 OFFSET (($2 - 1) * $1)',
             DB.PAGE_SIZE,
             pageNumber
@@ -178,6 +178,34 @@ export class DB {
         return true;
     }
 
+    public async defenseTkDamage(filters: EventFilters = {}): Promise<PlayerDamage[]> {
+        const query = `
+            SELECT p.alias
+                 , COUNT(DISTINCT m.logid) as num_games
+                 , SUM((e.extraData::json->>'value')::integer) / COUNT(DISTINCT m.logid) as dmg
+              FROM event as e 
+              JOIN logs as g
+                ON g.id = e.logid
+              JOIN match as m
+                ON m.logid = e.logid
+               AND m.playerid = e.playerTo
+              JOIN match as m2
+                ON m2.logid = e.logid
+               AND m2.playerid = e.playerFrom
+              JOIN player as p
+                ON p.id = e.playerFrom
+             WHERE ((m2.team = 2 AND e.isFirstLog = true) OR (m2.team = 1 AND e.isFirstLog = false))
+               AND e.eventType = 64
+               AND m2.team = m.team
+               AND e.playerFrom <> e.playerTo
+               AND g.server = 'Inhouse'
+               AND g.num_players >= 8
+             GROUP BY e.playerFrom, p.alias
+             ORDER BY dmg DESC`;
+
+        return this.query(query)
+    }
+
     private async ensurePlayers(client: pg.PoolClient, playerLists: PlayerList[]): Promise<Record<string, number>> {
         let players: Player[] = [];
         for (const playerList of playerLists)
@@ -299,6 +327,94 @@ export class DB {
             ]
         )
     }
+
+    static readonly defaultFilters: EventFilters = {
+        logValid: true,
+        logMinPlayers: 8,
+    };
+    private addFilters(matchFilters: EventFilters): EventFilterResult {
+        matchFilters = { ...DB.defaultFilters, ...matchFilters };
+        const keys = Object.keys(matchFilters) as EventFilterTypes[];
+        
+        let filterString = "";
+        let filterParams: any[] = [];
+        let paramIndex = 0;
+
+        for (const filter of keys) {
+            const filterValue = matchFilters[filter];
+            if (filterValue != null) {
+                switch (filter) {
+                    case 'logValid':
+                        filterString += `g.is_valid = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'logMap':
+                        filterString += `g.map = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'logMinPlayers':
+                        filterString += `g.num_players = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'logServer':
+                        filterString += `g.server = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'eventPlayerFrom':
+                        filterString += `e.playerFrom = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'eventPlayerTo':
+                        filterString += `e.playerTo = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'eventClassFrom':
+                        filterString += `e.playerFromClass = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'eventClassTo':
+                        filterString += `e.playerToClass = $${paramIndex}`;
+                        filterParams[paramIndex++] = filterValue;
+                        break;
+                    case 'eventAgainstSelf':
+                        filterString += 'e.playerTo = e.playerFrom';
+                        break;
+                    case 'eventPlayerFromBlue':
+                        if (filterValue)
+                            filterString = '((m2.team = 1 AND e.isFirstLog = true) OR (m2.team = 2 AND e.isFirstLog = false))';
+                        else
+                            filterString = '((m2.team = 2 AND e.isFirstLog = true) OR (m2.team = 1 AND e.isFirstLog = false))';
+                        break;
+                    case 'eventPlayerToBlue':
+                        if (filterValue)
+                            filterString = '((m.team = 1 AND e.isFirstLog = true) OR (m.team = 2 AND e.isFirstLog = false))';
+                        else
+                            filterString = '((m.team = 2 AND e.isFirstLog = true) OR (m.team = 1 AND e.isFirstLog = false))';
+                        break;
+                    case 'matchAgainstEnemy':
+                        filterString += 'm2.team <> m.team';
+                        break;
+                    case 'matchAgainstTeammate':
+                        filterString += 'm2.team = m.team';
+                        break;
+                    default:
+                        // compiler assertion: all cases handled:
+                        const badFilter: never = filter;
+                        throw new ParsingError({
+                            name: 'LOGIC_FAILURE',
+                            message: `unknown filter key/value: ${badFilter} / ${filterValue}`,
+                        });                        
+                }
+                
+                filterString += ' ';
+            }
+        }
+
+        return {
+            whereClause: filterString,
+            params: filterParams,
+        }
+    }
 }
 
 export interface ReparseMetadata {
@@ -316,4 +432,32 @@ export interface MatchMetadata {
     server: string | undefined;
     num_players: number | undefined;
     score: TeamScore;
+}
+
+export interface PlayerDamage {
+    alias: string;
+    num_games: number,
+    dmg: number,
+}
+
+export interface EventFilters {
+    logValid?: boolean;
+    logMinPlayers?: number;
+    logMap?: string;
+    logServer?: string;
+    eventPlayerFrom?: number;
+    eventPlayerTo?: number;
+    eventClassFrom?: number;
+    eventClassTo?: number;
+    eventPlayerFromBlue?: boolean;
+    eventPlayerToBlue?: boolean;
+    matchAgainstEnemy?: boolean;
+    matchAgainstTeammate?: boolean;
+    eventAgainstSelf?: boolean;
+}
+type EventFilterTypes = keyof EventFilters;
+
+export interface EventFilterResult {
+    whereClause: string;
+    params: any[];
 }
