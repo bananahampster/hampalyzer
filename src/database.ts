@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { OutputPlayer, ParsingError, TeamComposition } from './constants.js';
+import { OutputPlayer, ParsingError, TeamColor, TeamComposition } from './constants.js';
 import { Event, ParsedStats } from './parser.js';
 import PlayerList from './playerList.js';
 import Player from './player.js';
@@ -49,6 +49,7 @@ export class DB {
 
         await this.query('TRUNCATE TABLE match');
         await this.query('TRUNCATE TABLE event RESTART IDENTITY');
+        await this.query('TRUNCATE TABLE round RESTART IDENTITY CASCADE');
         // await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE'); // no need to truncate this
 
         return logs;
@@ -150,15 +151,18 @@ export class DB {
             if (logId == null)
                 logId = await this.recordLog(matchMeta, client);
 
+            const numRounds = events.length;
+
             const playerMapping = await this.ensurePlayers(client, players);
-            await this.saveTeams(client, parsedStats.players, logId, playerMapping);
+            const roundIds = await this.saveRoundTeams(client, parsedStats.players, logId, numRounds, playerMapping);
             await this.saveScore(client, matchMeta.score, logId);
             
             for (let roundNum = 0; roundNum < events.length; roundNum++) {
                 const round = events[roundNum];
-                const isFirstRound = roundNum === 0;
+                const roundId = roundIds[roundNum];
+
                 for (const event of round) {
-                    await this.addEvent(client, logId, event, isFirstRound);
+                    await this.addEvent(client, roundId, event);
                 }
             }
 
@@ -271,24 +275,72 @@ export class DB {
         return playerToId;
     }
 
-    private async saveTeams(client: pg.PoolClient, players: TeamComposition<OutputPlayer>, logId: number, playerMapping: Record<string, number>): Promise<void> {
+    private async saveRoundTeams(
+        client: pg.PoolClient,
+        players: TeamComposition<OutputPlayer>,
+        logId: number,
+        numRounds: number,
+        playerMapping: Record<string, number>): Promise<number[]> {
+
+        const secondRoundOppositeTeam: Record<TeamColor, TeamColor> = {
+            0: 0,
+            1: 2,  // swap
+            2: 1,  // swap
+            3: 3,
+            4: 4,
+            5: 5,
+        }
+        const roundIds: number[] = [];
+
+        for (let i = 0; i < numRounds; i++) {
+            const newRoundResult = await client.query<{ id: number }>(
+                `INSERT INTO round(logId, isFirst) VALUES ($1, $2) RETURNING id`,
+                [
+                    logId,
+                    i === 0,
+                ]
+            );
+
+            const roundId = newRoundResult.rows?.[0].id;
+            if (roundId == null) 
+                throw new ParsingError({
+                    name: "LOGIC_FAILURE",
+                    message: 'unable to add new round to DB',
+                });
+
+            roundIds.push(roundId);
+        }
+
         for (const team in players) {
             const teamPlayers = players[team] as OutputPlayer[];
             if (teamPlayers != null) {
                 for (const player of teamPlayers) {
                     const playerId = playerMapping[player.steamID];
 
-                    client.query(
-                        `INSERT INTO match(logid, playerid, team) VALUES ($1, $2, $3)`,
+                    await client.query(
+                        `INSERT INTO match(roundid, playerid, team) VALUES ($1, $2, $3)`,
                         [
-                            logId,
+                            roundIds[0],
                             playerId,
                             +team
                         ]
                     );
+
+                    if (roundIds[1] != null) {
+                        await client.query(
+                            `INSERT INTO match(roundid, playerid, team) VALUES ($1, $2, $3)`,
+                            [
+                                roundIds[1],
+                                playerId,
+                                secondRoundOppositeTeam[+team],
+                            ]
+                        );
+                    }
                 }
             }
         }
+
+        return roundIds;
     }
 
     private async saveScore(client: pg.PoolClient, score: TeamScore, logId: number): Promise<void> {
@@ -304,14 +356,13 @@ export class DB {
         );
     }
     
-    private async addEvent(client: pg.PoolClient, logId: number, event: Event, isFirstRound: boolean): Promise<void> {
+    private async addEvent(client: pg.PoolClient, roundId: number, event: Event): Promise<void> {
         client.query(
             `INSERT INTO 
-                event(logId, isFirstLog, eventType, lineNumber, timestamp, gameTime, extraData, playerFrom, playerFromClass, playerTo, playerToClass, withWeapon, playerFromFlag, playerToFlag) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+                event(roundId, eventType, lineNumber, timestamp, gameTime, extraData, playerFrom, playerFromClass, playerTo, playerToClass, withWeapon, playerFromFlag, playerToFlag) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
             [
-                logId,
-                isFirstRound,
+                roundId,
                 event.eventType,
                 event.lineNumber,
                 event.timestamp,

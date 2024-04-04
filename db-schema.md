@@ -1,27 +1,25 @@
 EVENT table (table is new)
 
-| name            | type     | values  | notes                      |
-|-----------------|----------|---------|----------------------------|
-| eventId         |          |         | auto-increment, NOT NULL   |
-| logId           |          |         | log table id ref, NOT NULL |
-| isFirstLog      | bool     |         | default true               |
-| eventType       | enum     | 0-71    | NOT NULL                   |
-| lineNumber      | number   |         | NOT NULL                   |
-| timestamp       | datetime |         | NOT NULL                   |
-| gameTime        | number   | seconds | NOT NULL                   |
-| extraData       | string   |         | (prefer json format?)      |
-| playerFrom      |          |         | player table id ref        |
-| playerFromClass | short    | 0-9     |                            |
-| playerTo        |          |         | player table id ref        |
-| playerToClass   | short    | 0-9     |                            |
-| withWeapon      | short    | 0-39    |                            |
-| playerFromFlag  | bool     |         | default false              |
-| playerToFlag    | bool     |         | default false              |
+| name            | type     | values  | notes                        |
+|-----------------|----------|---------|------------------------------|
+| eventId         |          |         | auto-increment, NOT NULL     |
+| roundId         |          |         | round table id ref, NOT NULL |
+| eventType       | enum     | 0-71    | NOT NULL                     |
+| lineNumber      | number   |         | NOT NULL                     |
+| timestamp       | datetime |         | NOT NULL                     |
+| gameTime        | number   | seconds | NOT NULL                     |
+| extraData       | string   |         | (prefer json format?)        |
+| playerFrom      |          |         | player table id ref          |
+| playerFromClass | short    | 0-9     |                              |
+| playerTo        |          |         | player table id ref          |
+| playerToClass   | short    | 0-9     |                              |
+| withWeapon      | short    | 0-39    |                              |
+| playerFromFlag  | bool     |         | default false                |
+| playerToFlag    | bool     |         | default false                |
 
 CREATE TABLE event (
   id serial,
-  logId integer NOT NULL,
-  isFirstLog boolean NOT NULL DEFAULT TRUE,
+  roundId integer NOT NULL,
   eventType smallint NOT NULL,
   lineNumber smallint NOT NULL,
   timestamp timestamp without time zone NOT NULL,
@@ -35,9 +33,9 @@ CREATE TABLE event (
   playerFromFlag boolean DEFAULT false,
   playerToFlag boolean DEFAULT false,
   PRIMARY KEY(id),
-  CONSTRAINT fk_log
-    FOREIGN KEY(logId)
-      REFERENCES logs(id)
+  CONSTRAINT fk_round
+    FOREIGN KEY(roundId)
+      REFERENCES round(id)
       ON DELETE NO ACTION,
   CONSTRAINT fk_playerFrom
     FOREIGN KEY(playerFrom)
@@ -49,10 +47,33 @@ CREATE TABLE event (
       ON DELETE NO ACTION
 );
 
-CREATE INDEX idx_event_logid on event (logid)
+CREATE INDEX idx_event_roundid on event (roundId);
 CREATE INDEX idx_event_playerfrom on event(playerFrom);
 CREATE INDEX idx_event_playerto on event(playerTo);
 CREATE INDEX idx_event_eventtype on event(eventType);
+
+
+ROUND table (table is new)
+
+| name            | type     | desc    | notes                      |
+|-----------------|----------|---------|----------------------------|
+| id              |          |         | auto-increment, NOT NULL   |
+| logId           | number   |         | logs table id ref          |
+| isFirst         | boolean  |         | default TRUE               |
+
+CREATE TABLE round (
+  id serial,
+  logId integer NOT NULL,
+  isFirst boolean NOT NULL DEFAULT TRUE,
+  PRIMARY KEY(id),
+  CONSTRAINT fk_log
+    FOREIGN KEY(logId)
+      REFERENCES logs(id)
+      ON DELETE NO ACTION
+);
+
+CREATE INDEX idx_round_logid on round(logid);
+
 
 PLAYER table (table is new)
 
@@ -75,25 +96,26 @@ MATCH table (table is new)
 
 | name            | type     | desc    | notes                      |
 |-----------------|----------|---------|----------------------------|
-| logid           | int      |         | log table id ref           |
-| playerid        | int      |         | player table id ref        |
+| roundId         | int      |         | round table id ref         |
+| playerId        | int      |         | player table id ref        |
 | team            | smallint | 0-4     | NOT NULL (players are 1-2) |
 
 CREATE TABLE match (
-  logid integer NOT NULL,
-  playerid integer NOT NULL,
+  roundId integer NOT NULL,
+  playerId integer NOT NULL,
   team smallint NOT NULL,
-  CONSTRAINT fk_log
-    FOREIGN KEY(logId)
-      REFERENCES logs(id)
+  CONSTRAINT fk_round
+    FOREIGN KEY(roundId)
+      REFERENCES round(id)
       ON DELETE NO ACTION,
   CONSTRAINT fk_player
-    FOREIGN KEY(playerid)
+    FOREIGN KEY(playerId)
       REFERENCES player(id)
       ON DELETE NO ACTION
 );
 
-CREATE INDEX idx_match_logid ON match (logid)
+CREATE INDEX idx_match_roundid ON match (roundId);
+CREATE INDEX idx_match_playerid ON match (playerId);
 
 
 LOGS table (* are new columns)
@@ -116,6 +138,21 @@ LOGS table (* are new columns)
 alter table logs add column "is_valid" boolean not null default true;
 alter table logs add column "score_team1" integer default 0;
 alter table logs add column "score_team2" integer default 0;
+
+CREATE TABLE logs (
+    id integer NOT NULL,
+    parsedlog character varying(255) NOT NULL,
+    log_file1 character varying(255) NOT NULL,
+    log_file2 character varying(255),
+    date_parsed timestamp without time zone NOT NULL,
+    date_match timestamp without time zone NOT NULL,
+    map character varying(50),
+    server character varying(255),
+    num_players smallint
+    is_valid boolean NOT NULL DEFAULT TRUE,
+    score_team1 integer DEFAULT 0,
+    score_team2 integer DEFAULT 0,
+);
 
 
 PARSEDLOGS table (table is new)
