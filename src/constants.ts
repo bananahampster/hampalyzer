@@ -44,18 +44,36 @@ export interface ScoringActivity {
     game_time_as_seconds: number;
 }
 
-export interface FlagMovement {
-    player: string; // steamID
+export type FlagMovement = FlagMovementBase & (FlagMovementReturn | FlagMovementFrag | FlagMovementOther);
+
+type FlagMovementBase = {   
+    current_score: number;
     game_time_as_seconds: number,
-    current_score: number,
-    how_dropped: FlagDrop;
 }
 
-export const enum FlagDrop {
-    Fragged = 0,
-    Captured,
-    Thrown,
+type FlagMovementOther = {
+    type: FlagMovementType;
+    carrier: string; //alias
 }
+
+export type FlagMovementFrag = {
+    type: FlagMovementType.Fragged,
+    carrier: string; // alias
+    fragger: string; // alias
+}
+
+type FlagMovementReturn = {
+    type: FlagMovementType.Returned,
+}
+
+export enum FlagMovementType {
+    Pickup,
+    Fragged,
+    Thrown,
+    Dropped,
+    Returned,
+    Captured
+};
 
 export type TeamsOutputStatsDetailed = { [team in TeamColor]?: TeamOutputStatsDetailed; }
 

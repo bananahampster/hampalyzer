@@ -7,6 +7,12 @@ body {
     font-size: .875rem;
     --team-a-color: rgba(175, 141, 195, 0.65);
     --team-b-color: rgba(127, 191, 123, 0.65);
+    --flag-pickup: rgb(17, 7, 38, 1);
+    --flag-fragged: rgba(81, 142, 166, 1);
+    --flag-thrown: rgb(180, 210, 217, 1);
+    --flag-dropped: rgba(217, 175, 139, 1);
+    --flag-returned: rgba(166, 109, 3, 1);
+    --flag-captured: rgb(17, 7, 38, 1);
 }
 
 .sidebar {
@@ -270,6 +276,22 @@ td.team-deaths, th.team-deaths,
 .summary-defense td:nth-child(5), .summary-defense th:nth-child(5),
 .summary-defense td:nth-child(9), .summary-defense th:nth-child(9)  {
     padding-left: 10px;
+}
+
+.toggles {
+    user-select: none;
+}
+
+#flag-pace .chart .markers circle {
+    stroke: rgba(255, 255, 255, 0.3);
+}
+
+#flag-pace .chart g.touch-labels text {
+    text-anchor: middle;
+    fill: white;
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
 }
 
 /** team styles */
