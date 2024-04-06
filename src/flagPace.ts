@@ -325,23 +325,22 @@ export default class FlagPaceChart {
                 .append('title')
                     .text(i => S[i]);
 
-            const touches: number[] = [];
-            for (const team in this.flagProgression) {
-                for (const flag of this.flagProgression[team]) {
-                    touches.push(flag.length);
-                }
-            }
-            serie.append('g')
-                .attr('class', 'touch-labels')
-                .selectAll('text')
-                .data(function(d) { return d[1].filter(i => T[i] === 5); })
-                .join('text')
-                .attr('x', i => xScale(X[i]))
-                .attr('y', i => yScale(Y[i]))
-                .attr('dy', '-0.66em')
-                .text((_,i) => touches[i])
-                .append('title')
-                    .text((i, index) => `${S[i]} (${touches[index]} touches)`);
+            const that = this;
+            serie.each(function (_, teamIndex) {
+                const touches = that.flagProgression![teamIndex].map(flag => flag.length);
+
+                d3.select<d3.BaseType, [string, number[]]>(this).append('g')
+                    .attr('class', 'touch-labels')
+                    .selectAll('text')
+                    .data(function(d) { return d[1].filter(i => T[i] === 5); })
+                    .join('text')
+                    .attr('x', i => xScale(X[i]))
+                    .attr('y', i => yScale(Y[i]))
+                    .attr('dy', '-0.66em')
+                    .text((_,i) => touches[i])
+                    .append('title')
+                        .text((i, index) => `${S[i]} (${touches[index]} touches)`);
+            });
         }
 
         return document.body.children[0].outerHTML;
