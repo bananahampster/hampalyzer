@@ -155,12 +155,48 @@ CREATE TABLE logs (
 );
 
 
-PARSEDLOGS table (table is new)
+PARSEDGAMES table (table is new)
 
 | name            | type         | values   | notes                      |
 |-----------------|--------------|----------|----------------------------|
-| logId           |              |          | auto-increment, NOT NULL   |
-| jsonSummary     | varchar(MAX) |          | full json                  |
+| logId           |              |          | logs table id ref, PRIMARY |
+| summary         | json         |          | full json                  |
+
+CREATE TABLE parsedgames (
+  logId integer NOT NULL,
+  summary jsonb NOT NULL,
+  CONSTRAINT fk_log
+    FOREIGN KEY(logId)
+      REFERENCES logs(id)
+      ON DELETE NO ACTION
+);
+CREATE INDEX idx_parsedgames_logid ON parsedgames(logId);
+
+PARSEDGAMEPLAYERS table (table is new)
+
+| name            | type         | values   | notes                      |
+|-----------------|--------------|----------|----------------------------|
+| logId           |              |          | logs table id ref          |
+| playerId        |              |          | player table id ref        |
+| summary         | json         |          | full json                  |
+
+
+CREATE TABLE parsedgameplayers (
+  logId integer NOT NULL,
+  playerId integer NOT NULL,
+  summary jsonb NOT NULL,
+  CONSTRAINT fk_log
+    FOREIGN KEY(logId)
+      REFERENCES logs(id)
+      ON DELETE NO ACTION,
+  CONSTRAINT fk_player
+    FOREIGN KEY(playerId)
+      REFERENCES player(id)
+      ON DELETE NO ACTION
+);
+
+CREATE INDEX idx_parsedgameplayers_logid ON parsedgameplayers(logId);
+CREATE INDEX idx_parsedgameplayers_playerid ON parsedgameplayers(playerId);
 
 
 MAPLOCATIONS table (table is new)

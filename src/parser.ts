@@ -21,6 +21,10 @@ export interface ParsedStats {
     isValid: boolean;
 }
 
+export interface ParsedStatsOutput extends Omit<ParsedStats, 'rawStats'> {
+    chartMarkup: string;
+}
+
 export class Parser {
     private rounds: RoundParser[] = [];
 

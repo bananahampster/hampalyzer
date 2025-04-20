@@ -142,6 +142,42 @@ class App {
             }
         });
 
+        router.get('/log/:log_name/:player_id', async (req, res) => {
+            const { log_name, player_id } = req.params;
+
+            if (log_name == null) {
+                res.status(404);
+                return;
+            }
+
+            // was a full game requested?
+            if (player_id == null) {
+                this.database.getLogJson(log_name)
+                    .catch(() => res.status(500))
+                    .then((json) => {
+                        if (json == null) {
+                            res.status(404);
+                        }
+                        else {
+                            // render
+                        }                        
+                    });
+            }
+            else {
+                this.database.getLogPlayerJson(log_name, player_id.slice(1))
+                    .catch(() => res.status(500))
+                    .then((json) => {
+                        if (json == null) {
+                            res.status(404);
+                        }
+                        else {
+                            // render
+                        }        
+                    })
+            }
+
+        });
+
         this.express.use('/', router);
     }
 

@@ -173,7 +173,13 @@ export default async function(
         // skip publishing to DB if this is a reparsed log
         if (useDB) {
             // if everything is successful up to this point, log into the database
-            dbSuccess = await database.matchTransaction(allStats, matchMeta, logId);
+            dbSuccess = await database.matchTransaction(
+                allStats,
+                matchMeta,
+                playersStats,
+                flagPaceChartMarkup,
+                logId
+            );
         }
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.

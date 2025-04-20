@@ -39,5 +39,5 @@ jobs:
           cp -rfL ~/hampalyzer/frontend/* -t /var/www/beta.hampalyzer.com/html
           cp -rf ~/hampalyzer/parsedlogs/assets/ -t /var/www/beta.hampalyzer.com/html/
           cd ~/hampalyzer/dist
-          pm2 restart hampalyzer -- server parsedlogs /var/www/beta.hampalyzer.com/html
+          pm2 restart hampalyzer -- server parsedlogs /var/www/beta.hampalyzer.com/html --reparse
 
