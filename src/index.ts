@@ -5,6 +5,7 @@ import App from './App.js';
 
 import { existsSync } from 'fs';
 import * as path from 'path';
+import { ReparseType } from './database.js';
 
 const port = process.env.PORT || 3000;
 
@@ -24,9 +25,17 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
     if (programArgs[2])
         webserverRoot = programArgs[2];
 
-    let reparse = false;
-    if (programArgs[3])
-        reparse = programArgs[3].toLocaleLowerCase() === '--reparse';
+    let reparseType: ReparseType | undefined = ReparseType.NoReparse;
+    switch (programArgs[3]) {
+        case '--reparse':
+            reparseType = ReparseType.FullReparse;
+            break;
+        case '--reparseCheck':
+            reparseType = ReparseType.CheckAll;
+            break;
+        case '--skipReparse':
+            reparseType = undefined;
+    }
 
     const outputDir = path.join(programArgs[2] || "", outputRoot);
     if (!existsSync(outputDir))
@@ -37,8 +46,8 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
 
     app.listen(port, () => {
 
-        if (reparse)
-            appClass.reparseAllLogs();
+        if (reparseType != null)
+            appClass.reparseAllLogs(reparseType);
 
         return console.log(`server is listening on ${port}.`);
     }).on("error", (err) => {
@@ -65,7 +74,11 @@ else {
         // logs = ['logs/1641109721918-L0102072.log', 'logs/1641109721922-L0102073.log']; // siden
         // logs = ['dist/uploads/1647142313653-L0313008.log', 'dist/uploads/1647142313653-L0313009.log']; // teams fucked?
         // logs = ['dist/uploads/1654325677960-L0604008.log', 'dist/uploads/1654325677973-L0604009.log']; // dmg not counted?
-        logs = ['backup/uploads/uploads/1702675375064-L1215064-coacheast.log.br', 'backup/uploads/uploads/1702675375069-L1215067-coacheast.log.br'];
+        // logs = ['backup/uploads/uploads/1702675375064-L1215064-coacheast.log.br', 'backup/uploads/uploads/1702675375069-L1215067-coacheast.log.br'];
+        logs = ['backup/uploads/uploads/1702977052923-L1219011.log.br', 'backup/uploads/uploads/1702977052937-L1219012.log.br'];
+        // logs = ['backup/uploads/uploads/1619422276257-L0425074.log', 'backup/uploads/uploads/1619422276263-L0425073.log']; 
+        // logs = ['backup/uploads/uploads/1663445190248-L0917062.log', 'backup/uploads/uploads/1663445190253-L0917063.log'];
+        // logs = ['backup/uploads/uploads/1693015529862-L0825084.log.br', 'backup/uploads/uploads/1693015529864-L0825086.log.br']; // 1v1 match issue
 
 
     console.log(`parsing logs ${logs.join(" and ")} ...`);

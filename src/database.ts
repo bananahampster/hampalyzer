@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { OutputPlayer, ParsingError, PlayerOutputStats, TeamColor, TeamComposition } from './constants.js';
+import { assertNever, OutputPlayer, ParsingError, PlayerOutputStats, TeamColor, TeamComposition } from './constants.js';
 import { Event, ParsedStats, ParsedStatsOutput } from './parser.js';
 import PlayerList from './playerList.js';
 import Player from './player.js';
@@ -78,19 +78,48 @@ export class DB {
     }
 
     /** Gets all the logs to reparse on server start */
-    public async getReparseLogs(): Promise<ReparseMetadata[]> {
-        const logs = await this.query<ReparseMetadata>(
-            'SELECT id, log_file1, log_file2 FROM logs WHERE id > 42' // before 42, wrong log filenames
-        );
+    public async getReparseLogs(reparseType: ReparseType = ReparseType.NoReparse): Promise<ReparseMetadata[]> {
+        switch (reparseType) {
+            case ReparseType.NoReparse: {
+                const logs = await this.query<ReparseMetadata>(
+                    `SELECT id, log_file1, log_file2
+                       FROM logs as l
+            LEFT OUTER JOIN parsedgames as g
+                         ON l.id = g.logid
+                      WHERE l.id > 42
+                        AND g.logid is null
+                    `
+                );
 
-        await this.query('TRUNCATE TABLE parsedgames');
-        await this.query('TRUNCATE TABLE parsedgameplayers');
-        await this.query('TRUNCATE TABLE match');
-        await this.query('TRUNCATE TABLE event RESTART IDENTITY');
-        await this.query('TRUNCATE TABLE round RESTART IDENTITY CASCADE');
-        // await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE'); // no need to truncate this
+                const logCount = await this.query<{ logcount: number }>(`SELECT count(1) as logcount from logs`);
+                const totalLogs = logCount?.[0].logcount;
 
-        return logs;
+                console.warn(`Reparsing ${logs.length} logs, ${Math.round(logs.length / totalLogs * 1000) / 10}% of total logs (${totalLogs})`);
+
+                return logs;
+            }
+            case ReparseType.FullReparse: {
+                const logs = await this.query<ReparseMetadata>(
+                    'SELECT id, log_file1, log_file2 FROM logs WHERE id > 42' // before 42, wrong log filenames
+                );
+
+                await this.query('TRUNCATE TABLE parsedgames');
+                await this.query('TRUNCATE TABLE parsedgameplayers');
+                await this.query('TRUNCATE TABLE match');
+                await this.query('TRUNCATE TABLE event RESTART IDENTITY');
+                await this.query('TRUNCATE TABLE round RESTART IDENTITY CASCADE');
+                // await this.query('TRUNCATE TABLE player RESTART IDENTITY CASCADE'); // no need to truncate this
+
+                return logs;
+            }
+            case ReparseType.CheckAll: {
+                throw new Error("Reparse type 'CheckAll' not implemented");
+            }
+            default:
+                assertNever(reparseType);
+        }
+
+        return [];
     }
 
     /** Updates the given log to be invalid */
@@ -548,6 +577,16 @@ export class DB {
         }
     }
 }
+
+/** Specifies the type of reparsing to do on server start.  If not provided, skip any setup. */
+export enum ReparseType {
+    /** Only parse logs into the database that don't have an entry in parsedGames */
+    NoReparse = 0,
+    /** Truncate event, round tables, and reparse all games  from log sources */
+    FullReparse,
+    /** not implemented; do verification checks on all existing games and reparse if validation fails */
+    CheckAll,
+};
 
 export interface ReparseMetadata {
     id: number,

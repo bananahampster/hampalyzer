@@ -13,7 +13,7 @@ import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
 import { ParseResponse, ParsingError, ParsingOptions, ParsingOptionsReparse } from './constants.js';
-import { DB } from './database.js';
+import { DB, ReparseType } from './database.js';
 
 const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
 dotenv.config({ path: envFilePath });
@@ -60,8 +60,8 @@ class App {
         };
     }
 
-    public async reparseAllLogs(): Promise<void> {
-        const success = await this.reparseLogs();
+    public async reparseAllLogs(reparseType?: ReparseType): Promise<void> {
+        const success = await this.reparseLogs(reparseType);
         if (!success) {
             console.error("failed to reparse all logs; there may be a corresponding error above.");
             return process.exit(-10);
@@ -186,8 +186,8 @@ class App {
      * Succeeds if there are no errors, and if the source log files are missing, skips them.
      * Fails if any previous log fails to parse.
      **/
-    private async reparseLogs(): Promise<boolean> {
-        const logs = await this.database.getReparseLogs(); 
+    private async reparseLogs(reparseType?: ReparseType): Promise<boolean> {
+        const logs = await this.database.getReparseLogs(reparseType); 
         for (let i = 0, len = logs.length; i < len; i++) {
             const game = logs[i];
 
