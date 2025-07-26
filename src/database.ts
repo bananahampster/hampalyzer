@@ -87,6 +87,7 @@ export class DB {
             LEFT OUTER JOIN parsedgames as g
                          ON l.id = g.logid
                       WHERE l.id > 42
+                        AND l.is_valid <> FALSE
                         AND g.logid is null
                     `
                 );
@@ -103,6 +104,7 @@ export class DB {
                     'SELECT id, log_file1, log_file2 FROM logs WHERE id > 42' // before 42, wrong log filenames
                 );
 
+                await this.query('UPDATE logs SET is_valid = NULL'); // unset determination of invalid logs
                 await this.query('TRUNCATE TABLE parsedgames');
                 await this.query('TRUNCATE TABLE parsedgameplayers');
                 await this.query('TRUNCATE TABLE match');

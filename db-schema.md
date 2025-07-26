@@ -221,3 +221,8 @@ ALTER TABLE logs
 # get column sizes in a table filled with data
 https://dbfiddle.uk/wtnwh8v7
 select *, pg_size_pretty(column_size) from column_sizes('event');
+
+select
+  pg_size_pretty(SUM(pg_total_relation_size(quote_ident(table_name))))
+from information_schema.tables
+where table_schema = 'public';
