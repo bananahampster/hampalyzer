@@ -62,7 +62,7 @@ class App {
 
     public async reparseAllLogs(reparseType?: ReparseType): Promise<void> {
         const success = await this.reparseLogs(reparseType);
-        if (!success) {
+        if (!success && reparseType !== ReparseType.NoReparse) {
             console.error("failed to reparse all logs; there may be a corresponding error above.");
             return process.exit(-10);
         }
