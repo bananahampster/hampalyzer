@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import url from 'url';
 import cors from 'cors';
 import express from 'express';
+import { engine } from 'express-handlebars';
 import Handlebars from 'handlebars';
 import multer from 'multer';
 
@@ -43,6 +44,14 @@ class App {
 
     constructor(private webserverRoot = "", private outputRoot = "parsedlogs", reparse = false) {
         this.express = express();
+
+        this.express.engine('handlebars', engine());
+        this.express.set('view engine', 'handlebars'); // how `render()` works
+        this.express.set('views', './views'); // where templates live (should be copied relative to executed JS)
+        this.express.enable('view cache'); // enable view caching (prod only)
+
+        this.express.use(express.static('templates')); // serve files from `./templates` as static files
+
         this.mountRoutes();
 
         // create database connection pool
@@ -142,38 +151,50 @@ class App {
             }
         });
 
-        router.get('/log/:log_name/:player_id', async (req, res) => {
-            const { log_name, player_id } = req.params;
+        // TEST WITH <http://127.0.0.1:3000/log/Inhouse-2023-Dec-19-22-57/>
+        router.get('/log/:log_name/:player_id?', async (req, res) => {
+            let { log_name, player_id } = req.params;
 
             if (log_name == null) {
                 res.status(404);
                 return;
             }
 
+            // base url of the game (will leave trailing slash)
+            const baseUrl = req.url.replace(/^([^\/]*\/[^\/]*\/[^\/]*)\/.+/, '$1');
+
             // was a full game requested?
             if (player_id == null) {
                 this.database.getLogJson(log_name)
-                    .catch(() => res.status(500))
-                    .then((json) => {
-                        if (json == null) {
+                    .then((summary) => {
+                        if (summary == null) {
                             res.status(404);
                         }
                         else {
-                            // render
+                            res.render(
+                                'game', 
+                                { ...summary, baseUrl }
+                            );
                         }                        
-                    });
+                    })
+                    .catch(() => res.status(500));
             }
             else {
+                player_id = player_id.replace('.html', '');
                 this.database.getLogPlayerJson(log_name, player_id.slice(1))
-                    .catch(() => res.status(500))
-                    .then((json) => {
-                        if (json == null) {
+                    .then((response) => {
+                        if (response == null) {
                             res.status(404);
                         }
                         else {
-                            // render
+                            const { stats, parsing_errors } = response.game;
+                            res.render(
+                                'player', 
+                                { stats, parsing_errors, ...response.player, baseUrl }
+                            );
                         }        
                     })
+                    .catch(() => res.status(500));
             }
 
         });

@@ -1,0 +1,61 @@
+<div class="sidebar-sticky">
+    <ul class="nav flex-column">
+
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
+            <span>Overall statistics</span>
+        </h6>
+        {{~#if stats.[1]}}
+        <li class="nav-item">
+            <a id="summary-nav-link" class="nav-link active" href="{{ baseUrl }}/#summary">
+                Stats by round
+            </a>
+        </li>
+        <li class="nav-item">
+            <a id="comp-nav-link" class="nav-link" href="{{ baseUrl }}/#comp">
+                O/D comparison
+            </a>
+        </li>
+        {{/if}}
+        <li class="nav-item">
+            <a id="flag-pace-nav-link" class="nav-link" href="{{ baseUrl }}/#flag-pace">
+                Flag pace
+            </a>
+        </li>
+        {{#ifListNotEmpty parsing_errors}}
+        <li class="nav-item">
+            <a id="parsing-errors-nav-link" class="nav-link" href="{{ baseUrl }}/#parsing-errors">
+                Parsing errors
+                <span class="badge badge-warning badge-pill">{{countParsingErrors parsing_errors}}</span>
+            </a>
+        </li>
+        {{/ifListNotEmpty}}
+    </ul>
+
+    <h6 class="sidebar-heading px-3 mt-4 mb-1">
+        <div class="icon icon-team-a"></div>
+        <span>Team A</span>
+    </h6>
+    <ul class="nav flex-column mb-2">
+        {{#each players.[1]}}
+        <li class="nav-item">
+            <a class="nav-link" href="{{ baseUrl }}/p{{id}}.html">
+                {{name}}
+            </a>
+        </li>
+        {{/each}}
+    </ul>
+
+    <h6 class="sidebar-heading px-3 mt-4 mb-1">
+        <div class="icon icon-team-b"></div>
+        <span>Team B</span>
+    </h6>
+    <ul class="nav flex-column mb-2">
+        {{#each players.[2]}}
+        <li class="nav-item">
+            <a class="nav-link" href="{{ baseUrl }}/p{{id}}.html">
+                {{name}}
+            </a>
+        </li>
+        {{/each}}
+    </ul>
+</div>

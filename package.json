@@ -4,7 +4,7 @@
   "description": "A utility to parse Half-Life GoldSrc logs for the purporses of game statistics",
   "main": "index.js",
   "scripts": {
-    "prepare": "mkdir -p dist/templates && cp -rf src/html/template* src/html/hamp2.css -t dist/templates/",
+    "prepare": "mkdir -p dist/templates && cp -rf src/html/template* src/html/hamp2.css -t dist/templates/ && cp -rf src/views/ -t dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -27,10 +27,12 @@
     "d3": "^7.1.1",
     "dotenv": "^16.3.1",
     "express": "^4.16.4",
+    "express-handlebars": "^8.0.3",
     "handlebars": "^4.7.7",
     "jsdom": "^18.0.1",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.5.1"
+    "pg": "^8.5.1",
+    "typescript": "^5.9.2"
   },
   "devDependencies": {
     "@types/d3": "^7.1.0",

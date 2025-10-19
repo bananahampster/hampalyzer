@@ -47,7 +47,7 @@ export class DB {
     }
 
     public async getLogJson(log_name): Promise<ParsedStatsOutput | undefined> {
-        const result = await this.query<ParsedStatsOutput | undefined> (
+        const result = await this.query<{ summary: ParsedStatsOutput } | undefined> (
             `SELECT g.summary 
                FROM logs as l 
                JOIN parsedgames as g
@@ -57,18 +57,20 @@ export class DB {
         );
 
         if (result.length === 1)
-            return result[0];
+            return result[0]!.summary;
     }
 
     /** @param player_id the `{player_last_sequence_of_steamId}` to match previous URL */
-    public async getLogPlayerJson(log_name, player_id): Promise<PlayerOutputStats | undefined> {
-        const result = await this.query<PlayerOutputStats | undefined>(
-            `SELECT gp.summary
+    public async getLogPlayerJson(log_name, player_id): Promise<{ player: PlayerOutputStats; game: ParsedStatsOutput } | undefined> {
+        const result = await this.query<{ player: PlayerOutputStats; game: ParsedStatsOutput } | undefined>(
+            `SELECT gp.summary as player, g.summary as game
                FROM logs as l
                JOIN parsedgameplayers as gp
                  ON l.id = gp.logId
                JOIN player as p
                  ON p.id = gp.playerId
+               JOIN parsedgames as g
+                 ON l.id = g.logid
               WHERE l.parsedlog = $1
                 AND p.steamid LIKE $2`,
             log_name,
@@ -76,7 +78,7 @@ export class DB {
         );
 
         if (result.length === 1)
-            return result[0];
+            return result[0]!;
     }
 
     /** Gets all the logs to reparse on server start */
