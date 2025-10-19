@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { assertNever, OutputPlayer, ParsingError, PlayerOutputStats, TeamColor, TeamComposition } from './constants.js';
+import { assertNever, OutputPlayer, ParsingError, PlayerOutputStats, PlayerStats, TeamColor, TeamComposition, TeamOutputStatsDetailed } from './constants.js';
 import { Event, ParsedStats, ParsedStatsOutput } from './parser.js';
 import PlayerList from './playerList.js';
 import Player from './player.js';
@@ -7,6 +7,8 @@ import { TeamScore } from './parserUtils.js';
 
 /** steamId to DB playerId */
 type PlayerMapping = Record<string, number>;
+
+type AllKeys<T> = (keyof T)[] & { length: keyof T extends infer K ? K extends any[] ? K['length'] : never : never };
 
 export class DB {
     private pool: pg.Pool;
@@ -212,8 +214,7 @@ export class DB {
         playerOutputStats: PlayerOutputStats[],
         client: pg.PoolClient): Promise<void> {
 
-        const { rawStats: _, ...summary } = parsedStats;
-        (summary as ParsedStatsOutput).chartMarkup = chartMarkup;
+        const summary = DB.cleanUpSummary(parsedStats, chartMarkup);
 
         await client.query(
             "INSERT INTO parsedgames(logId, summary) VALUES ($1, $2)",
@@ -238,6 +239,36 @@ export class DB {
                 ]
             );
         }
+    }
+
+    private static cleanUpSummary(parsedStats: ParsedStats, chartMarkup: string): ParsedStatsOutput {
+        // get rid of any remaining event/rawStats info
+        const { rawStats: _, ...otherStats } = parsedStats;
+        
+        // dump all faceted stats details
+        const summaryOutput = { ...otherStats, chartMarkup };
+
+        // iterate through known generic stats and remove everything but value
+        const playerStatsKeys: (keyof PlayerStats)[] = ['kills', 'buildables', 'damage', 'deaths', 'objectives', 'weaponStats'];
+
+        for (const round of summaryOutput.stats) {
+            for (const teamNum in round!.teams) {
+                const team = round!.teams[teamNum] as TeamOutputStatsDetailed;
+                for (const player of team.players) {
+                    for (const statKey of playerStatsKeys) {
+                        const playerStat = player[statKey];
+                        for (const subStat in playerStat) {
+                            let playerSubStat = playerStat[subStat];
+                            if (playerSubStat?.value != null) {
+                                playerStat[subStat] = { value: playerSubStat.value };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return summaryOutput;
     }
 
     public async matchTransaction(

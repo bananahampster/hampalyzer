@@ -149,10 +149,13 @@ CREATE TABLE logs (
     map character varying(50),
     server character varying(255),
     num_players smallint
-    is_valid boolean NOT NULL DEFAULT TRUE,
+    is_valid boolean DEFAULT TRUE,
     score_team1 integer DEFAULT 0,
     score_team2 integer DEFAULT 0,
 );
+
+ALTER TABLE logs
+  ALTER COLUMN is_valid DROP NOT NULL;
 
 
 PARSEDGAMES table (table is new)

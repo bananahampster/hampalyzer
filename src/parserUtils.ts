@@ -780,6 +780,8 @@ export default class ParserUtils {
             }
         }
 
+        // for output, delete reference to events
+        delete thisStat.events;
         return thisStat;
     }
 
@@ -890,7 +892,8 @@ export default class ParserUtils {
             if (!facetedDetails[otherPlayer])
                 facetedDetails[otherPlayer] = [];
 
-            facetedDetails[otherPlayer].push(detail);
+            const { player, ...outputDetail } = detail;
+            facetedDetails[otherPlayer].push(outputDetail);
 
             // per-weapon
             const weapon = detail.weapon || 0;
