@@ -50,6 +50,8 @@ class App {
         this.express.set('views', './views'); // where templates live (should be copied relative to executed JS)
         this.express.enable('view cache'); // enable view caching (prod only)
 
+        console.warn(`running NODE_ENV: ${process.env.NODE_ENV ?? '(none)'}`);
+
         this.express.use(express.static('public')); // serve files from `./public` as static files; 
                                                     // deploy script should also copy these files to webserver root
 
