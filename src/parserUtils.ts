@@ -738,12 +738,16 @@ export default class ParserUtils {
         }
 
         if (!playerStats[category][item]) {
-            playerStats[category][item] = {
+            const stat: GenericStat = {
                 title: item,
-                value: undefined,
-                description,
+                value: 0,
                 events: [],
             };
+
+            if (description)
+                stat.description = description;
+
+            playerStats[category][item] = stat;
         }
 
         return playerStats[category][item];
@@ -806,7 +810,7 @@ export default class ParserUtils {
             if (!facetedDetails[otherPlayer])
                 facetedDetails[otherPlayer] = [];
 
-            facetedDetails[otherPlayer].push({ value: playerDamage[1].toString(), whileConced: false, description: "", cssClassToAdd: "" });
+            facetedDetails[otherPlayer].push({ value: playerDamage[1].toString(), });
         }
 
         return { details: facetedDetails };
@@ -879,12 +883,25 @@ export default class ParserUtils {
     private static generateFacetedStats(events: Event[], descriptor: EventDescriptor, isByPlayer?: boolean): FacetedStat {
         const facetedDetails = {};
         const facetedWeaponCounts: { [key in Weapon]?: number } = {};
-        const allDetails = events.map(e => (<StatDetails>{
-            description: descriptor(e),
-            cssClassToAdd: (e.playerFrom?.team != e.playerTo?.team && e.playerToWasCarryingFlag) ? "weapon-highlight-good" : e.playerToWasCarryingFlag ? "weapon-highlight-bad" : "",
-            player: isByPlayer ? e.playerTo : e.playerFrom,
-            weapon: e.withWeapon
-        }));
+
+        const allDetails: StatDetails[] = [];
+        for (const e of (events || [])) {
+            const statDetail: StatDetails = {
+                player: isByPlayer ? e.playerTo : e.playerFrom,
+                weapon: e.withWeapon
+            }
+
+            const detailDescription = descriptor(e);
+            if (detailDescription)
+                statDetail.description = detailDescription;
+
+            if (e.playerFrom?.team != e.playerTo?.team && e.playerToWasCarryingFlag)
+                statDetail.cssClassToAdd = "weapon-highlight-good";
+            else if (e.playerToWasCarryingFlag)
+                statDetail.cssClassToAdd = "weapon-highlight-bad";
+
+            allDetails.push(statDetail);
+        }
 
         for (const detail of allDetails) {
             // per-player

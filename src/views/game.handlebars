@@ -1,5 +1,4 @@
 
-{{#with stats.[0]}} {{!-- begin giant hack --}}
 <div class="row">
     <nav class="col-md-2 d-none d-md-block bg-dark sidebar">
         {{> page/sidebar }}
@@ -8,6 +7,7 @@
     <main role="main" class="col-sm-9 ml-sm-auto col-lg-10 px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <div>
+{{#with stats.[0]}} {{!-- begin giant hack --}}
                 <ul class="list-unstyled">
                     <!-- should probably css-style these icons to align text;
                             see <https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements> -->
@@ -72,7 +72,7 @@
                             <tr class="team{{team}}">
                                 <td class="player-name">
                                     {{#if is_mvp}}<span class="mvp">★</span>{{/if}}
-                                    <a href="{{@root.baseUrl}}{{id}}">{{name}}</a>
+                                    <a href="{{@root.baseUrl}}p{{id}}.html">{{name}}</a>
                                 </td>
                                 <td class="roles">{{roles}}</td>
                                 <td class="kills">{{#if kills.kill}}{{kills.kill.value}}{{else}}0{{/if}}</td>

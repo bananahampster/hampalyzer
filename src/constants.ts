@@ -151,11 +151,11 @@ export type FacetedStatDetails = { [key: string]: StatDetails[] };
 export type EventDescriptor = (ev: Event) => string;
 
 export interface StatDetails {
-    description: string;
-    cssClassToAdd: string;
+    description?: string;
+    cssClassToAdd?: string;
     player?: Player;
     weapon?: Weapon;
-    whileConced: boolean;
+    whileConced?: boolean;
     value?: string;
 }
 

@@ -6,24 +6,24 @@
         </h6>
         {{~#if stats.[1]}}
         <li class="nav-item">
-            <a id="summary-nav-link" class="nav-link active" href="{{ baseUrl }}/#summary">
+            <a id="summary-nav-link" class="nav-link active" href="{{ baseUrl }}#summary">
                 Stats by round
             </a>
         </li>
         <li class="nav-item">
-            <a id="comp-nav-link" class="nav-link" href="{{ baseUrl }}/#comp">
+            <a id="comp-nav-link" class="nav-link" href="{{ baseUrl }}#comp">
                 O/D comparison
             </a>
         </li>
         {{/if}}
         <li class="nav-item">
-            <a id="flag-pace-nav-link" class="nav-link" href="{{ baseUrl }}/#flag-pace">
+            <a id="flag-pace-nav-link" class="nav-link" href="{{ baseUrl }}#flag-pace">
                 Flag pace
             </a>
         </li>
         {{#ifListNotEmpty parsing_errors}}
         <li class="nav-item">
-            <a id="parsing-errors-nav-link" class="nav-link" href="{{ baseUrl }}/#parsing-errors">
+            <a id="parsing-errors-nav-link" class="nav-link" href="{{ baseUrl }}#parsing-errors">
                 Parsing errors
                 <span class="badge badge-warning badge-pill">{{countParsingErrors parsing_errors}}</span>
             </a>
@@ -38,7 +38,7 @@
     <ul class="nav flex-column mb-2">
         {{#each players.[1]}}
         <li class="nav-item">
-            <a class="nav-link" href="{{ baseUrl }}/p{{id}}.html">
+            <a class="nav-link" href="{{ @root.baseUrl }}p{{id}}.html">
                 {{name}}
             </a>
         </li>
@@ -52,7 +52,7 @@
     <ul class="nav flex-column mb-2">
         {{#each players.[2]}}
         <li class="nav-item">
-            <a class="nav-link" href="{{ baseUrl }}/p{{id}}.html">
+            <a class="nav-link" href="{{ @root.baseUrl }}p{{id}}.html">
                 {{name}}
             </a>
         </li>

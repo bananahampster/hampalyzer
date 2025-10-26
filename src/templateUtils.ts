@@ -36,6 +36,17 @@ export default class TemplateUtils {
                 return options.inverse(this);
         });
 
+        Handlebars.registerHelper('eachOrderKeys', function(this: unknown, givenArray: Object, orderKeys: string, options) {
+            let ret = "";
+            const orderKeysList = orderKeys.split(',');
+            for (const orderKey of (orderKeysList || [])) {
+                if (givenArray[orderKey]) {
+                    ret += options.fn(givenArray[orderKey]);
+                }
+            }
+            return ret;
+        });
+
         Handlebars.registerHelper('countParsingErrors', function(this: unknown, givenArray: any[][]) {
             if (givenArray.length && givenArray.some(item => item.length)) {
                 return givenArray.reduce((acc, round) => acc + (round.length || 0), 0);

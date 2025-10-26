@@ -31,7 +31,7 @@
             <div class="emoji pt-3">💀</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#each kills}}
+                {{#eachOrderKeys kills "kill,kill_while_conced,teamkill"}}
                 <div class="stats-faceted">
                     <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                     <div class="stats-facets py-3">
@@ -54,7 +54,7 @@
                         {{/each}}
                     </div>
                 </div>
-                {{/each}}
+                {{/eachOrderKeys}}
             </div>
             {{/each}}
 
@@ -62,7 +62,7 @@
             <div class="emoji pt-3">☠</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#each deaths}}
+                {{#eachOrderKeys deaths "death,by_team"}}
                 <div class="stats-faceted">
                     <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                     <div class="stats-facets">
@@ -85,7 +85,7 @@
                         {{/each}}
                     </div>
                 </div>
-                {{/each}}
+                {{/eachOrderKeys}}
             </div>
             {{/each}}
 
@@ -93,7 +93,7 @@
             <div class="emoji">🤕</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#each damage}}
+                {{#eachOrderKeys damage "to_enemies,to_team,from_enemies,from_team,to_self"}}
                 <div class="stats-faceted">
                     <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                     <div class="stats-facets">
@@ -108,7 +108,7 @@
                         {{/each}}
                     </div>
                 </div>
-                {{/each}}
+                {{/eachOrderKeys}}
             </div>
             {{/each}}
 
@@ -116,7 +116,7 @@
             <div class="emoji">🔫</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#each weaponStats}}
+                {{#eachOrderKeys weaponStats "airshot,concs,airshoted"}}
                 <div class="stats-faceted">
                     <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                     <div class="stats-facets">
@@ -131,7 +131,7 @@
                         {{/each}}
                     </div>
                 </div>
-                {{/each}}
+                {{/eachOrderKeys}}
             </div>
             {{/each}}
 

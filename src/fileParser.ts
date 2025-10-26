@@ -1,7 +1,6 @@
 import { readFileSync, writeFile, mkdir } from 'fs';
 
 import Handlebars from 'handlebars';
-import * as pg from 'pg';
 
 import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats, ParseResponse, ParsingError } from './constants.js';
 import { ParsedStats } from "./parser.js";
@@ -79,41 +78,13 @@ export default async function(
 
         const outputDir = `${outputRoot}/${matchMeta.logName}`;
 
-        // ensure directory exists; create if it doesn't
-        mkdir(
-            outputDir, 
-            { mode: 0o775, recursive: true, }, 
-            err => {
-                if (err && err.code !== "EEXIST") 
-                    throw new ParsingError({
-                        name: 'PARSING_FAILURE',
-                        message: err.message,
-                    }); 
-            });
-
         // generate the summary output
         let flagPaceChartMarkup = "";
-        const summaryOutput = `${outputDir}/index.html`;
 
         if (allStats.stats.length > 0) {
             let flagPaceChart = new FlagPaceChart(allStats.stats.filter((stats) => !!stats?.scoring_activity).map((stats) => stats?.scoring_activity!));
             flagPaceChartMarkup = await flagPaceChart.getSvgMarkup();
         }
-
-        const html = templates.summary({
-            ...allStats,
-            chartMarkup: flagPaceChartMarkup
-        });
-
-        writeFile(summaryOutput, html, err => {
-            if (err) {
-                console.error(`failed to write output: ${err}`);
-                throw new ParsingError({
-                    name: 'PARSING_FAILURE',
-                    message: `Failed to write output: ${err}`,
-                });
-            }
-        });
 
         // * collect each player (allStats.players[team][index])
         // * for each player, collect their stats from available rounds and combine into
@@ -152,27 +123,10 @@ export default async function(
             }
         });
 
-        // generate page for every player
-        for (const playerStats of playersStats) {
-            const html = templates.player(playerStats);
-            const playerOutput = `${outputDir}/p${playerStats.id}.html`;
-
-            writeFile(playerOutput, html, err => {
-                if (err) {
-                    console.error(`failed to write output: ${err}`);
-                    throw new ParsingError({
-                        name: 'PARSING_FAILURE',
-                        message: `Failed to write output: ${err}`,
-                    });
-                }
-            });
-        }
-
         let dbSuccess = !useDB;
         
-        // skip publishing to DB if this is a reparsed log
+        // if everything is successful up to this point, log into the database as a transaction
         if (useDB) {
-            // if everything is successful up to this point, log into the database
             dbSuccess = await database.matchTransaction(
                 allStats,
                 matchMeta,
@@ -181,11 +135,57 @@ export default async function(
                 logId
             );
         }
+        // Use "old" templates if running in non-database mode.
+        else {
+            // ensure directory exists at output point; create if it doesn't
+            mkdir(
+                outputDir, 
+                { mode: 0o775, recursive: true, }, 
+                err => {
+                    if (err && err.code !== "EEXIST") 
+                        throw new ParsingError({
+                            name: 'PARSING_FAILURE',
+                            message: err.message,
+                        }); 
+                });
+
+            const html = templates.summary({
+                ...allStats,
+                chartMarkup: flagPaceChartMarkup
+            });
+
+            const summaryOutput = `${outputDir}/index.html`;
+            writeFile(summaryOutput, html, err => {
+                if (err) {
+                    console.error(`failed to write output: ${err}`);
+                    throw new ParsingError({
+                        name: 'PARSING_FAILURE',
+                        message: `Failed to write output: ${err}`,
+                    });
+                }
+            });
+
+            // generate page for every player
+            for (const playerStats of playersStats) {
+                const html = templates.player(playerStats);
+                const playerOutput = `${outputDir}/p${playerStats.id}.html`;
+
+                writeFile(playerOutput, html, err => {
+                    if (err) {
+                        console.error(`failed to write output: ${err}`);
+                        throw new ParsingError({
+                            name: 'PARSING_FAILURE',
+                            message: `Failed to write output: ${err}`,
+                        });
+                    }
+                });
+            }
+        }
 
         // Append a forward slash to ensure we skip the nginx redirect which adds it anyway.
         // (which, when the server name had a '?', decodes %3F back into '?' which in turn results in a 404)
         if (dbSuccess || !logId) {
-            console.log(`writing log to ${outputDir}`);
+            console.log(`log should be available at ${outputDir}`);
             return {
                 success: true,
                 message: `${outputDir}/`

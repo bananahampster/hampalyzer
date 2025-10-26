@@ -42,7 +42,7 @@ class App {
     private templates: HampalyzerTemplates;
     private readonly PAGE_SIZE: number = 20;
 
-    constructor(private webserverRoot = "", private outputRoot = "parsedlogs", reparse = false) {
+    constructor(private webserverRoot = "", private outputRoot = "parsedlogs") {
         this.express = express();
 
         this.express.engine('handlebars', engine());
@@ -50,7 +50,8 @@ class App {
         this.express.set('views', './views'); // where templates live (should be copied relative to executed JS)
         this.express.enable('view cache'); // enable view caching (prod only)
 
-        this.express.use(express.static('templates')); // serve files from `./templates` as static files
+        this.express.use(express.static('public')); // serve files from `./public` as static files; 
+                                                    // deploy script should also copy these files to webserver root
 
         this.mountRoutes();
 
@@ -156,19 +157,21 @@ class App {
             let { log_name, player_id } = req.params;
 
             if (log_name == null) {
-                res.status(404);
+                res.status(404).json({ error: "No log name was supplied." });
                 return;
             }
 
             // base url of the game (will leave trailing slash)
-            const baseUrl = req.url.replace(/^([^\/]*\/[^\/]*\/[^\/]*)\/.+/, '$1');
+            let baseUrl = req.url.replace(/^([^\/]*\/[^\/]*\/[^\/]*)\/.+/, '$1');
+            if (baseUrl.charAt(baseUrl.length - 1) != '/')
+                baseUrl += '/';
 
             // was a full game requested?
             if (player_id == null) {
                 this.database.getLogJson(log_name)
                     .then((summary) => {
                         if (summary == null) {
-                            res.status(404);
+                            res.status(404).json({ error: "Supplied log name was not found in the database." });
                         }
                         else {
                             res.render(
@@ -177,14 +180,14 @@ class App {
                             );
                         }                        
                     })
-                    .catch(() => res.status(500));
+                    .catch((e) => res.status(500).json({ error: `Server had an internal error: ${e.name}.` }));
             }
             else {
                 player_id = player_id.replace('.html', '');
                 this.database.getLogPlayerJson(log_name, player_id.slice(1))
                     .then((response) => {
                         if (response == null) {
-                            res.status(404);
+                            res.status(404).json({ error: 'Supplied player id/game was not found in the database' });
                         }
                         else {
                             const { stats, parsing_errors } = response.game;
@@ -194,9 +197,8 @@ class App {
                             );
                         }        
                     })
-                    .catch(() => res.status(500));
+                    .catch((e) => res.status(500).json({ error: `Server had an internal error: ${e.name}.` }));
             }
-
         });
 
         this.express.use('/', router);

@@ -216,13 +216,6 @@ export class DB {
         playerOutputStats: PlayerOutputStats[],
         client: pg.PoolClient): Promise<void> {
 
-        const summary = DB.cleanUpSummary(parsedStats, chartMarkup);
-
-        await client.query(
-            "INSERT INTO parsedgames(logId, summary) VALUES ($1, $2)",
-            [logId, summary],
-        );
-
         // output players
         for (const playerStats of playerOutputStats) {
             const playerId = playerMapping[playerStats.steamID];
@@ -241,6 +234,13 @@ export class DB {
                 ]
             );
         }
+
+        const summary = DB.cleanUpSummary(parsedStats, chartMarkup);
+
+        await client.query(
+            "INSERT INTO parsedgames(logId, summary) VALUES ($1, $2)",
+            [logId, summary],
+        );
     }
 
     private static cleanUpSummary(parsedStats: ParsedStats, chartMarkup: string): ParsedStatsOutput {
@@ -619,7 +619,7 @@ export enum ReparseType {
     NoReparse = 0,
     /** Truncate event, round tables, and reparse all games  from log sources */
     FullReparse,
-    /** not implemented; do verification checks on all existing games and reparse if validation fails */
+    /** TODO: not implemented; do verification checks on all existing games and reparse if validation fails */
     CheckAll,
 };
 
