@@ -156,6 +156,9 @@ class App {
 
         // TEST WITH <http://127.0.0.1:3000/parsedlogs/Inhouse-2023-Dec-19-22-57/>
         router.get('/parsedlogs/:log_name/:player_id?', async (req, res) => {
+            // perf tracking
+            const start = performance.now();
+
             let { log_name, player_id } = req.params;
 
             if (log_name == null) {
@@ -172,6 +175,8 @@ class App {
             if (player_id == null) {
                 this.database.getLogJson(log_name)
                     .then((summary) => {
+                        const db_finished = performance.now();
+                        console.warn(`db call: ${db_finished - start}ms`);
                         if (summary == null) {
                             res.status(404).json({ error: "Supplied log name was not found in the database." });
                         }
@@ -180,6 +185,7 @@ class App {
                                 'game', 
                                 { ...summary, baseUrl }
                             );
+                            console.warn(`render: ${performance.now() - db_finished}ms`);
                         }                        
                     })
                     .catch((e) => res.status(500).json({ error: `Server had an internal error: ${e.name}.` }));
@@ -188,6 +194,8 @@ class App {
                 player_id = player_id.replace('.html', '');
                 this.database.getLogPlayerJson(log_name, player_id.slice(1))
                     .then((response) => {
+                        const db_finished = performance.now();
+                        console.warn(`db call: ${db_finished - start}ms`);
                         if (response == null) {
                             res.status(404).json({ error: 'Supplied player id/game was not found in the database' });
                         }
@@ -197,6 +205,7 @@ class App {
                                 'player', 
                                 { stats, parsing_errors, ...response.player, baseUrl }
                             );
+                            console.warn(`render: ${performance.now() - db_finished}ms`);
                         }        
                     })
                     .catch((e) => res.status(500).json({ error: `Server had an internal error: ${e.name}.` }));
