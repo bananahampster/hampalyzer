@@ -30,6 +30,8 @@ jobs:
         username: ${{ secrets.DEPLOY_USER }}
         key: ${{ secrets.BETA_DEPLOY_KEY }}
         script: |
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
           cd ~/hampalyzer
           git reset --hard HEAD
           git pull

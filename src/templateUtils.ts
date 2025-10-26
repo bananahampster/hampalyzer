@@ -37,6 +37,10 @@ export default class TemplateUtils {
         });
 
         Handlebars.registerHelper('eachOrderKeys', function(this: unknown, givenArray: Object, orderKeys: string, options) {
+            // abort if empty
+            if (givenArray == null || Object.keys(givenArray).length === 0)
+                return;
+
             let ret = "";
             const orderKeysList = orderKeys.split(',');
             for (const orderKey of (orderKeysList || [])) {

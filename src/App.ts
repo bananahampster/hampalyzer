@@ -152,8 +152,8 @@ class App {
             }
         });
 
-        // TEST WITH <http://127.0.0.1:3000/log/Inhouse-2023-Dec-19-22-57/>
-        router.get('/log/:log_name/:player_id?', async (req, res) => {
+        // TEST WITH <http://127.0.0.1:3000/parsedlogs/Inhouse-2023-Dec-19-22-57/>
+        router.get('/parsedlogs/:log_name/:player_id?', async (req, res) => {
             let { log_name, player_id } = req.params;
 
             if (log_name == null) {
@@ -162,7 +162,7 @@ class App {
             }
 
             // base url of the game (will leave trailing slash)
-            let baseUrl = req.url.replace(/^([^\/]*\/[^\/]*\/[^\/]*)\/.+/, '$1');
+            let baseUrl = req.url.replace(/^\/[^\/]*\/([^\/]*)\/?.*/, '/parsedlogs/$1');
             if (baseUrl.charAt(baseUrl.length - 1) != '/')
                 baseUrl += '/';
 
