@@ -156,6 +156,8 @@ class App {
 
         // TEST WITH <http://127.0.0.1:3000/parsedlogs/Inhouse-2023-Dec-19-22-57/>
         router.get('/parsedlogs/:log_name/:player_id?', async (req, res) => {
+            this.cacheSummaryResponse(res);
+
             // perf tracking
             const start = performance.now();
 
@@ -290,6 +292,10 @@ class App {
                     }
                 }
             });
+    }
+
+    private cacheSummaryResponse(res: express.Response): void {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
     }
 }
 
