@@ -5,6 +5,7 @@ import express from 'express';
 import { engine } from 'express-handlebars';
 import Handlebars from 'handlebars';
 import multer from 'multer';
+import tx2 from 'tx2';
 
 import { readFileSync } from 'fs';
 import path from 'path';
@@ -70,6 +71,11 @@ class App {
             summary: Handlebars.compile(readFileSync(templateFile, 'utf-8')),
             player:  Handlebars.compile(readFileSync(playerTemplate, 'utf-8')),
         };
+
+        // RPC command to reparse; i.e.: `pm2 trigger hampalyzer reparseAll`
+        tx2.action('reparseAll', () => {
+            this.reparseAllLogs(ReparseType.FullReparse);
+        });
     }
 
     public async reparseAllLogs(reparseType?: ReparseType): Promise<void> {

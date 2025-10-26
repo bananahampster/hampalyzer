@@ -32,6 +32,7 @@
     "jsdom": "^18.0.1",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.5.1",
+    "tx2": "^1.0.5",
     "typescript": "^5.9.2"
   },
   "devDependencies": {
@@ -40,6 +41,7 @@
     "@types/jsdom": "^16.2.13",
     "@types/multer": "^1.4.3",
     "@types/node": "^20.5.6",
-    "@types/pg": "^7.14.11"
+    "@types/pg": "^7.14.11",
+    "@types/tx2": "^1.0.3"
   }
 }
