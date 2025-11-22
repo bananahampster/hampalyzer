@@ -25,10 +25,10 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
     if (programArgs[2])
         webserverRoot = programArgs[2];
 
-    let reparseType: ReparseType | undefined = ReparseType.NoReparse;
+    let reparseType: ReparseType | undefined = ReparseType.ReparseNew;
     switch (programArgs[3]) {
         case '--reparse':
-            reparseType = ReparseType.FullReparse;
+            reparseType = ReparseType.ReparseAll;
             break;
         case '--reparseCheck':
             reparseType = ReparseType.CheckAll;
@@ -47,7 +47,7 @@ if (programArgs.length > 0 && programArgs[0].toLocaleLowerCase() === 'server') {
     app.listen(port, () => {
 
         if (reparseType != null)
-            appClass.reparseAllLogs(reparseType);
+            appClass.reparseLogsFromSource(reparseType);
 
         return console.log(`server is listening on ${port}.`);
     }).on("error", (err) => {

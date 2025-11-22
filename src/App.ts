@@ -74,13 +74,17 @@ class App {
 
         // RPC command to reparse; i.e.: `pm2 trigger hampalyzer reparseAll`
         tx2.action('reparseAll', () => {
-            this.reparseAllLogs(ReparseType.FullReparse);
+            this.reparseLogsFromSource(ReparseType.ReparseAll);
+        });
+
+        tx2.action('reparseNew', () => {
+            this.reparseLogsFromSource(ReparseType.ReparseNew);
         });
     }
 
-    public async reparseAllLogs(reparseType?: ReparseType): Promise<void> {
+    public async reparseLogsFromSource(reparseType?: ReparseType): Promise<void> {
         const success = await this.reparseLogs(reparseType);
-        if (!success && reparseType !== ReparseType.NoReparse) {
+        if (!success && reparseType !== ReparseType.ReparseNew) {
             console.error("failed to reparse all logs; there may be a corresponding error above.");
             return process.exit(-10);
         }
@@ -147,16 +151,30 @@ class App {
             if (isNaN(page_num)) 
                 page_num = 1;
 
-            try {
-                const result = await this.database.getLogs(page_num);
-                res.status(200).json(result);
-            }
-            catch (e: any) {
-                const error = e as ParsingError;
-                if (error.name)
-                    res.status(500).json({ error: `${error.name}: ${error.message}`});
-                else
-                    res.status(500).json({ error: e });
+            await this.attemptDatabaseResponse(
+                res,
+                this.database.getLogs(page_num),
+            );
+        });
+
+        router.get('/stats/:stat_type', async (req, res) => {
+            const { stat_type } = req.params;
+            switch (stat_type) {
+                case 'numGames': {
+                    return await this.attemptDatabaseResponse(
+                        res,
+                        this.database.getNumGames()
+                    );
+                }
+                case 'maps': {
+                    return await this.attemptDatabaseResponse(
+                        res,
+                        this.database.getMostPlayedMaps(req.query)
+                    );
+                }
+                default: 
+                    res.status(404).json({ error: "Unknown stat type." });
+                    return;
             }
         });
 
@@ -287,6 +305,20 @@ class App {
                         message: error,
                     }
                 }
+            });
+    }
+
+    private async attemptDatabaseResponse(
+        res: express.Response, 
+        callback: Promise<unknown>): Promise<void> 
+    {
+        await callback
+            .then((results) => res.status(200).json(results))
+            .catch((e: ParsingError) => {
+                if (e.name)
+                    res.status(500).json({ error: `${e.name}: ${e.message}`});
+                else
+                    res.status(500).json({ error: e });
             });
     }
 

@@ -40,10 +40,51 @@ export class DB {
     /** Gets a list of logs, limited to a 20-log limit */
     public async getLogs(pageNumber = 1): Promise<MatchMetadata[]> {
         return await this.query<MatchMetadata>(
-            'SELECT * FROM logs ORDER BY date_parsed DESC LIMIT $1 OFFSET (($2 - 1) * $1)',
+            `SELECT parsedlog, date_parsed, date_match, map, server, num_players, score_team1, score_team2 
+               FROM logs 
+              ORDER BY date_parsed DESC 
+              LIMIT $1 OFFSET (($2 - 1) * $1)`,
             DB.PAGE_SIZE,
             pageNumber
         );
+    }
+
+    public async getNumGames(): Promise<number> {
+        const result = await this.query<{ count: number }>(`SELECT count(1) as count from logs`);
+        
+        if (result.length === 1)
+            return result[0].count;
+
+        return Infinity;
+    }
+
+    public async getMostPlayedMaps(matchFilters?: EventFilters): Promise<{ map: string, count: number }[]> {
+        let filterResult = DB.addFilters({ logValid: true }, 2);
+        if (matchFilters) {
+            filterResult = DB.addFilters(matchFilters, 2);
+        }
+
+        return await this.query<{ map: string, count: number }>(
+            `SELECT map, count(1) as count 
+               FROM logs as g
+              WHERE ${filterResult.whereClause} 
+              GROUP BY map 
+              ORDER BY count DESC
+              LIMIT $1;`,
+              DB.PAGE_SIZE,
+              ...filterResult.params,
+        );
+
+// SELECT map, count(1)
+//   FROM logs as g
+//   JOIN round as r
+//     ON r.logid = g.id
+//   JOIN match as m
+//     ON m.roundid = r.id
+//  WHERE m.playerid = 50
+//  GROUP BY map 
+//  ORDER BY count DESC
+//  LIMIT 50;
     }
 
     public async getLogJson(log_name): Promise<ParsedStatsOutput | undefined> {
@@ -82,9 +123,9 @@ export class DB {
     }
 
     /** Gets all the logs to reparse on server start */
-    public async getReparseLogs(reparseType: ReparseType = ReparseType.NoReparse): Promise<ReparseMetadata[]> {
+    public async getReparseLogs(reparseType: ReparseType = ReparseType.ReparseNew): Promise<ReparseMetadata[]> {
         switch (reparseType) {
-            case ReparseType.NoReparse: {
+            case ReparseType.ReparseNew: {
                 const logs = await this.query<ReparseMetadata>(
                     `SELECT id, log_file1, log_file2
                        FROM logs as l
@@ -96,6 +137,8 @@ export class DB {
                     `
                 );
 
+                console.warn("Reparsing NEW LOGS ONLY.\n\n");
+
                 const logCount = await this.query<{ logcount: number }>(`SELECT count(1) as logcount from logs`);
                 const totalLogs = logCount?.[0].logcount;
 
@@ -103,10 +146,13 @@ export class DB {
 
                 return logs;
             }
-            case ReparseType.FullReparse: {
+            case ReparseType.ReparseAll: {
                 const logs = await this.query<ReparseMetadata>(
                     'SELECT id, log_file1, log_file2 FROM logs WHERE id > 42' // before 42, wrong log filenames
                 );
+
+                console.warn("Reparsing ALL LOGS FROM SOURCE.  This will take at least 3 full days.\n\nWaiting 60 seconds before continuing.  To stop via daemon: `pm2 stop hampalyzer`");
+                await setTimeout(() => {}, 60000);
 
                 await this.query('UPDATE logs SET is_valid = NULL'); // unset determination of invalid logs
                 await this.query('TRUNCATE TABLE parsedgames');
@@ -528,70 +574,74 @@ export class DB {
         logValid: true,
         logMinPlayers: 8,
     };
-    private addFilters(matchFilters: EventFilters): EventFilterResult {
+    
+    static addFilters(
+        matchFilters: EventFilters, 
+        start_param:number = 1): EventFilterResult 
+    {
         matchFilters = { ...DB.defaultFilters, ...matchFilters };
         const keys = Object.keys(matchFilters) as EventFilterTypes[];
         
-        let filterString = "";
+        let filterString: string[] = [];
         let filterParams: any[] = [];
-        let paramIndex = 0;
+        let paramIndex = start_param;
+        let fillIndex = 0;
 
         for (const filter of keys) {
             const filterValue = matchFilters[filter];
             if (filterValue != null) {
                 switch (filter) {
                     case 'logValid':
-                        filterString += `g.is_valid = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`g.is_valid IS NOT FALSE`);
                         break;
                     case 'logMap':
-                        filterString += `g.map = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`g.map = $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'logMinPlayers':
-                        filterString += `g.num_players = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`g.num_players >= $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'logServer':
-                        filterString += `g.server = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`g.server = $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'eventPlayerFrom':
-                        filterString += `e.playerFrom = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`e.playerFrom = $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'eventPlayerTo':
-                        filterString += `e.playerTo = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`e.playerTo = $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'eventClassFrom':
-                        filterString += `e.playerFromClass = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`e.playerFromClass = $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'eventClassTo':
-                        filterString += `e.playerToClass = $${paramIndex}`;
-                        filterParams[paramIndex++] = filterValue;
+                        filterString.push(`e.playerToClass = $${paramIndex++}`);
+                        filterParams[fillIndex++] = filterValue;
                         break;
                     case 'eventAgainstSelf':
-                        filterString += 'e.playerTo = e.playerFrom';
+                        filterString.push('e.playerTo = e.playerFrom');
                         break;
                     case 'eventPlayerFromBlue':
                         if (filterValue)
-                            filterString = '((m2.team = 1 AND e.isFirstLog = true) OR (m2.team = 2 AND e.isFirstLog = false))';
+                            filterString.push('((m2.team = 1 AND e.isFirstLog = true) OR (m2.team = 2 AND e.isFirstLog = false))');
                         else
-                            filterString = '((m2.team = 2 AND e.isFirstLog = true) OR (m2.team = 1 AND e.isFirstLog = false))';
+                            filterString.push('((m2.team = 2 AND e.isFirstLog = true) OR (m2.team = 1 AND e.isFirstLog = false))');
                         break;
                     case 'eventPlayerToBlue':
                         if (filterValue)
-                            filterString = '((m.team = 1 AND e.isFirstLog = true) OR (m.team = 2 AND e.isFirstLog = false))';
+                            filterString.push('((m.team = 1 AND e.isFirstLog = true) OR (m.team = 2 AND e.isFirstLog = false))');
                         else
-                            filterString = '((m.team = 2 AND e.isFirstLog = true) OR (m.team = 1 AND e.isFirstLog = false))';
+                            filterString.push('((m.team = 2 AND e.isFirstLog = true) OR (m.team = 1 AND e.isFirstLog = false))');
                         break;
                     case 'matchAgainstEnemy':
-                        filterString += 'm2.team <> m.team';
+                        filterString.push('m2.team <> m.team');
                         break;
                     case 'matchAgainstTeammate':
-                        filterString += 'm2.team = m.team';
+                        filterString.push('m2.team = m.team');
                         break;
                     default:
                         // compiler assertion: all cases handled:
@@ -601,13 +651,11 @@ export class DB {
                             message: `unknown filter key/value: ${badFilter} / ${filterValue}`,
                         });                        
                 }
-                
-                filterString += ' ';
             }
         }
 
         return {
-            whereClause: filterString,
+            whereClause: filterString.join(' AND '),
             params: filterParams,
         }
     }
@@ -616,9 +664,9 @@ export class DB {
 /** Specifies the type of reparsing to do on server start.  If not provided, skip any setup. */
 export enum ReparseType {
     /** Only parse logs into the database that don't have an entry in parsedGames */
-    NoReparse = 0,
+    ReparseNew = 0,
     /** Truncate event, round tables, and reparse all games  from log sources */
-    FullReparse,
+    ReparseAll,
     /** TODO: not implemented; do verification checks on all existing games and reparse if validation fails */
     CheckAll,
 };
