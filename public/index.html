@@ -67,8 +67,8 @@
         </div>
         <div class="row mt-5">
             <div class="col-md-9">
-                Database statistics -- currently tracking:
-                <span id="db-stats"></span>
+                Database statistics: currently tracking
+                <span id="db-stats">(loading...)</span>
             </div>
         </div>
     </div>
@@ -85,10 +85,14 @@
             const dbStatsRequest = $.get(
                 'api/getDBStats',
                 function(data) {
+                    const getNumber = function(stat) {
+                        return +(data.find(d => d.table === stat).estimate).toLocaleString();
+                    }
+
                     $("#db-stats").html(`
-                        ${data.find(d => d.table === 'player').estimate} players over
-                        ${data.find(d => d.table === 'logs').estimate} games, which contain
-                        ${data.find(d => d.table === 'event').estimate} total events (log lines).
+                        ${getNumber('player')} players over
+                        ${getNumber('logs')} games, which contain
+                        ${getNumber('event')} total events (log lines).
                     `);
                 }
             );
