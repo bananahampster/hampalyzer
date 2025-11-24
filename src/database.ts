@@ -37,6 +37,15 @@ export class DB {
             });
     }
 
+    public async getDBStats(): Promise<{ estimate: number, table: string }[]> {
+        return await this.query<{ estimate: number, table: string }>(
+            `SELECT reltuples::bigint AS estimate, 
+                    relname AS table 
+               FROM pg_class 
+              WHERE relname in ('logs', 'player', 'event')`
+        );
+    }
+
     /** Gets a list of logs, limited to a 20-log limit */
     public async getLogs(pageNumber = 1): Promise<MatchMetadata[]> {
         return await this.query<MatchMetadata>(

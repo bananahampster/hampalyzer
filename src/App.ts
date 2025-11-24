@@ -73,12 +73,16 @@ class App {
         };
 
         // RPC command to reparse; i.e.: `pm2 trigger hampalyzer reparseAll`
-        tx2.action('reparseAll', () => {
-            this.reparseLogsFromSource(ReparseType.ReparseAll);
+        tx2.action('reparseAll', (reply) => {
+            this.reparseLogsFromSource(ReparseType.ReparseAll)
+                .then(() => reply({ success: true }))
+                .catch(() => reply({ success: false }));
         });
 
-        tx2.action('reparseNew', () => {
-            this.reparseLogsFromSource(ReparseType.ReparseNew);
+        tx2.action('reparseNew', (reply) => {
+            this.reparseLogsFromSource(ReparseType.ReparseNew)
+                .then(() => reply({ success: true }))
+                .catch(() => reply({ success: false }));
         });
     }
 
@@ -154,6 +158,13 @@ class App {
             await this.attemptDatabaseResponse(
                 res,
                 this.database.getLogs(page_num),
+            );
+        });
+
+        router.get('/getDBStats', async (req, res) => {
+            return await this.attemptDatabaseResponse(
+                res,
+                this.database.getDBStats()
             );
         });
 

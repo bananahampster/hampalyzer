@@ -18,7 +18,7 @@
 <body style="background-color: rgb(52, 58, 64);">
 
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-sm-3 mr-0" href="/">Hampalyzer &mdash; TFC Statistics</a>
+        <a class="navbar-brand col-sm-3 mr-0" href="/">Hampalyzer &mdash; TFC Statistics <sup class="text-warning">BETA</sup></a>
         <ul class="navbar-nav px-3">
             <li class="nav-item text-nowrap">
                 <a class="nav-link" href="/logs.html">Other Logs</a>
@@ -65,6 +65,12 @@
                 </div>
             </div>
         </div>
+        <div class="row mt-5">
+            <div class="col-md-9">
+                Database statistics -- currently tracking:
+                <span id="db-stats"></span>
+            </div>
+        </div>
     </div>
 
 
@@ -75,6 +81,21 @@
         crossorigin="anonymous"></script>
 
     <script>
+        $(document).ready(function() {
+            const dbStatsRequest = $.get(
+                'api/getDBStats',
+                function(data) {
+                    $("#db-stats").html(`
+                        ${data.find(d => d.table === 'player').estimate} players over
+                        ${data.find(d => d.table === 'logs').estimate} games, which contain
+                        ${data.find(d => d.table === 'event').estimate} total events (log lines).
+                    `);
+                }
+            );
+        });
+
+        
+        
         const form = document.querySelector('form');
 
         $('#logFiles').on('change', function(e) {
