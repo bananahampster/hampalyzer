@@ -246,12 +246,12 @@ export class DB {
             matchMeta.num_players
         ];
 
-        let result: number[] | undefined;
+        let result: { id: number }[] | undefined;
         if (client) {
             result = (await client.query(query, params))?.rows;
         }
         else {
-            result = await this.query<number>(query, ...params);
+            result = await this.query<{ id: number }>(query, ...params);
         }
         
         if (!result || result.length !== 1)
@@ -260,7 +260,7 @@ export class DB {
                 message: "Expected one row from DB when inserting log metadata"
             });
 
-        return result[0];
+        return result[0].id;
     }
 
     private async recordLogJsons(
