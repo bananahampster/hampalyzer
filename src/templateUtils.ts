@@ -1,5 +1,5 @@
 import Handlebars from 'handlebars';
-import { OffenseTeamStats, DefenseTeamStats, OutputPlayer } from './constants.js';
+import { OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound } from './constants.js';
 
 export default class TemplateUtils {
     public static registerHelpers() {
@@ -48,6 +48,21 @@ export default class TemplateUtils {
                     ret += options.fn(givenArray[orderKey]);
                 }
             }
+            return ret;
+        });
+
+        /** Order players on the scoreboard by kills, descending */
+        Handlebars.registerHelper('eachPlayerScoreboard', function(this: unknown, givenArray: PlayerOutputStatsRound[], options) {
+            // abort if empty
+            if (givenArray == null || givenArray.length === 0)
+                return;
+
+            givenArray.sort((a, b) => (b.kills.kill?.value || 0) - (a.kills.kill?.value || 0));
+
+            let ret = "";
+            for (const player of givenArray)
+                ret += options.fn(player);
+
             return ret;
         });
 

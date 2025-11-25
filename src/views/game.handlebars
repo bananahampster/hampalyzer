@@ -68,7 +68,7 @@
                         </thead>
                         <tbody>
                             {{#each teams}}
-                            {{#each players}}
+                            {{#eachPlayerScoreboard players}}
                             <tr class="team{{team}}">
                                 <td class="player-name">
                                     {{#if is_mvp}}<span class="mvp">★</span>{{/if}}
@@ -91,7 +91,7 @@
                                 <td class="flag-time">{{formatSecondsForDisplay objectives.flag_time_in_seconds.value}}</td>
                                 <td class="objectives">{{#if objectives.button}}{{objectives.button.value}}{{else}}--{{/if}}</td>
                             </tr>
-                            {{/each}}
+                            {{/eachPlayerScoreboard}}
                             {{#with teamStats}}
                             <tr class="total team{{math @index "+" 1}}">
                                 <td class="total">Total</td>
