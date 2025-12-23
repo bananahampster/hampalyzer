@@ -38,6 +38,8 @@ jobs:
           git checkout $BRANCH_NAME
           npm install
           tsc
+          node dist/generateStaticHtml.js index
+          node dist/generateStaticHtml.js logs
           cp -rf ~/hampalyzer/public/* -t /var/www/beta.hampalyzer.com/html
           cd ~/hampalyzer/dist
           pm2 restart hampalyzer -- server parsedlogs /var/www/beta.hampalyzer.com/html --skipReparse

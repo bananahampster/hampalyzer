@@ -59,3 +59,29 @@
         {{/each}}
     </ul>
 </div>
+
+<script type="text/javascript">
+(() => {
+    if ("IntersectionObserver" in window
+        && "IntersectionObserverEntry" in window
+        && "intersectionRatio" in window.IntersectionObserverEntry.prototype
+    ) {
+        const intersectionRatioThreshold = 0.3;
+        document.querySelectorAll("#summary, #comp, #flag-pace, #parsing-errors").forEach((element) => {
+            let observer = new IntersectionObserver(entries => {
+                entries.forEach((entry) => {
+                    if (entry.intersectionRatio >= intersectionRatioThreshold) {
+                        document.querySelector(`#${entry.target.id}-nav-link.nav-link`).classList.add("active");
+                    } else {
+                        document.querySelector(`#${entry.target.id}-nav-link.nav-link`).classList.remove("active");
+                    }
+                });
+            },
+            {
+                threshold: [0, intersectionRatioThreshold]
+            });
+            observer.observe(element);
+        });
+    }
+})();
+</script>
