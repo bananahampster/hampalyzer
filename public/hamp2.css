@@ -7,6 +7,8 @@ body {
     font-size: .875rem;
     --team-a-color: rgba(175, 141, 195, 0.65);
     --team-b-color: rgba(127, 191, 123, 0.65);
+    --text-color: #e6e6e6;
+    --text-color-hover: #81aad4;
 }
 
 .sidebar {
@@ -18,7 +20,7 @@ body {
     padding: var(--navbar-height) 0 0; /* navbar height */
     box-shadow: inset -1px 0 0 rgba(222, 226, 230, 0.65);
 
-    color: #e6e6e6;
+    color: var(--text-color);
 }
 
 .sidebar-sticky {
@@ -43,11 +45,11 @@ body {
 
 .sidebar .nav-link {
     font-weight: 500;
-    color: #e6e6e6;
+    color: var(--text-color);
 }
 
 .sidebar .nav-link.active {
-    color: #81aad4;
+    color: var(--text-color-hover);
 }
 
 .sidebar .icon {
@@ -77,12 +79,36 @@ body {
 [role="main"] {
     padding-top: 72px; /* space for navbar */
     background-color: rgb(52, 58, 64);
-    color: #e6e6e6;
+    color: var(--text-color);
     min-height: calc(100vh);
+}
+
+.link {
+    color: var(--text-color);
+    text-decoration: underline;
+}
+
+.link:hover {
+    color: var(--text-color-hover);
+    text-decoration: none;
 }
 
 .fas {
     color: #aaa;
+}
+
+.fas.fa-spinner {
+    animation: spinner 1.2s linear infinite;
+}
+
+@keyframes spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+    
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .team-comp p {

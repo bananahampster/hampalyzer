@@ -48,10 +48,11 @@
                 </div>
                 <div class="form-group form-check">
                     <input type="checkbox" class="form-check-input" name="force" id="force">
-                    <label class="form-check-label" for="force"><abbr title="will skip validation that map matches, players nearly match between rounds, and match lengths are within 5 minutes">Force-parse logs</abbr></label>
+                    <label class="form-check-label" for="force"><abbr title="will skip validation that map and player pools are nearly the same between rounds, and that round lengths are within 5 minutes">Skip match validation (two logs)</abbr></label>
                 </div>
                 <div class="form-group">
                     <input class="btn btn-primary" type="submit" value="Submit">
+                    <i class="fas fa-lg fa-spinner d-none ml-2" title="working..."></i>
                 </div>
             </form>
         </div>
@@ -59,14 +60,53 @@
     <div class="row">
         <div class="col-md-9">
             <div id="formResponse" class="alert alert-primary invisible" role="alert">
-
             </div>
         </div>
     </div>
     <div class="row mt-5">
         <div class="col-md-9">
-            Database statistics: currently tracking
-            <span id="db-stats">(loading...)</span>
+            <p>
+                Find an issue? <a href="https://github.com/bananahampster/hampalyzer/issues" target="_blank" class="link">File it on GitHub</a>, or message @Hampster on Discord.
+            </p>
+            <p>Here's a link of features that are upcoming, rougly ordered by priority (ease of implementation vs. utility):</p>
+            <ol>
+                <li>Merge with master and remove beta branch (requires updating deploy scripts)</li>
+                <li>Update backup scripts (DB + files)</li>
+                <li>Update to Bootstrap v5 (currently v4; will enable easier theming)</li>
+                <li>
+                    Global statistics (maps played, matches played per-user, best teammates, etc.)
+                    <ul>
+                        <li>Start with global statistics, with a 'dashboard' overall view</li>
+                        <li>Move onto player-specific queries (for top 100 players?)</li>
+                        <li>Likely use PostgresSQL <code>MATERIALIZED VIEW</code> to minimize db load, re-run cron job to update nightly</li>
+                    </ul>
+                </li>
+                <li>
+                    Enable programmatic access to match information
+                    <ul>
+                        <li>Requires API access key/mechanism</li>
+                        <li>Requires some sort of "cost" to limit DOS; implement backoff</li>
+                        <li>Consider 'admin' UI interface for DB monitoring/key managment</li>
+                    </ul>
+                </li>
+                <li>
+                    Support for flag location naming (e.g., "flag dropped top-ramp")
+                    <ul>
+                        <li>Requires per-map work to captured named 3D boxes (already done for schtop; took 30 minutes)</li>
+                        <li>Requires <code>psql</code> version 14 to support 3D queries; should populate flag locations into flag drop events into match summary.</li>
+                    </ul>
+                </li>
+                <li>
+                    Support for demo uploads alongside matches
+                    <ul>
+                        <li>Consider using <a href="https://github.com/x8BitRain/webhl/" class="link">WebHL</a>, which itself is a fork of <a href="https://github.com/skyrim/hlviewer.js" class="link">hlviewer.js</a>.  Seems to not support HLTV replay, unfortunately.  If it works, then could click on <emph>any event</emph> in a match summary to jump to that location in the HLTV and show it in the browser.</li>
+                    </ul>
+                </li>
+            </ol>
+            <p>
+                <strong>Database statistics:</strong> currently tracking
+                <span id="db-stats">(loading...)</span>
+            </p>
         </div>
     </div>
 </div>
@@ -160,15 +200,21 @@
             cache: false,
         });
 
+        const spinner = $('.fa-spinner')
+        spinner.removeClass('d-none');
+
         let handler = function(response) {
-            if (response.success) {
-                $('#formResponse').attr('class', 'alert alert-primary')
-                    .html(`Your game has been parsed and is available at <a href="${ response.success.path }">${ response.success.path }</a>!`);
-            } 
-            else if (response.failure) {
-                $('#formResponse').attr('class', 'alert alert-danger')
-                    .html(`There was an error parsing the logs: <strong>${response.failure.error_reason}</strong>.<br />${response.failure.message}`);
-            } 
+            spinner.addClass('d-none');
+            if (response != null) {
+                if (response.success) {
+                    $('#formResponse').attr('class', 'alert alert-primary')
+                        .html(`Your game has been parsed and is available at <a href="${ response.success.path }">${ response.success.path }</a>!`);
+                } 
+                else if (response.failure) {
+                    $('#formResponse').attr('class', 'alert alert-danger')
+                        .html(`There was an error parsing the logs: <strong>${response.failure.error_reason}</strong>.<br />${response.failure.message}`);
+                } 
+            }
             else {
                 $('#formResponse').attr('class', 'alert alert-danger')
                     .html(`An unknown error occured: either the server did not respond or it talked funny to us.`);
