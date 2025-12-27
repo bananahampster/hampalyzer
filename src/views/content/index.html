@@ -45,7 +45,25 @@
             <p>Here's a link of features that are upcoming, rougly ordered by priority (ease of implementation vs. utility):</p>
             <ol>
                 <li>Merge with master and remove beta branch (requires updating deploy scripts)</li>
-                <li>Update backup scripts (DB + files)</li>
+                <li>
+                    Administrivia update:
+                    <ul>
+                        <li>Update backup scripts (DB + files)</li>
+                        <li>Add match force-reparse reparse link (visible to admin-only)</li>
+                        <li>Add match invalidation link (visible to admin-only); disqualify log from counting against stats (also add some UI to note this on match page)</li>
+                    </ul>
+                </li>
+                <li>
+                    Statistics update (full reparse after each):
+                    <ul>
+                        <li>Add engineering stats to player page (built guns, gun uptime, dets, etc.)</li>
+                        <li>Add 'time conced' stat to defense summary per-player (?)</li>
+                        <li>Fix bug that prevents flag returns due to timeout not showing</li>
+                        <li>Fix bug for parsing Copper (<a href="https://github.com/bananahampster/hampalyzer/issues/59" target="_blank" class="link">#59</a>)</li>
+                        <li>Fix bug for parsing Baconbowl (<a href="https://github.com/bananahampster/hampalyzer/issues/48" target="_blank" class="link">#48</a>)</li><li>Add chat logs (<a href="https://github.com/bananahampster/hampalyzer/issues/4" target="_blank" class="link">#4</a>)</li>
+                        <li>Show flag carrier kills on summary view (<a href="https://github.com/bananahampster/hampalyzer/issues/30" target="_blank" class="link">#30</a>)</li>
+                    </ul>
+                </li>
                 <li>Update to Bootstrap v5 (currently v4; will enable easier theming)</li>
                 <li>
                     Global statistics (maps played, matches played per-user, best teammates, etc.)
