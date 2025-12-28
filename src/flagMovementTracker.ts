@@ -3,9 +3,8 @@ import EventType from './eventType.js';
 import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
 import { RoundState } from "./roundState.js";
 import { TeamScore } from "./parserUtils.js";
-import { FlagDrop, FlagMovement, ParsingError, PlayerClass, TeamColor, TeamFlagMovements } from "./constants.js";
+import { FlagMovement, FlagMovementType, ParsingError, TeamColor, TeamFlagMovements } from "./constants.js";
 import Player from "./player.js";
-import { PlayerRoundStats } from "./player.js";
 
 class TeamFlagRoundStats {
     public numberOfCaps: number = 0;
@@ -158,8 +157,7 @@ export class FlagMovementTracker extends EventSubscriber {
                         break;
                     case EventType.PlayerPickedUpBonusFlag:
                         {
-                            this.flagRoundStatsByTeam[event.playerFrom!.team].flagEvents.push(event);
-
+                            // don't record this fact; just update flag status
                             let flagStatusToUpdate = this.currentFlagStatusByTeam[event.data!.team!];
                             if (!flagStatusToUpdate.carrier || !flagStatusToUpdate.carrier.matches(event.playerFrom!)) {
                                 console.error("Bonus flag pickup seen by a player (" + event.playerFrom!.name + ") which wasn't carrying the flag"
@@ -319,39 +317,83 @@ export class FlagMovementTracker extends EventSubscriber {
 
 
             const flagEvents = this.flagRoundStatsByTeam[team].flagEvents;
-            flagEvents.forEach(event => {
+            const teamFlagMovements = flagMovements[team] as FlagMovement[];
+            flagEvents.forEach((event: Event) => {
                 const player = event.playerFrom;
-                let howFlagWasDropped = FlagDrop.Fragged;
                 switch (event.eventType) {
                     case EventType.TeamFlagHoldBonus:
                         runningScore[team] += this.pointsPerTeamFlagHoldBonus;
-                        howFlagWasDropped = FlagDrop.Captured;
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Captured,
+                            carrier: "<Team>",
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
+                        break;
+                    case EventType.PlayerPickedUpFlag:
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Pickup,
+                            carrier: player!.name,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
+                        break;
+                    case EventType.PlayerPickedUpBonusFlag:
+                        return; // do nothing
+                    case EventType.FlagReturn:
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Returned,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
+                        break;
+                    case EventType.PlayerThrewFlag:
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Thrown,
+                            carrier: player!.name,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
+                        break;
+                    case EventType.PlayerFraggedPlayer:
+                    case EventType.PlayerCommitSuicide:
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Fragged,
+                            fragger: player!.name,
+                            carrier: event.playerTo!.name,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
+                        break;
+                    case EventType.PlayerLeftServer:
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Dropped,
+                            carrier: player!.name,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
                         break;
                     case EventType.PlayerCapturedBonusFlag:
                         runningScore[team] += this.pointsPerBonusCap;
-                        howFlagWasDropped = FlagDrop.Captured;
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Captured,
+                            carrier: player!.name,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
                         break;
                     case EventType.PlayerCapturedFlag:
                         runningScore[team] += this.pointsPerCap;
-                        howFlagWasDropped = FlagDrop.Captured;
-                        break;
-                    case EventType.PlayerThrewFlag:
-                        howFlagWasDropped = FlagDrop.Thrown;
-                        break;
-                    case EventType.PlayerFraggedPlayer:
-                        howFlagWasDropped = FlagDrop.Fragged;
+                        teamFlagMovements.push({
+                            type: FlagMovementType.Captured,
+                            carrier: player!.name,
+                            current_score: runningScore[team],
+                            game_time_as_seconds: event.gameTimeAsSeconds!,
+                        });
                         break;
                     default:
-                        break;
+                        return;
                 }
-                const flagMovement: FlagMovement = {
-                    game_time_as_seconds: event.gameTimeAsSeconds!,
-                    player: player ? player.name : "<Team>",
-                    current_score: runningScore[team],
-                    how_dropped: howFlagWasDropped,
-                    // TODO: add _who/what_ they were fragged by.
-                }
-                flagMovements[team].push(flagMovement);
             });
 
             if (needToComputeTeamScore) { // only overwrite the team score if there was no teamScore event

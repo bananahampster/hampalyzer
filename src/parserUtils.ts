@@ -2,7 +2,7 @@ import PlayerList from "./playerList.js";
 import { Event, RoundParser } from "./parser.js";
 import Player from "./player.js";
 import { RoundState } from "./roundState.js";
-import { TeamColor, TeamComposition, OutputStats, DisplayStringHelper, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, TeamFlagMovements, FlagMovement, FlagDrop, FacetedStatDetails } from "./constants.js";
+import { TeamColor, TeamComposition, OutputStats, DisplayStringHelper, TeamStatsComparison, TeamRole, TeamStats, OffenseTeamStats, DefenseTeamStats, OutputPlayer, PlayerOutputStatsRound, TeamsOutputStatsDetailed, GenericStat, TeamOutputStatsDetailed, StatDetails, FacetedStat, EventDescriptor, Weapon, FacetedStatSummary, FacetedStatDetails } from "./constants.js";
 import EventType from "./eventType.js";
 
 export type TeamScore = { [team in TeamColor]?: number; };

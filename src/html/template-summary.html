@@ -281,6 +281,28 @@
                     <div class="chart">
                         {{{chartMarkup}}}
                     </div>
+                    <div class="toggles">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="togglePickup" value="option1" checked>
+                            <label class="form-check-label" for="togglePickup">Show pickups</label>
+                          </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="toggleTosses" value="option1">
+                            <label class="form-check-label" for="toggleTosses">Show tosses</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="toggleFrags" value="option1">
+                            <label class="form-check-label" for="toggleFrags">Show frags</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="toggleReturns" value="option1" checked>
+                            <label class="form-check-label" for="toggleReturns">Show returns</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="toggleDrops" value="option1" checked>
+                            <label class="form-check-label" for="toggleDrops">Show drops</label>
+                          </div>                                                                                                        
+                    </div>
                 </div>
 
                 {{#ifListNotEmpty parsing_errors}}
@@ -292,7 +314,7 @@
                     <h5 class="alert-heading">Round {{math @index "+" 1}}</h5>
                     <ul class="mb-0">
                         {{#each this}}
-                        <li>{{this}}</li>
+                        <li>{{this}}</li>       
                         {{/each}}
                     </ul>
                     {{/if}}
@@ -303,6 +325,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>   
     <script type="text/javascript">
     (() => {
         if ("IntersectionObserver" in window
@@ -326,6 +349,24 @@
                 observer.observe(element);
             });
         }
+
+        const toggleMap = {
+            0: 'togglePickup',
+            1: 'toggleFrags',
+            2: 'toggleTosses',
+            3: 'toggleDrops',
+            4: 'toggleReturns'
+        };
+        let updateFlagToggleState = function() {
+            for (const [flagMovementType, toggleName] of Object.entries(toggleMap)) {
+                const isChecked = d3.select(`#${toggleName}`).property('checked');
+                d3.selectAll(`.flag-${flagMovementType}`)
+                    .style('visibility', isChecked ? 'visible' : 'hidden');
+            }
+        }
+
+        document.querySelectorAll('.toggles input').forEach(checkbox => checkbox.addEventListener('change', updateFlagToggleState))
+        updateFlagToggleState();
     })();
     </script>
 </body>
