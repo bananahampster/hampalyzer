@@ -102,6 +102,17 @@ class App {
             });
         });
 
+        // if development (ONLY!), redirect `/api/` requests to `/`
+        if (process.env.NODE_ENV == null) {
+            router.get('/api/*', async (req, res) => {
+                res.redirect(req.url.replace('/api', ''));
+            });
+
+            router.post('/api/*', async (req, res) => {
+                res.redirect(307, req.url.replace('/api', ''));
+            });
+        }
+
         router.post('/parseGame', cors(), upload.array('logs[]', 2), async (req, res) => {
             if (req.files && (req.files as Express.Multer.File[]).length < 2) {
                 res.status(400).json({ failure: { message: "expected two files in `logs[]`"}});

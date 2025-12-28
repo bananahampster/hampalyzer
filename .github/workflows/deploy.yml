@@ -4,7 +4,7 @@
 # * `~/hampalyzer` is this cloned repo in the user's home directory
 # * `pm2 start dist/index.js --name hampalyzer` was previously run
 
-name: Deploy Hampalyzer
+name: Deploy Hampalyzer NEW
 
 # Controls when the action will run.
 on:
@@ -23,22 +23,24 @@ jobs:
     steps:
     - name: deploy script
       uses: appleboy/ssh-action@master
+      env:
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
       with:
-        host: ${{ secrets.SERVER_NAME }}
+        host: ${{ secrets.BETA_SERVER_NAME }}
         username: ${{ secrets.DEPLOY_USER }}
-        password: ${{ secrets.DEPLOY_PASSWORD }}
+        key: ${{ secrets.BETA_DEPLOY_KEY }}
         script: |
           export NVM_DIR=~/.nvm
-          export HAMPALYZER_DB_USER=${{ secrets.DEPLOY_USER }}
-          export HAMPALYZER_DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }}
           source ~/.nvm/nvm.sh
           cd ~/hampalyzer
-          git reset --hard origin/master
-          git pull origin master
+          git reset --hard HEAD
+          git pull
+          git checkout $BRANCH_NAME
           npm install
           tsc
-          cp -rfL ~/hampalyzer/frontend/* -t /var/www/app.hampalyzer.com/html
-          cp -rf ~/hampalyzer/parsedlogs/assets/ -t /var/www/app.hampalyzer.com/html/
+          node dist/generateStaticHtml.js index
+          node dist/generateStaticHtml.js logs
+          cp -rf ~/hampalyzer/public/* -t /var/www/beta.hampalyzer.com/html
           cd ~/hampalyzer/dist
-          pm2 restart hampalyzer --update-env -- server parsedlogs /var/www/app.hampalyzer.com/html
+          pm2 restart hampalyzer -- server parsedlogs /var/www/beta.hampalyzer.com/html --skipReparse
 
