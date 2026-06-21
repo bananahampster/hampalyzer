@@ -15,7 +15,7 @@ import { default as fileParser, HampalyzerTemplates } from './fileParser.js';
 import { Parser } from './parser.js';
 import TemplateUtils from './templateUtils.js';
 import { ParseResponse, ParsingError, ParsingOptions, ParsingOptionsReparse } from './constants.js';
-import { DB, ReparseType } from './database.js';
+import { DB, ReparseType, EventFilters } from './database.js';
 
 const envFilePath = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "../.env");
 dotenv.config({ path: envFilePath });
@@ -160,7 +160,7 @@ class App {
             }
         });
 
-        router.get('/logs/:page_num', async (req, res) => {
+        router.get('/logs/:page_num/:filters?', async (req, res) => {
             let page_num = +req.params['page_num'] || 1;
             
             if (isNaN(page_num)) 
@@ -168,7 +168,8 @@ class App {
 
             await this.attemptDatabaseResponse(
                 res,
-                this.database.getLogs(page_num),
+                filters => this.database.getLogs(page_num, filters),
+                req.params.filters,
             );
         });
 
@@ -183,9 +184,11 @@ class App {
             const { stat_type } = req.params;
             switch (stat_type) {
                 case 'numGames': {
+                    const filterString = req.query.filters as string | undefined;
                     return await this.attemptDatabaseResponse(
                         res,
-                        this.database.getNumGames()
+                        filters => this.database.getNumGames(filters),
+                        filterString
                     );
                 }
                 case 'maps': {
@@ -332,16 +335,27 @@ class App {
 
     private async attemptDatabaseResponse(
         res: express.Response, 
-        callback: Promise<unknown>): Promise<void> 
+        callback: ((filters: EventFilters) => Promise<unknown>) | Promise<unknown>,
+        filterString?: string): Promise<void> 
     {
-        await callback
-            .then((results) => res.status(200).json(results))
-            .catch((e: ParsingError) => {
-                if (e.name)
-                    res.status(500).json({ error: `${e.name}: ${e.message}`});
-                else
-                    res.status(500).json({ error: e });
-            });
+        try {
+            const filters = filterString ? this.database.parseFilters(filterString) : {};
+            
+            const resultPromise = typeof callback === 'function' 
+                ? callback(filters) 
+                : callback;
+            
+            await resultPromise
+                .then((results) => res.status(200).json(results))
+                .catch((e: ParsingError) => {
+                    if (e.name)
+                        res.status(500).json({ error: `${e.name}: ${e.message}`});
+                    else
+                        res.status(500).json({ error: e });
+                });
+        } catch (e: any) {
+            res.status(500).json({ error: e.message || e });
+        }
     }
 
     private cacheSummaryResponse(res: express.Response): void {

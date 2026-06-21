@@ -47,19 +47,43 @@ export class DB {
     }
 
     /** Gets a list of logs, limited to a 20-log limit */
-    public async getLogs(pageNumber = 1): Promise<MatchMetadata[]> {
-        return await this.query<MatchMetadata>(
-            `SELECT parsedlog, date_parsed, date_match, map, server, num_players, score_team1, score_team2 
-               FROM logs 
-              ORDER BY date_parsed DESC 
-              LIMIT $1 OFFSET (($2 - 1) * $1)`,
-            DB.PAGE_SIZE,
-            pageNumber
-        );
+    public async getLogs(pageNumber = 1, filters?: EventFilters): Promise<MatchMetadata[]> {
+        let query: string;
+        let params: any[];
+        
+        if (filters) {
+            const filterResult = DB.addFilters(filters, 3);
+            query = `SELECT parsedlog, date_parsed, date_match, map, server, num_players, score_team1, score_team2 
+                       FROM logs as g
+                      WHERE ${filterResult.whereClause}
+                      ORDER BY date_parsed DESC 
+                      LIMIT $1 OFFSET (($2 - 1) * $1)`;
+            params = [DB.PAGE_SIZE, pageNumber, ...filterResult.params];
+        } else {
+            query = `SELECT parsedlog, date_parsed, date_match, map, server, num_players, score_team1, score_team2 
+                       FROM logs 
+                      ORDER BY date_parsed DESC 
+                      LIMIT $1 OFFSET (($2 - 1) * $1)`;
+            params = [DB.PAGE_SIZE, pageNumber];
+        }
+        
+        return await this.query<MatchMetadata>(query, ...params);
     }
 
-    public async getNumGames(): Promise<number> {
-        const result = await this.query<{ count: number }>(`SELECT count(1) as count from logs`);
+    public async getNumGames(filters?: EventFilters): Promise<number> {
+        let query: string;
+        let params: any[];
+        
+        if (filters) {
+            const filterResult = DB.addFilters(filters, 1);
+            query = `SELECT count(1) as count FROM logs as g WHERE ${filterResult.whereClause}`;
+            params = filterResult.params;
+        } else {
+            query = `SELECT count(1) as count FROM logs`;
+            params = [];
+        }
+        
+        const result = await this.query<{ count: number }>(query, ...params);
         
         if (result.length === 1)
             return result[0].count;
@@ -579,6 +603,85 @@ export class DB {
         )
     }
 
+    public parseFilters(filterString: string | Record<string, string>): EventFilters {
+        const filters: EventFilters = {};
+        
+        if (
+            !filterString || 
+            (typeof filterString !== 'object' && filterString.trim() === '') || 
+            (typeof filterString === 'object' && Object.keys(filterString).length === 0)
+        ) {
+            return filters;
+        }
+
+        try {
+            let params: Record<string, string> = {};
+            
+            if (typeof filterString !== 'object') {
+                const searchParams = new URLSearchParams(filterString);
+                for (const [key, value] of searchParams.entries()) {
+                    params[key] = value;
+                }
+            }
+            else
+                params = filterString;
+            
+            for (const [key, value] of Object.entries(params)) {
+                switch (key) {
+                    case 'logValid':
+                    case 'eventPlayerFromBlue':
+                    case 'eventPlayerToBlue':
+                    case 'matchAgainstEnemy':
+                    case 'matchAgainstTeammate':
+                    case 'eventAgainstSelf':
+                        filters[key] = value === 'true' || value === '1';
+                        break;
+                    
+                    case 'logMinPlayers':
+                    case 'eventPlayerFrom':
+                    case 'eventPlayerTo':
+                    case 'eventClassFrom':
+                    case 'eventClassTo':
+                        const numValue = parseInt(value, 10);
+                        if (!isNaN(numValue)) {
+                            filters[key] = numValue;
+                        }
+                        break;
+                    
+                    case 'logMap':
+                    case 'logServer':
+                        if (value && value.trim() !== '') {
+                            filters[key] = value;
+                        }
+                        break;
+                    
+                    case 'map':
+                        if (value && value.trim() !== '') {
+                            filters.logMap = value;
+                        }
+                        break;
+                    
+                    case 'minPlayers':
+                        const minPlayers = parseInt(value, 10);
+                        if (!isNaN(minPlayers)) {
+                            filters.logMinPlayers = minPlayers;
+                        }
+                        break;
+                    
+                    case 'server':
+                        if (value && value.trim() !== '') {
+                            filters.logServer = value;
+                        }
+                        break;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to parse filters:', e);
+        }
+
+        return filters;
+    }
+
     static readonly defaultFilters: EventFilters = {
         logValid: true,
         logMinPlayers: 8,
@@ -586,7 +689,7 @@ export class DB {
     
     static addFilters(
         matchFilters: EventFilters, 
-        start_param:number = 1): EventFilterResult 
+        start_param: number = 1): EventFilterResult 
     {
         matchFilters = { ...DB.defaultFilters, ...matchFilters };
         const keys = Object.keys(matchFilters) as EventFilterTypes[];
