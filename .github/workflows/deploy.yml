@@ -37,6 +37,7 @@ jobs:
           git pull
           git checkout $BRANCH_NAME
           npm install
+          npm test
           tsc
           node dist/generateStaticHtml.js index
           node dist/generateStaticHtml.js logs

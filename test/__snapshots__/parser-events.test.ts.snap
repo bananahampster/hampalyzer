@@ -1,0 +1,305 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Event parsing - L0308008 (schtop round 1) > has TeamScore events 1`] = `
+[
+  {
+    "data": {
+      "team": 1,
+      "value": "50",
+    },
+    "rawLine": "L 03/08/2026 - 03:15:39: Team "Blue" scored "50" with "4" players (kills "137") (kills_unaccounted "-3")",
+  },
+  {
+    "data": {
+      "team": 2,
+      "value": "0",
+    },
+    "rawLine": "L 03/08/2026 - 03:15:39: Team "Red" scored "0" with "4" players (kills "127") (kills_unaccounted "-3")",
+  },
+]
+`;
+
+exports[`Event parsing - L0308008 (schtop round 1) > has correct event type distribution 1`] = `
+{
+  "MapLoading": 1,
+  "PlayerBuiltDispenser": 1,
+  "PlayerBuiltSentryGun": 22,
+  "PlayerCapturedFlag": 5,
+  "PlayerChangeRole": 10,
+  "PlayerCommitSuicide": 34,
+  "PlayerConced": 476,
+  "PlayerDamage": 2820,
+  "PlayerDetonatedBuilding": 3,
+  "PlayerDismantledBuilding": 1,
+  "PlayerDroppedFlagViaDeathWithLocation": 26,
+  "PlayerFraggedGun": 19,
+  "PlayerFraggedPlayer": 350,
+  "PlayerGainedFlagWithLocation": 68,
+  "PlayerGotSecurity": 24,
+  "PlayerHitAirshot": 4,
+  "PlayerInfectedPlayer": 7,
+  "PlayerJoinTeam": 19,
+  "PlayerMM1": 2,
+  "PlayerMM2": 48,
+  "PlayerPassedInfection": 1,
+  "PlayerPickedUpFlag": 68,
+  "PlayerRepairedBuilding": 25,
+  "PlayerSpawn": 389,
+  "PlayerThrewFlag": 36,
+  "PlayerUpgradedGun": 19,
+  "PrematchEnd": 1,
+  "SecurityUp": 24,
+  "ServerCvar": 92,
+  "ServerName": 1,
+  "TeamScore": 2,
+}
+`;
+
+exports[`Event parsing - L0308008 (schtop round 1) > has no or minimal parsing errors 1`] = `[]`;
+
+exports[`Event parsing - L0308008 (schtop round 1) > has player join and role events 1`] = `
+[
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "Cheese",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "karms",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "JaNordy-TPF-TFC-NEW-NEW",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "Death",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "Doug",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "k",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "Hampster w/Radioactive Bananas*",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "arenzi",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "johnbest",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 1,
+    },
+    "player": "karms",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 1,
+    },
+    "player": "Doug",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "class": 5,
+    },
+    "player": "Doug",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "team": 1,
+    },
+    "player": "arenzi",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "class": 5,
+    },
+    "player": "arenzi",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "team": 1,
+    },
+    "player": "Death",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "class": 5,
+    },
+    "player": "Death",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "team": 2,
+    },
+    "player": "Cheese",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 2,
+    },
+    "player": "karms",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "class": 4,
+    },
+    "player": "Cheese",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "team": 2,
+    },
+    "player": "JaNordy-TPF-TFC-NEW-NEW",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 1,
+    },
+    "player": "Hampster w/Radioactive Bananas*",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "team": 5,
+    },
+    "player": "k",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "class": 9,
+    },
+    "player": "karms",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "class": 5,
+    },
+    "player": "Hampster w/Radioactive Bananas*",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "team": 2,
+    },
+    "player": "johnbest",
+    "type": "PlayerJoinTeam",
+  },
+  {
+    "data": {
+      "class": 6,
+    },
+    "player": "johnbest",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "class": 3,
+    },
+    "player": "JaNordy-TPF-TFC-NEW-NEW",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "class": 3,
+    },
+    "player": "karms",
+    "type": "PlayerChangeRole",
+  },
+  {
+    "data": {
+      "class": 1,
+    },
+    "player": "arenzi",
+    "type": "PlayerChangeRole",
+  },
+]
+`;
+
+exports[`Event parsing - L0308009 (schtop round 2) > has correct event type distribution 1`] = `
+{
+  "MapLoading": 1,
+  "PlayerBuiltDispenser": 2,
+  "PlayerBuiltSentryGun": 18,
+  "PlayerCapturedFlag": 10,
+  "PlayerChangeRole": 11,
+  "PlayerCommitSuicide": 30,
+  "PlayerConced": 506,
+  "PlayerDamage": 2622,
+  "PlayerDetonatedBuilding": 3,
+  "PlayerDetpackExplode": 1,
+  "PlayerDetpackSet": 1,
+  "PlayerDroppedFlagViaDeathWithLocation": 17,
+  "PlayerFraggedDispenser": 2,
+  "PlayerFraggedGun": 15,
+  "PlayerFraggedPlayer": 331,
+  "PlayerGainedFlagWithLocation": 58,
+  "PlayerGotSecurity": 26,
+  "PlayerHitAirshot": 3,
+  "PlayerInfectedPlayer": 2,
+  "PlayerJoinServer": 1,
+  "PlayerJoinTeam": 21,
+  "PlayerMM1": 2,
+  "PlayerMM2": 5,
+  "PlayerPassedInfection": 1,
+  "PlayerPickedUpFlag": 58,
+  "PlayerRepairedBuilding": 22,
+  "PlayerSpawn": 368,
+  "PlayerThrewFlag": 31,
+  "PlayerUpgradedGun": 18,
+  "PrematchEnd": 1,
+  "SecurityUp": 24,
+  "ServerCvar": 93,
+  "ServerName": 1,
+  "TeamScore": 2,
+}
+`;
