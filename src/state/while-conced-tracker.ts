@@ -1,9 +1,9 @@
-import { PlayerClass } from "./constants.js";
-import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
-import EventType from "./eventType.js";
-import { Event } from "./parser.js";
-import Player from "./player.js";
-import { RoundState } from "./roundState.js";
+import { PlayerClass } from "../models/types.js";
+import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./event-subscriber-manager.js";
+import EventType from "../models/event-types.js";
+import type { Event } from "../models/event.js";
+import Player from "../models/player.js";
+import { RoundState } from "./round-state.js";
 
 export class WhileConcedTracker extends EventSubscriber {
 

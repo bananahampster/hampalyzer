@@ -1,10 +1,10 @@
-import { Event } from "./parser.js";
-import EventType from './eventType.js';
-import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./eventSubscriberManager.js";
-import { RoundState } from "./roundState.js";
-import { TeamColor, TeamComposition } from "./constants.js";
-import Player from "./player.js";
-import PlayerList from "./playerList.js";
+import type { Event } from "../models/event.js";
+import EventType from '../models/event-types.js';
+import { EventSubscriber, EventHandlingPhase, HandlerRequest } from "./event-subscriber-manager.js";
+import { RoundState } from "./round-state.js";
+import { TeamColor, TeamComposition } from "../models/types.js";
+import Player from "../models/player.js";
+import PlayerList from "../models/player-list.js";
 
 export class PlayerTeamTracker extends EventSubscriber {
     // The players seen throughout the round.

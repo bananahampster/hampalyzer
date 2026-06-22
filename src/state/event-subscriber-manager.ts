@@ -1,6 +1,6 @@
-import { ParsingError } from './constants.js';
-import { Event } from './parser.js';
-import { RoundState } from './roundState.js';
+import { ParsingError } from '../models/types.js';
+import type { Event } from '../models/event.js';
+import { RoundState } from './round-state.js';
 
 export enum EventHandlingPhase {
     Initial,

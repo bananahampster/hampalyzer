@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Parser, RoundParser, Event } from '../src/parser.js';
-import EventType from '../src/eventType.js';
+import { Event } from '../src/models/event.js';
+import EventType from '../src/models/event-types.js';
+import { Parser } from '../src/parsing/match-parser.js';
+import { RoundParser } from '../src/parsing/round-parser.js';
 import { resolve } from 'path';
 
 const fixtureDir = resolve(import.meta.dirname, '.');

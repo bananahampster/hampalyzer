@@ -2,12 +2,12 @@ import { readFileSync, writeFile, mkdir } from 'fs';
 
 import Handlebars from 'handlebars';
 
-import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats, ParseResponse, ParsingError } from './constants.js';
-import { ParsedStats } from "./parser.js";
-import ParserUtils from './parserUtils.js';
-import TemplateUtils from './templateUtils.js';
-import FlagPaceChart from './flagPace.js';
-import { DB, MatchMetadata } from './database.js';
+import { OutputPlayer, PlayerOutputStatsRound, PlayerOutputStats, ParseResponse, ParsingError } from '../models/types.js';
+import { ParsedStats } from "../parsing/match-parser.js";
+import TemplateUtils from '../server/template-helpers.js';
+import { getPlayerFromTeams } from '../stats/output-builder.js';
+import FlagPaceChart from './flag-pace-chart.js';
+import { DB, MatchMetadata } from '../db/database.js';
 
 export interface HampalyzerTemplates {
     summary: HandlebarsTemplateDelegate<any>;
@@ -47,7 +47,7 @@ export default async function(
         };
 
         // depends on npm "prepare" putting template files in the right place (next to js)
-        const templateDir = new URL('./templates/', import.meta.url);
+        const templateDir = new URL('../templates/', import.meta.url);
         const templateFile = new URL('./template-summary.html', templateDir);
         const playerTemplate = new URL('./template-summary-player.html', templateDir);
 
@@ -110,7 +110,7 @@ export default async function(
                     const round = allStats.stats[i];
                     if (!round) continue;
 
-                    const foundPlayer = ParserUtils.getPlayerFromTeams(player.steamID, round.teams);
+                    const foundPlayer = getPlayerFromTeams(player.steamID, round.teams);
                     if (foundPlayer)
                         playerStats.push({ ...foundPlayer, round_number: i+1 });
                 }

@@ -1,8 +1,8 @@
-import { EventHandlingPhase, EventSubscriber, HandlerRequest } from './eventSubscriberManager.js'
-import { RoundState } from './roundState.js'
-import { Event } from './parser.js';
-import EventType from './eventType.js';
-import { ParsingError } from './constants.js';
+import { EventHandlingPhase, EventSubscriber, HandlerRequest } from './event-subscriber-manager.js'
+import { RoundState } from './round-state.js'
+import type { Event } from '../models/event.js';
+import EventType from '../models/event-types.js';
+import { ParsingError } from '../models/types.js';
 
 export class ClassTracker extends EventSubscriber {
     public phaseStart(phase: EventHandlingPhase, _roundState: RoundState): void {

@@ -1,7 +1,7 @@
-import { OutputPlayer, PlayerClass } from "./constants.js";
-import { ClassTime, DisplayStringHelper, TeamColor } from "./constants.js";
-import { TimeInterval } from "./timeInterval.js";
-import { TimeIntervalWithContext } from "./timeIntervalWithContext.js";
+import { OutputPlayer, PlayerClass } from "./types.js";
+import { ClassTime, DisplayStringHelper, TeamColor } from "./types.js";
+import { TimeInterval } from "./time-interval.js";
+import { TimeIntervalWithContext } from "./time-interval.js";
 
 export class PlayerRoundStats {
     public flagCarries = 0;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Parser } from '../src/parser.js';
+import { Parser } from '../src/parsing/match-parser.js';
 import { resolve } from 'path';
 
 const fixtureDir = resolve(import.meta.dirname, '.');

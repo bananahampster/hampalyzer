@@ -1,11 +1,11 @@
-import { Parser } from './parser.js';
-import fileParser from './fileParser.js';
+import { Parser } from './parsing/match-parser.js';
+import fileParser from './output/file-parser.js';
 import { FileCompression } from './fileCompression.js';
-import App from './App.js';
+import App from './server/app.js';
 
 import { existsSync } from 'fs';
 import * as path from 'path';
-import { ReparseType } from './database.js';
+import { ReparseType } from './db/index.js';
 
 const port = process.env.PORT || 3000;
 

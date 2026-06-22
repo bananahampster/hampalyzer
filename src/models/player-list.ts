@@ -1,5 +1,5 @@
 import Player from './player.js';
-import { TeamComposition, TeamColor } from './constants.js';
+import { TeamComposition, TeamColor } from './types.js';
 
 class PlayerList {
     // Each individual player has a per-team Player object to allow
