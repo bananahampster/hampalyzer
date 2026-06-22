@@ -6,9 +6,11 @@
         "target": "ES2022",
         "noImplicitAny": false,
         "sourceMap": true,
+        "inlineSources": true,
         "outDir": "./dist/",
         "strict": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+        "forceConsistentCasingInFileNames": true
     },
     "files": [
         "./node_modules/@types/node/index.d.ts",
@@ -20,5 +22,4 @@
     "exclude": [
         "node_modules",
     ],
-    "forceConsistentCasingInFileNames": true,
 }
