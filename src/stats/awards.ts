@@ -42,6 +42,9 @@ export function setGameAwards(teamComp: TeamComposition<OutputPlayer>, stats: (O
                     points += 5 * player.objectives.flag_capture_bonus.value;
                 }
 
+                // Store per-round MVP score on the player
+                player.mvp_score = Math.round(points * 10) / 10;
+
                 if (mvpPoints[player.id] != null) {
                     mvpPoints[player.id] += points;
                 }

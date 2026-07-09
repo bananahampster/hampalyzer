@@ -67,6 +67,8 @@ export enum ReparseType {
     ReparseAll,
     /** TODO: not implemented; do verification checks on all existing games and reparse if validation fails */
     CheckAll,
+    /** Re-parse all logs and update only the summary JSONs (parsedgames + parsedgameplayers), skipping event/round/match insertion */
+    ReparseSummaries,
 };
 
 export interface ReparseMetadata {
@@ -467,6 +469,19 @@ export class DB {
             case ReparseType.CheckAll: {
                 throw new Error("Reparse type 'CheckAll' not implemented");
             }
+            case ReparseType.ReparseSummaries: {
+                const logs = await this.query<ReparseMetadata>(
+                    `SELECT l.id, l.log_file1, l.log_file2
+                       FROM logs as l
+                       JOIN parsedgames as g
+                         ON l.id = g.logid
+                      WHERE l.id > 42
+                        AND l.is_valid <> FALSE`
+                );
+
+                console.warn(`Reparsing SUMMARIES ONLY for ${logs.length} logs.\n`);
+                return logs;
+            }
             default:
                 assertNever(reparseType);
         }
@@ -682,14 +697,15 @@ export class DB {
     private static cleanUpSummary(parsedStats: ParsedStats, chartMarkup: string): ParsedStatsOutput {
         const { rawStats: _, ...otherStats } = parsedStats;
         const summaryOutput = { ...otherStats, chartMarkup };
-        const playerStatsKeys: (keyof PlayerStats)[] = ['kills', 'buildables', 'damage', 'deaths', 'objectives', 'weaponStats'];
+        const playerStatsKeys = ['kills', 'buildables', 'damage', 'deaths', 'objectives', 'weaponStats'] as const;
 
         for (const round of summaryOutput.stats) {
             for (const teamNum in round!.teams) {
                 const team = round!.teams[teamNum] as TeamOutputStatsDetailed;
                 for (const player of team.players) {
                     for (const statKey of playerStatsKeys) {
-                        const playerStat = player[statKey];
+                        const playerStat = player[statKey] as Record<string, any> | undefined;
+                        if (!playerStat || typeof playerStat !== 'object') continue;
                         for (const subStat in playerStat) {
                             let playerSubStat = playerStat[subStat];
                             if (playerSubStat?.value != null) {
@@ -702,6 +718,89 @@ export class DB {
         }
 
         return summaryOutput;
+    }
+
+    /**
+     * Updates only the summary JSONs for a previously-parsed game.
+     * Used by ReparseSummaries to avoid re-inserting events/rounds/matches.
+     */
+    public async updateLogJsons(
+        logId: number,
+        parsedStats: ParsedStats,
+        playerOutputStats: PlayerOutputStats[],
+        chartMarkup: string,
+        playerMapping: PlayerMapping,
+    ): Promise<boolean> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // Update game summary
+            const summary = DB.cleanUpSummary(parsedStats, chartMarkup);
+            await client.query(
+                'UPDATE parsedgames SET summary = $1 WHERE logId = $2',
+                [summary, logId],
+            );
+
+            // Delete and re-insert player summaries (simpler than matching per-player)
+            await client.query(
+                'DELETE FROM parsedgameplayers WHERE logId = $1',
+                [logId],
+            );
+
+            for (const playerStats of playerOutputStats) {
+                const playerId = playerMapping[playerStats.steamID];
+                if (!playerId)
+                    throw new ParsingError({
+                        name: 'LOGIC_FAILURE',
+                        message: `failed to find DB playerId of player ${playerStats.steamID}`,
+                    });
+
+                await client.query(
+                    'INSERT INTO parsedgameplayers(logId, playerId, summary) VALUES ($1, $2, $3)',
+                    [logId, playerId, playerStats],
+                );
+            }
+
+            await client.query('COMMIT');
+        }
+        catch (e: any) {
+            await client.query('ROLLBACK');
+            throw new ParsingError({
+                name: 'DATABASE_FAILURE',
+                message: 'Update JSON transaction failure: ' + (e.stack || e.message || e),
+            });
+        }
+        finally {
+            client.release();
+        }
+
+        return true;
+    }
+
+    /**
+     * Ensures players exist in the DB and returns a mapping of steamID -> DB player id.
+     * Public variant for use in summary-only reparse (without a transaction client).
+     */
+    public async ensurePlayersPublic(players: PlayerList[]): Promise<PlayerMapping> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+            const mapping = await this.ensurePlayers(client, players);
+            await client.query('COMMIT');
+            return mapping;
+        }
+        catch (e: any) {
+            await client.query('ROLLBACK');
+            throw new ParsingError({
+                name: 'DATABASE_FAILURE',
+                message: 'Failed to determine player ids from steam ids in database: ' + (e.stack || e.message || e),
+            });
+        }
+        finally {
+            client.release();
+        }
     }
 
     public async matchTransaction(

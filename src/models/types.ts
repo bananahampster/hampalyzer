@@ -30,8 +30,13 @@ export interface OutputStats {
     score: TeamScore;
     teams: TeamsOutputStatsDetailed;
     scoring_activity?: ScoringActivity;
-    damage_stats_exist: boolean;
+    stats_available: StatsAvailable;
     parsing_errors?: string[];
+}
+
+export interface StatsAvailable {
+    damage_stats: boolean;
+    mvp_stats: boolean;
 }
 
 // expected to be ordered by timestamp ascending
@@ -119,6 +124,7 @@ export interface PlayerStats {
     kills: { // frags, TK, sg kills
         kill?: GenericStat<'kill'>;
         kill_while_conced?: GenericStat<'kill_while_conced'>;
+        kill_flag_carrier?: GenericStat<'kill_flag_carrier'>;
         teamkill?: GenericStat<'teamkill'>;
         sg?: GenericStat<'sg'>;
     };
@@ -148,11 +154,22 @@ export interface PlayerStats {
         concs?: GenericStat<'concs'>;
         airshot?: GenericStat<'airshot'>;
         airshoted?: GenericStat<'airshoted'>;
+        healer?: GenericStat<'healer'>;
+        healee?: GenericStat<'healee'>;
+        infecter?: GenericStat<'infecter'>;
+        infectee?: GenericStat<'infectee'>;
+        pass_infecter?: GenericStat<'pass_infecter'>;
+        pass_infectee?: GenericStat<'pass_infectee'>;
     };
     buildables?: { // sg build, upgrade, detonate, etc.
         build_sg?: GenericStat<'build_sg'>;
         build_disp?: GenericStat<'build_disp'>;
+        build_tele?: GenericStat<'build_tele'>;
+        repair_building?: GenericStat<'repair_building'>;
+        upgrade_building?: GenericStat<'upgrade_building'>;
+        det_building?: GenericStat<'det_building'>;
     };
+    mvp_score?: number;
 }
 
 export interface GenericStat<T = string, ValueType = number> extends FacetedStat {
@@ -364,11 +381,13 @@ export type ParsingOptions = ParsingOptionsSkipValidation | ParsingOptionsRepars
 
 export interface ParsingOptionsSkipValidation {
     skipValidation?: boolean;
+    summaryOnly?: boolean;
 }
 
 export interface ParsingOptionsReparse {
     skipValidation: false,
     logId: number,
+    summaryOnly?: boolean;
 }
 
 export type ParsingErrorName = 'MATCH_INVALID' | 'PARSING_FAILURE' | 'DATABASE_FAILURE' | 'LOGIC_FAILURE';

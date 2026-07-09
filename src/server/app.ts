@@ -84,6 +84,12 @@ class App {
                 .then(() => reply({ success: true }))
                 .catch(() => reply({ success: false }));
         });
+
+        tx2.action('reparseSummaries', (reply) => {
+            this.reparseLogsFromSource(ReparseType.ReparseSummaries)
+                .then(() => reply({ success: true }))
+                .catch(() => reply({ success: false }));
+        });
     }
 
     public async reparseLogsFromSource(reparseType?: ReparseType): Promise<void> {
@@ -263,6 +269,8 @@ class App {
      **/
     private async reparseLogs(reparseType?: ReparseType): Promise<boolean> {
         const logs = await this.database.getReparseLogs(reparseType); 
+        const summaryOnly = reparseType === ReparseType.ReparseSummaries;
+
         for (let i = 0, len = logs.length; i < len; i++) {
             const game = logs[i];
 
@@ -272,9 +280,9 @@ class App {
                 filenames.push(game.log_file2);
             }
 
-            console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing: ${filenames.join(" + ")}`);
+            console.warn(`${i+1} / ${len} (${Math.round((i+1) / len * 1000) / 10}%) reparsing${summaryOnly ? ' (summary only)' : ''}: ${filenames.join(" + ")}`);
 
-            const parsedLog = await this.parseLogs(filenames, { logId: game.id, skipValidation: false });
+            const parsedLog = await this.parseLogs(filenames, { logId: game.id, skipValidation: false, summaryOnly });
             if (!parsedLog.success) {
                 // if it is a validation failure, mark it and move on to the next log.
                 if (parsedLog.error_reason === 'MATCH_INVALID') {
@@ -299,7 +307,7 @@ class App {
     }
 
     private async parseLogs(filenames: string[], options: ParsingOptions): Promise<ParseResponse> {
-        const { skipValidation } = options;
+        const { skipValidation, summaryOnly } = options;
         const logId: number | undefined = (options as ParsingOptionsReparse).logId;
 
         filenames = await FileCompression.ensureFilesCompressed(filenames, /*deleteOriginals=*/true);
@@ -312,7 +320,8 @@ class App {
                     path.join(this.webserverRoot, this.outputRoot),
                     this.templates, 
                     this.database, 
-                    logId
+                    logId,
+                    summaryOnly,
                 )
             )
             .catch(error => {

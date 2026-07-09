@@ -31,7 +31,7 @@
             <div class="emoji pt-3">💀</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#eachOrderKeys kills "kill,kill_while_conced,teamkill"}}
+                {{#eachOrderKeys kills "kill,kill_while_conced,kill_flag_carrier,teamkill"}}
                 <div class="stats-faceted">
                     <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                     <div class="stats-facets py-3">
@@ -116,7 +116,7 @@
             <div class="emoji">🔫</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#eachOrderKeys weaponStats "airshot,concs,airshoted"}}
+                {{#eachOrderKeys weaponStats "airshot,concs,airshoted,healer,healee,infecter,infectee,pass_infecter,pass_infectee"}}
                 <div class="stats-faceted">
                     <div class="stat-title pt-3 pb-1"><h4>{{description}}: {{value}}</h4></div>
                     <div class="stats-facets">
@@ -136,14 +136,15 @@
             {{/each}}
 
             <!-- buildables -->
+            <!-- ensure buildable icons show up -->
             <div class="emoji">🏗</div>
             {{#each round}}
             <div class="d-flex flex-column">
-                {{#each buildables}}
+                {{#eachOrderKeys buildables "build_sg,build_disp,build_tele,repair_building,upgrade_building,det_building"}}
                 <div>
-                    <span title="{{description}}">{{title}}</span>: {{value}}
+                    <span title="{{description}}">{{description}}</span>: {{value}}
                 </div>
-                {{/each}}
+                {{/eachOrderKeys}}
             </div>
             {{/each}}
         </div>

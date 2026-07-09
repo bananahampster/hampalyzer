@@ -1706,9 +1706,9 @@ exports[`Output stats - 2-round schtop match > has team stats comparison 1`] = `
 ]
 `;
 
-exports[`Player stats - schtop match > damage stats exist flag 1`] = `true`;
+exports[`Player stats - schtop match > damage stats exist flag 1`] = `undefined`;
 
-exports[`Player stats - schtop match > damage stats exist flag 2`] = `true`;
+exports[`Player stats - schtop match > damage stats exist flag 2`] = `undefined`;
 
 exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
 {
@@ -2214,6 +2214,13 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "5": "1 (7%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -2327,22 +2334,60 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 56.3,
         "name": "Doug",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "Doug": [
+                {
+                  "description": "Got button at 04:03",
+                },
+                {
+                  "description": "Got button at 05:06",
+                },
+                {
+                  "description": "Got button at 07:22",
+                },
+                {
+                  "description": "Got button at 12:02",
+                },
+              ],
+            },
             "title": "button",
             "value": 4,
+            "weapon_summary": {
+              "0": "4 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "Doug": [
+                {
+                  "description": "Captured flag at 02:13",
+                },
+                {
+                  "description": "Captured flag at 03:48",
+                },
+                {
+                  "description": "Captured flag at 10:12",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 3,
+            "weapon_summary": {
+              "0": "3 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -2350,8 +2395,87 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "Doug": [
+                {
+                  "description": "Picked up flag at 00:28",
+                },
+                {
+                  "description": "Picked up flag at 00:46",
+                },
+                {
+                  "description": "Picked up flag at 01:17",
+                },
+                {
+                  "description": "Picked up flag at 01:30",
+                },
+                {
+                  "description": "Picked up flag at 01:55",
+                },
+                {
+                  "description": "Picked up flag at 02:05",
+                },
+                {
+                  "description": "Picked up flag at 02:55",
+                },
+                {
+                  "description": "Picked up flag at 03:06",
+                },
+                {
+                  "description": "Picked up flag at 03:34",
+                },
+                {
+                  "description": "Picked up flag at 05:09",
+                },
+                {
+                  "description": "Picked up flag at 05:33",
+                },
+                {
+                  "description": "Picked up flag at 05:53",
+                },
+                {
+                  "description": "Picked up flag at 06:54",
+                },
+                {
+                  "description": "Picked up flag at 08:46",
+                },
+                {
+                  "description": "Picked up flag at 09:32",
+                },
+                {
+                  "description": "Picked up flag at 09:47",
+                },
+                {
+                  "description": "Picked up flag at 10:06",
+                },
+                {
+                  "description": "Picked up flag at 11:45",
+                },
+                {
+                  "description": "Picked up flag at 12:05",
+                },
+                {
+                  "description": "Picked up flag at 12:37",
+                },
+                {
+                  "description": "Picked up flag at 13:21",
+                },
+                {
+                  "description": "Picked up flag at 14:12",
+                },
+                {
+                  "description": "Picked up flag at 14:48",
+                },
+                {
+                  "description": "Picked up flag at 14:58",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 24,
+            "weapon_summary": {
+              "0": "24 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -2369,8 +2493,363 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
         "weaponStats": {
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "Doug": [
+                {
+                  "description": "Conc jumped at 00:07",
+                },
+                {
+                  "description": "Conc jumped at 00:12",
+                },
+                {
+                  "description": "Conc jumped at 00:22",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 00:28",
+                },
+                {
+                  "description": "Conc jumped at 00:36",
+                },
+                {
+                  "description": "Conc jumped at 00:43",
+                },
+                {
+                  "description": "Conc jumped at 00:51",
+                },
+                {
+                  "description": "Conc jumped at 01:02",
+                },
+                {
+                  "description": "Conc jumped at 01:11",
+                },
+                {
+                  "description": "Conc jumped at 01:16",
+                },
+                {
+                  "description": "Conc jumped at 01:23",
+                },
+                {
+                  "description": "Conc jumped at 01:38",
+                },
+                {
+                  "description": "Conc jumped at 01:52",
+                },
+                {
+                  "description": "Conc jumped at 02:02",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 02:06",
+                },
+                {
+                  "description": "Conc jumped at 02:18",
+                },
+                {
+                  "description": "Conc jumped at 02:24",
+                },
+                {
+                  "description": "Conc jumped at 02:32",
+                },
+                {
+                  "description": "Conc jumped at 02:38",
+                },
+                {
+                  "description": "Conc jumped at 02:47",
+                },
+                {
+                  "description": "Conc jumped at 02:52",
+                },
+                {
+                  "description": "Conc jumped at 03:01",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 03:07",
+                },
+                {
+                  "description": "Conc jumped at 03:15",
+                },
+                {
+                  "description": "Conc jumped at 03:31",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 03:35",
+                },
+                {
+                  "description": "Conc jumped at 03:53",
+                },
+                {
+                  "description": "Conc jumped at 03:58",
+                },
+                {
+                  "description": "Conc jumped at 04:11",
+                },
+                {
+                  "description": "Conc jumped at 04:17",
+                },
+                {
+                  "description": "Conc jumped at 04:26",
+                },
+                {
+                  "description": "Conc jumped at 04:31",
+                },
+                {
+                  "description": "Conc jumped at 04:45",
+                },
+                {
+                  "description": "Conc jumped at 04:57",
+                },
+                {
+                  "description": "Conc jumped at 05:03",
+                },
+                {
+                  "description": "Conc jumped at 05:18",
+                },
+                {
+                  "description": "Conc jumped at 05:40",
+                },
+                {
+                  "description": "Conc jumped at 05:50",
+                },
+                {
+                  "description": "Conc jumped at 05:54",
+                },
+                {
+                  "description": "Conc jumped at 06:05",
+                },
+                {
+                  "description": "Conc jumped at 06:11",
+                },
+                {
+                  "description": "Conc jumped at 06:19",
+                },
+                {
+                  "description": "Conc jumped at 06:24",
+                },
+                {
+                  "description": "Conc jumped at 06:33",
+                },
+                {
+                  "description": "Conc jumped at 06:38",
+                },
+                {
+                  "description": "Conc jumped at 06:46",
+                },
+                {
+                  "description": "Conc jumped at 06:52",
+                },
+                {
+                  "description": "Conc jumped at 07:01",
+                },
+                {
+                  "description": "Conc jumped at 07:06",
+                },
+                {
+                  "description": "Conc jumped at 07:13",
+                },
+                {
+                  "description": "Conc jumped at 07:19",
+                },
+                {
+                  "description": "Conc jumped at 07:31",
+                },
+                {
+                  "description": "Conc jumped at 07:37",
+                },
+                {
+                  "description": "Conc jumped at 07:45",
+                },
+                {
+                  "description": "Conc jumped at 07:51",
+                },
+                {
+                  "description": "Conc jumped at 07:59",
+                },
+                {
+                  "description": "Conc jumped at 08:05",
+                },
+                {
+                  "description": "Conc jumped at 08:13",
+                },
+                {
+                  "description": "Conc jumped at 08:19",
+                },
+                {
+                  "description": "Conc jumped at 08:27",
+                },
+                {
+                  "description": "Conc jumped at 08:33",
+                },
+                {
+                  "description": "Conc jumped at 08:39",
+                },
+                {
+                  "description": "Conc jumped at 08:45",
+                },
+                {
+                  "description": "Conc jumped at 08:54",
+                },
+                {
+                  "description": "Conc jumped at 09:03",
+                },
+                {
+                  "description": "Conc jumped at 09:08",
+                },
+                {
+                  "description": "Conc jumped at 09:18",
+                },
+                {
+                  "description": "Conc jumped at 09:23",
+                },
+                {
+                  "description": "Conc jumped at 09:29",
+                },
+                {
+                  "description": "Conc jumped at 09:43",
+                },
+                {
+                  "description": "Conc jumped at 09:47",
+                },
+                {
+                  "description": "Conc jumped at 09:53",
+                },
+                {
+                  "description": "Conc jumped at 10:04",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 10:08",
+                },
+                {
+                  "description": "Conc jumped at 10:17",
+                },
+                {
+                  "description": "Conc jumped at 10:22",
+                },
+                {
+                  "description": "Conc jumped at 10:32",
+                },
+                {
+                  "description": "Conc jumped at 10:38",
+                },
+                {
+                  "description": "Conc jumped at 10:45",
+                },
+                {
+                  "description": "Conc jumped at 10:57",
+                },
+                {
+                  "description": "Conc jumped at 11:08",
+                },
+                {
+                  "description": "Conc jumped at 11:13",
+                },
+                {
+                  "description": "Conc jumped at 11:23",
+                },
+                {
+                  "description": "Conc jumped at 11:28",
+                },
+                {
+                  "description": "Conc jumped at 11:37",
+                },
+                {
+                  "description": "Conc jumped at 11:43",
+                },
+                {
+                  "description": "Conc jumped at 11:52",
+                },
+                {
+                  "description": "Conc jumped at 11:58",
+                },
+                {
+                  "description": "Conc jumped at 12:15",
+                },
+                {
+                  "description": "Conc jumped at 12:31",
+                },
+                {
+                  "description": "Conc jumped at 12:36",
+                },
+                {
+                  "description": "Conc jumped at 12:47",
+                },
+                {
+                  "description": "Conc jumped at 12:52",
+                },
+                {
+                  "description": "Conc jumped at 12:58",
+                },
+                {
+                  "description": "Conc jumped at 13:13",
+                },
+                {
+                  "description": "Conc jumped at 13:19",
+                },
+                {
+                  "description": "Conc jumped at 13:28",
+                },
+                {
+                  "description": "Conc jumped at 13:43",
+                },
+                {
+                  "description": "Conc jumped at 13:49",
+                },
+                {
+                  "description": "Conc jumped at 14:05",
+                },
+                {
+                  "description": "Conc jumped at 14:10",
+                },
+                {
+                  "description": "Conc jumped at 14:19",
+                },
+                {
+                  "description": "Conc jumped at 14:23",
+                },
+                {
+                  "description": "Conc jumped at 14:31",
+                },
+                {
+                  "description": "Conc jumped at 14:35",
+                },
+                {
+                  "description": "Conc jumped at 14:45",
+                },
+                {
+                  "description": "Conc jumped at 14:55",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 14:59",
+                },
+              ],
+            },
             "title": "concs",
             "value": 108,
+            "weapon_summary": {
+              "0": "108 (100%)",
+            },
+          },
+          "infecter": {
+            "description": "Infections given",
+            "details": {
+              "johnbest": [
+                {
+                  "description": "Infected johnbest at 05:58",
+                },
+                {
+                  "description": "Infected johnbest at 07:36",
+                },
+              ],
+            },
+            "title": "infecter",
+            "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
         },
       },
@@ -2923,6 +3402,13 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "5": "1 (4%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -3039,12 +3525,29 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 53.8,
         "name": "arenzi",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "arenzi": [
+                {
+                  "description": "Got button at 08:25",
+                },
+                {
+                  "description": "Got button at 10:58",
+                },
+                {
+                  "description": "Got button at 13:16",
+                },
+              ],
+            },
             "title": "button",
             "value": 3,
+            "weapon_summary": {
+              "0": "3 (100%)",
+            },
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -3052,8 +3555,57 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "arenzi": [
+                {
+                  "description": "Picked up flag at 01:05",
+                },
+                {
+                  "description": "Picked up flag at 01:22",
+                },
+                {
+                  "description": "Picked up flag at 01:52",
+                },
+                {
+                  "description": "Picked up flag at 05:39",
+                },
+                {
+                  "description": "Picked up flag at 08:30",
+                },
+                {
+                  "description": "Picked up flag at 08:57",
+                },
+                {
+                  "description": "Picked up flag at 09:12",
+                },
+                {
+                  "description": "Picked up flag at 09:54",
+                },
+                {
+                  "description": "Picked up flag at 11:57",
+                },
+                {
+                  "description": "Picked up flag at 12:33",
+                },
+                {
+                  "description": "Picked up flag at 12:48",
+                },
+                {
+                  "description": "Picked up flag at 14:31",
+                },
+                {
+                  "description": "Picked up flag at 14:38",
+                },
+                {
+                  "description": "Picked up flag at 14:51",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 14,
+            "weapon_summary": {
+              "0": "14 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -3095,8 +3647,322 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
           },
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "arenzi": [
+                {
+                  "description": "Conc jumped at 00:11",
+                },
+                {
+                  "description": "Conc jumped at 00:15",
+                },
+                {
+                  "description": "Conc jumped at 00:28",
+                },
+                {
+                  "description": "Conc jumped at 00:34",
+                },
+                {
+                  "description": "Conc jumped at 00:41",
+                },
+                {
+                  "description": "Conc jumped at 01:02",
+                },
+                {
+                  "description": "Conc jumped at 01:18",
+                },
+                {
+                  "description": "Conc jumped at 01:27",
+                },
+                {
+                  "description": "Conc jumped at 01:39",
+                },
+                {
+                  "description": "Conc jumped at 01:48",
+                },
+                {
+                  "description": "Conc jumped at 02:00",
+                },
+                {
+                  "description": "Conc jumped at 02:05",
+                },
+                {
+                  "description": "Conc jumped at 02:14",
+                },
+                {
+                  "description": "Conc jumped at 02:19",
+                },
+                {
+                  "description": "Conc jumped at 02:29",
+                },
+                {
+                  "description": "Conc jumped at 02:34",
+                },
+                {
+                  "description": "Conc jumped at 02:43",
+                },
+                {
+                  "description": "Conc jumped at 02:48",
+                },
+                {
+                  "description": "Conc jumped at 03:02",
+                },
+                {
+                  "description": "Conc jumped at 03:07",
+                },
+                {
+                  "description": "Conc jumped at 03:18",
+                },
+                {
+                  "description": "Conc jumped at 03:23",
+                },
+                {
+                  "description": "Conc jumped at 03:29",
+                },
+                {
+                  "description": "Conc jumped at 03:40",
+                },
+                {
+                  "description": "Conc jumped at 03:45",
+                },
+                {
+                  "description": "Conc jumped at 03:54",
+                },
+                {
+                  "description": "Conc jumped at 04:00",
+                },
+                {
+                  "description": "Conc jumped at 04:10",
+                },
+                {
+                  "description": "Conc jumped at 04:15",
+                },
+                {
+                  "description": "Conc jumped at 04:23",
+                },
+                {
+                  "description": "Conc jumped at 04:29",
+                },
+                {
+                  "description": "Conc jumped at 04:39",
+                },
+                {
+                  "description": "Conc jumped at 04:45",
+                },
+                {
+                  "description": "Conc jumped at 04:56",
+                },
+                {
+                  "description": "Conc jumped at 05:08",
+                },
+                {
+                  "description": "Conc jumped at 05:22",
+                },
+                {
+                  "description": "Conc jumped at 05:35",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 05:40",
+                },
+                {
+                  "description": "Conc jumped at 05:52",
+                },
+                {
+                  "description": "Conc jumped at 05:57",
+                },
+                {
+                  "description": "Conc jumped at 06:09",
+                },
+                {
+                  "description": "Conc jumped at 06:24",
+                },
+                {
+                  "description": "Conc jumped at 06:34",
+                },
+                {
+                  "description": "Conc jumped at 06:51",
+                },
+                {
+                  "description": "Conc jumped at 07:06",
+                },
+                {
+                  "description": "Conc jumped at 07:11",
+                },
+                {
+                  "description": "Conc jumped at 07:24",
+                },
+                {
+                  "description": "Conc jumped at 07:34",
+                },
+                {
+                  "description": "Conc jumped at 07:43",
+                },
+                {
+                  "description": "Conc jumped at 07:51",
+                },
+                {
+                  "description": "Conc jumped at 08:00",
+                },
+                {
+                  "description": "Conc jumped at 08:15",
+                },
+                {
+                  "description": "Conc jumped at 08:24",
+                },
+                {
+                  "description": "Conc jumped at 08:37",
+                },
+                {
+                  "description": "Conc jumped at 08:49",
+                },
+                {
+                  "description": "Conc jumped at 08:55",
+                },
+                {
+                  "description": "Conc jumped at 09:04",
+                },
+                {
+                  "description": "Conc jumped at 09:10",
+                },
+                {
+                  "description": "Conc jumped at 09:21",
+                },
+                {
+                  "description": "Conc jumped at 09:26",
+                },
+                {
+                  "description": "Conc jumped at 09:33",
+                },
+                {
+                  "description": "Conc jumped at 09:40",
+                },
+                {
+                  "description": "Conc jumped at 09:51",
+                },
+                {
+                  "description": "Conc jumped at 10:00",
+                },
+                {
+                  "description": "Conc jumped at 10:15",
+                },
+                {
+                  "description": "Conc jumped at 10:21",
+                },
+                {
+                  "description": "Conc jumped at 10:30",
+                },
+                {
+                  "description": "Conc jumped at 10:42",
+                },
+                {
+                  "description": "Conc jumped at 10:52",
+                },
+                {
+                  "description": "Conc jumped at 11:06",
+                },
+                {
+                  "description": "Conc jumped at 11:11",
+                },
+                {
+                  "description": "Conc jumped at 11:21",
+                },
+                {
+                  "description": "Conc jumped at 11:26",
+                },
+                {
+                  "description": "Conc jumped at 11:33",
+                },
+                {
+                  "description": "Conc jumped at 11:39",
+                },
+                {
+                  "description": "Conc jumped at 11:49",
+                },
+                {
+                  "description": "Conc jumped at 11:55",
+                },
+                {
+                  "description": "Conc jumped at 12:05",
+                },
+                {
+                  "description": "Conc jumped at 12:22",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 12:35",
+                },
+                {
+                  "description": "Conc jumped at 12:41",
+                },
+                {
+                  "description": "Conc jumped at 12:47",
+                },
+                {
+                  "description": "Conc jumped at 13:09",
+                },
+                {
+                  "description": "Conc jumped at 13:15",
+                },
+                {
+                  "description": "Conc jumped at 13:24",
+                },
+                {
+                  "description": "Conc jumped at 13:41",
+                },
+                {
+                  "description": "Conc jumped at 13:53",
+                },
+                {
+                  "description": "Conc jumped at 14:05",
+                },
+                {
+                  "description": "Conc jumped at 14:12",
+                },
+                {
+                  "description": "Conc jumped at 14:19",
+                },
+                {
+                  "description": "Conc jumped at 14:28",
+                },
+                {
+                  "description": "Conc jumped at 14:36",
+                },
+                {
+                  "description": "Conc jumped at 14:45",
+                },
+                {
+                  "description": "Conc jumped at 14:50",
+                },
+                {
+                  "description": "Conc jumped at 14:57",
+                },
+              ],
+            },
             "title": "concs",
             "value": 95,
+            "weapon_summary": {
+              "0": "95 (100%)",
+            },
+          },
+          "infecter": {
+            "description": "Infections given",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Infected Cheese at 09:45",
+                },
+              ],
+              "johnbest": [
+                {
+                  "description": "Infected johnbest at 09:44",
+                },
+              ],
+            },
+            "title": "infecter",
+            "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
         },
       },
@@ -3621,6 +4487,13 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "29": "1 (3%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -3747,22 +4620,54 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 50.6,
         "name": "Death",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "Death": [
+                {
+                  "description": "Got button at 00:16",
+                },
+                {
+                  "description": "Got button at 01:59",
+                },
+                {
+                  "description": "Got button at 03:01",
+                },
+                {
+                  "description": "Got button at 06:20",
+                },
+              ],
+            },
             "title": "button",
             "value": 4,
+            "weapon_summary": {
+              "0": "4 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "Death": [
+                {
+                  "description": "Captured flag at 06:04",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -3770,8 +4675,57 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "Death": [
+                {
+                  "description": "Picked up flag at 01:16",
+                },
+                {
+                  "description": "Picked up flag at 01:44",
+                },
+                {
+                  "description": "Picked up flag at 03:05",
+                },
+                {
+                  "description": "Picked up flag at 03:16",
+                },
+                {
+                  "description": "Picked up flag at 04:53",
+                },
+                {
+                  "description": "Picked up flag at 05:55",
+                },
+                {
+                  "description": "Picked up flag at 08:56",
+                },
+                {
+                  "description": "Picked up flag at 09:13",
+                },
+                {
+                  "description": "Picked up flag at 09:25",
+                },
+                {
+                  "description": "Picked up flag at 09:36",
+                },
+                {
+                  "description": "Picked up flag at 10:03",
+                },
+                {
+                  "description": "Picked up flag at 14:00",
+                },
+                {
+                  "description": "Picked up flag at 14:15",
+                },
+                {
+                  "description": "Picked up flag at 14:36",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 14,
+            "weapon_summary": {
+              "0": "14 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -3789,8 +4743,310 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
         "weaponStats": {
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "Death": [
+                {
+                  "description": "Conc jumped at 00:10",
+                },
+                {
+                  "description": "Conc jumped at 00:14",
+                },
+                {
+                  "description": "Conc jumped at 00:26",
+                },
+                {
+                  "description": "Conc jumped at 00:31",
+                },
+                {
+                  "description": "Conc jumped at 00:38",
+                },
+                {
+                  "description": "Conc jumped at 00:43",
+                },
+                {
+                  "description": "Conc jumped at 00:55",
+                },
+                {
+                  "description": "Conc jumped at 00:59",
+                },
+                {
+                  "description": "Conc jumped at 01:11",
+                },
+                {
+                  "description": "Conc jumped at 01:15",
+                },
+                {
+                  "description": "Conc jumped at 01:24",
+                },
+                {
+                  "description": "Conc jumped at 01:42",
+                },
+                {
+                  "description": "Conc jumped at 01:51",
+                },
+                {
+                  "description": "Conc jumped at 02:13",
+                },
+                {
+                  "description": "Conc jumped at 02:22",
+                },
+                {
+                  "description": "Conc jumped at 02:27",
+                },
+                {
+                  "description": "Conc jumped at 02:35",
+                },
+                {
+                  "description": "Conc jumped at 02:40",
+                },
+                {
+                  "description": "Conc jumped at 02:49",
+                },
+                {
+                  "description": "Conc jumped at 02:53",
+                },
+                {
+                  "description": "Conc jumped at 03:23",
+                },
+                {
+                  "description": "Conc jumped at 03:38",
+                },
+                {
+                  "description": "Conc jumped at 04:01",
+                },
+                {
+                  "description": "Conc jumped at 04:23",
+                },
+                {
+                  "description": "Conc jumped at 04:29",
+                },
+                {
+                  "description": "Conc jumped at 04:38",
+                },
+                {
+                  "description": "Conc jumped at 04:43",
+                },
+                {
+                  "description": "Conc jumped at 05:02",
+                },
+                {
+                  "description": "Conc jumped at 05:08",
+                },
+                {
+                  "description": "Conc jumped at 05:15",
+                },
+                {
+                  "description": "Conc jumped at 05:28",
+                },
+                {
+                  "description": "Conc jumped at 05:52",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 05:57",
+                },
+                {
+                  "description": "Conc jumped at 06:11",
+                },
+                {
+                  "description": "Conc jumped at 06:16",
+                },
+                {
+                  "description": "Conc jumped at 06:27",
+                },
+                {
+                  "description": "Conc jumped at 06:32",
+                },
+                {
+                  "description": "Conc jumped at 06:44",
+                },
+                {
+                  "description": "Conc jumped at 06:49",
+                },
+                {
+                  "description": "Conc jumped at 07:01",
+                },
+                {
+                  "description": "Conc jumped at 07:05",
+                },
+                {
+                  "description": "Conc jumped at 07:30",
+                },
+                {
+                  "description": "Conc jumped at 07:35",
+                },
+                {
+                  "description": "Conc jumped at 07:45",
+                },
+                {
+                  "description": "Conc jumped at 07:49",
+                },
+                {
+                  "description": "Conc jumped at 08:09",
+                },
+                {
+                  "description": "Conc jumped at 08:14",
+                },
+                {
+                  "description": "Conc jumped at 08:24",
+                },
+                {
+                  "description": "Conc jumped at 08:49",
+                },
+                {
+                  "description": "Conc jumped at 08:53",
+                },
+                {
+                  "description": "Conc jumped at 09:08",
+                },
+                {
+                  "description": "Conc jumped at 09:12",
+                },
+                {
+                  "description": "Conc jumped at 09:20",
+                },
+                {
+                  "description": "Conc jumped at 09:24",
+                },
+                {
+                  "description": "Conc jumped at 09:43",
+                },
+                {
+                  "description": "Conc jumped at 09:47",
+                },
+                {
+                  "description": "Conc jumped at 09:59",
+                },
+                {
+                  "description": "Conc jumped at 10:03",
+                },
+                {
+                  "description": "Conc jumped at 10:11",
+                },
+                {
+                  "description": "Conc jumped at 10:16",
+                },
+                {
+                  "description": "Conc jumped at 10:25",
+                },
+                {
+                  "description": "Conc jumped at 10:30",
+                },
+                {
+                  "description": "Conc jumped at 10:39",
+                },
+                {
+                  "description": "Conc jumped at 10:45",
+                },
+                {
+                  "description": "Conc jumped at 10:56",
+                },
+                {
+                  "description": "Conc jumped at 11:01",
+                },
+                {
+                  "description": "Conc jumped at 11:12",
+                },
+                {
+                  "description": "Conc jumped at 11:17",
+                },
+                {
+                  "description": "Conc jumped at 11:26",
+                },
+                {
+                  "description": "Conc jumped at 11:31",
+                },
+                {
+                  "description": "Conc jumped at 11:49",
+                },
+                {
+                  "description": "Conc jumped at 11:53",
+                },
+                {
+                  "description": "Conc jumped at 12:05",
+                },
+                {
+                  "description": "Conc jumped at 12:09",
+                },
+                {
+                  "description": "Conc jumped at 12:22",
+                },
+                {
+                  "description": "Conc jumped at 12:27",
+                },
+                {
+                  "description": "Conc jumped at 12:34",
+                },
+                {
+                  "description": "Conc jumped at 12:54",
+                },
+                {
+                  "description": "Conc jumped at 12:58",
+                },
+                {
+                  "description": "Conc jumped at 13:09",
+                },
+                {
+                  "description": "Conc jumped at 13:14",
+                },
+                {
+                  "description": "Conc jumped at 13:21",
+                },
+                {
+                  "description": "Conc jumped at 13:25",
+                },
+                {
+                  "description": "Conc jumped at 13:36",
+                },
+                {
+                  "description": "Conc jumped at 13:40",
+                },
+                {
+                  "description": "Conc jumped at 13:51",
+                },
+                {
+                  "description": "Conc jumped at 13:55",
+                },
+                {
+                  "description": "Conc jumped at 14:09",
+                },
+                {
+                  "description": "Conc jumped at 14:14",
+                },
+                {
+                  "description": "Conc jumped at 14:24",
+                },
+                {
+                  "description": "Conc jumped at 14:33",
+                },
+                {
+                  "description": "Conc jumped at 14:37",
+                },
+                {
+                  "description": "Conc jumped at 14:55",
+                },
+              ],
+            },
             "title": "concs",
             "value": 93,
+            "weapon_summary": {
+              "0": "93 (100%)",
+            },
+          },
+          "infecter": {
+            "description": "Infections given",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Infected Cheese at 01:35",
+                },
+              ],
+            },
+            "title": "infecter",
+            "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
         },
       },
@@ -4289,6 +5545,13 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "29": "1 (5%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -4382,22 +5645,45 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 53.8,
         "name": "Hampster w/Radioactive Bananas*",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "description": "Got button at 09:53",
+                },
+              ],
+            },
             "title": "button",
             "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "description": "Captured flag at 13:11",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -4405,8 +5691,63 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "description": "Picked up flag at 00:24",
+                },
+                {
+                  "description": "Picked up flag at 00:47",
+                },
+                {
+                  "description": "Picked up flag at 02:59",
+                },
+                {
+                  "description": "Picked up flag at 03:28",
+                },
+                {
+                  "description": "Picked up flag at 04:24",
+                },
+                {
+                  "description": "Picked up flag at 04:59",
+                },
+                {
+                  "description": "Picked up flag at 05:12",
+                },
+                {
+                  "description": "Picked up flag at 05:30",
+                },
+                {
+                  "description": "Picked up flag at 05:44",
+                },
+                {
+                  "description": "Picked up flag at 08:53",
+                },
+                {
+                  "description": "Picked up flag at 09:07",
+                },
+                {
+                  "description": "Picked up flag at 12:32",
+                },
+                {
+                  "description": "Picked up flag at 12:53",
+                },
+                {
+                  "description": "Picked up flag at 13:03",
+                },
+                {
+                  "description": "Picked up flag at 14:08",
+                },
+                {
+                  "description": "Picked up flag at 14:44",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 16,
+            "weapon_summary": {
+              "0": "16 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -4440,8 +5781,321 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
           },
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "description": "Conc jumped at 00:07",
+                },
+                {
+                  "description": "Conc jumped at 00:18",
+                },
+                {
+                  "description": "Conc jumped at 00:22",
+                },
+                {
+                  "description": "Conc jumped at 00:33",
+                },
+                {
+                  "description": "Conc jumped at 00:38",
+                },
+                {
+                  "description": "Conc jumped at 00:54",
+                },
+                {
+                  "description": "Conc jumped at 01:26",
+                },
+                {
+                  "description": "Conc jumped at 01:41",
+                },
+                {
+                  "description": "Conc jumped at 01:46",
+                },
+                {
+                  "description": "Conc jumped at 01:56",
+                },
+                {
+                  "description": "Conc jumped at 02:06",
+                },
+                {
+                  "description": "Conc jumped at 02:11",
+                },
+                {
+                  "description": "Conc jumped at 02:20",
+                },
+                {
+                  "description": "Conc jumped at 02:25",
+                },
+                {
+                  "description": "Conc jumped at 02:35",
+                },
+                {
+                  "description": "Conc jumped at 02:40",
+                },
+                {
+                  "description": "Conc jumped at 02:52",
+                },
+                {
+                  "description": "Conc jumped at 02:56",
+                },
+                {
+                  "description": "Conc jumped at 03:05",
+                },
+                {
+                  "description": "Conc jumped at 03:20",
+                },
+                {
+                  "description": "Conc jumped at 03:36",
+                },
+                {
+                  "description": "Conc jumped at 03:40",
+                },
+                {
+                  "description": "Conc jumped at 03:49",
+                },
+                {
+                  "description": "Conc jumped at 04:03",
+                },
+                {
+                  "description": "Conc jumped at 04:07",
+                },
+                {
+                  "description": "Conc jumped at 04:30",
+                },
+                {
+                  "description": "Conc jumped at 04:36",
+                },
+                {
+                  "description": "Conc jumped at 04:49",
+                },
+                {
+                  "description": "Conc jumped at 04:53",
+                },
+                {
+                  "description": "Conc jumped at 05:06",
+                },
+                {
+                  "description": "Conc jumped at 05:10",
+                },
+                {
+                  "description": "Conc jumped at 05:18",
+                },
+                {
+                  "description": "Conc jumped at 05:22",
+                },
+                {
+                  "description": "Conc jumped at 05:37",
+                },
+                {
+                  "description": "Conc jumped at 05:41",
+                },
+                {
+                  "description": "Conc jumped at 05:50",
+                },
+                {
+                  "description": "Conc jumped at 05:55",
+                },
+                {
+                  "description": "Conc jumped at 06:11",
+                },
+                {
+                  "description": "Conc jumped at 06:36",
+                },
+                {
+                  "description": "Conc jumped at 06:40",
+                },
+                {
+                  "description": "Conc jumped at 06:50",
+                },
+                {
+                  "description": "Conc jumped at 07:06",
+                },
+                {
+                  "description": "Conc jumped at 07:13",
+                },
+                {
+                  "description": "Conc jumped at 07:24",
+                },
+                {
+                  "description": "Conc jumped at 07:30",
+                },
+                {
+                  "description": "Conc jumped at 07:46",
+                },
+                {
+                  "description": "Conc jumped at 07:51",
+                },
+                {
+                  "description": "Conc jumped at 07:59",
+                },
+                {
+                  "description": "Conc jumped at 08:04",
+                },
+                {
+                  "description": "Conc jumped at 08:17",
+                },
+                {
+                  "description": "Conc jumped at 08:22",
+                },
+                {
+                  "description": "Conc jumped at 08:31",
+                },
+                {
+                  "description": "Conc jumped at 08:35",
+                },
+                {
+                  "description": "Conc jumped at 08:45",
+                },
+                {
+                  "description": "Conc jumped at 08:50",
+                },
+                {
+                  "description": "Conc jumped at 09:00",
+                },
+                {
+                  "description": "Conc jumped at 09:04",
+                },
+                {
+                  "description": "Conc jumped at 09:14",
+                },
+                {
+                  "description": "Conc jumped at 09:25",
+                },
+                {
+                  "description": "Conc jumped at 09:34",
+                },
+                {
+                  "description": "Conc jumped at 09:48",
+                },
+                {
+                  "description": "Conc jumped at 09:52",
+                },
+                {
+                  "description": "Conc jumped at 10:26",
+                },
+                {
+                  "description": "Conc jumped at 10:31",
+                },
+                {
+                  "description": "Conc jumped at 10:41",
+                },
+                {
+                  "description": "Conc jumped at 10:45",
+                },
+                {
+                  "description": "Conc jumped at 10:52",
+                },
+                {
+                  "description": "Conc jumped at 10:57",
+                },
+                {
+                  "description": "Conc jumped at 11:09",
+                },
+                {
+                  "description": "Conc jumped at 11:14",
+                },
+                {
+                  "description": "Conc jumped at 11:24",
+                },
+                {
+                  "description": "Conc jumped at 11:30",
+                },
+                {
+                  "description": "Conc jumped at 11:46",
+                },
+                {
+                  "description": "Conc jumped at 11:50",
+                },
+                {
+                  "description": "Conc jumped at 12:02",
+                },
+                {
+                  "description": "Conc jumped at 12:07",
+                },
+                {
+                  "description": "Conc jumped at 12:18",
+                },
+                {
+                  "description": "Conc jumped at 12:22",
+                },
+                {
+                  "description": "Conc jumped at 12:39",
+                },
+                {
+                  "description": "Conc jumped at 12:50",
+                },
+                {
+                  "description": "Conc jumped at 13:01",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 13:05",
+                },
+                {
+                  "description": "Conc jumped at 13:16",
+                },
+                {
+                  "description": "Conc jumped at 13:21",
+                },
+                {
+                  "description": "Conc jumped at 13:32",
+                },
+                {
+                  "description": "Conc jumped at 13:37",
+                },
+                {
+                  "description": "Conc jumped at 13:47",
+                },
+                {
+                  "description": "Conc jumped at 13:51",
+                },
+                {
+                  "description": "Conc jumped at 14:01",
+                },
+                {
+                  "description": "Conc jumped at 14:06",
+                },
+                {
+                  "description": "Conc jumped at 14:16",
+                },
+                {
+                  "description": "Conc jumped at 14:27",
+                },
+                {
+                  "description": "Conc jumped at 14:42",
+                },
+                {
+                  "description": "Conc jumped at 14:53",
+                },
+                {
+                  "description": "Conc jumped at 14:57",
+                },
+              ],
+            },
             "title": "concs",
             "value": 95,
+            "weapon_summary": {
+              "0": "95 (100%)",
+            },
+          },
+          "infecter": {
+            "description": "Infections given",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Infected Cheese at 10:09",
+                },
+              ],
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "description": "Infected JaNordy-TPF-TFC-NEW-NEW at 04:38",
+                },
+              ],
+            },
+            "title": "infecter",
+            "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
         },
       },
@@ -5053,6 +6707,85 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "3": "4 (8%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Death": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Death at 09:14",
+                  "weapon": 1,
+                },
+              ],
+              "Doug": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Doug at 01:18",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Doug at 03:09",
+                  "weapon": 1,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Doug at 11:46",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Doug at 14:12",
+                  "weapon": 18,
+                },
+              ],
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 02:59",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 04:59",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 05:12",
+                  "weapon": 18,
+                },
+              ],
+              "arenzi": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier arenzi at 08:30",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier arenzi at 09:54",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier arenzi at 12:35",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier arenzi at 14:31",
+                  "weapon": 18,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 12,
+            "weapon_summary": {
+              "1": "2 (17%)",
+              "18": "10 (83%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -5195,6 +6928,7 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 17.1,
         "name": "Cheese",
         "objectives": {
           "flag_time_in_seconds": {
@@ -5214,18 +6948,305 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
         "round_number": 0,
         "steamID": "0:1:3613037",
         "team": 2,
+        "weaponStats": {
+          "infectee": {
+            "description": "Infections received",
+            "details": {
+              "Death": [
+                {
+                  "description": "Infected by Death at 01:35",
+                },
+              ],
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "description": "Infected by Hampster w/Radioactive Bananas* at 10:09",
+                },
+              ],
+              "arenzi": [
+                {
+                  "description": "Infected by arenzi at 09:45",
+                },
+              ],
+            },
+            "title": "infectee",
+            "value": 3,
+            "weapon_summary": {
+              "0": "3 (100%)",
+            },
+          },
+        },
       },
       {
         "buildables": {
           "build_disp": {
             "description": "Built dispensers",
+            "details": {
+              "karms": [
+                {
+                  "description": "Built dispenser at 03:43",
+                },
+              ],
+            },
             "title": "build_disp",
             "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
           "build_sg": {
             "description": "Built sentry guns",
+            "details": {
+              "karms": [
+                {
+                  "description": "Built sentry gun at 00:17",
+                },
+                {
+                  "description": "Built sentry gun at 00:38",
+                },
+                {
+                  "description": "Built sentry gun at 02:29",
+                },
+                {
+                  "description": "Built sentry gun at 03:29",
+                },
+                {
+                  "description": "Built sentry gun at 04:30",
+                },
+                {
+                  "description": "Built sentry gun at 05:11",
+                },
+                {
+                  "description": "Built sentry gun at 05:53",
+                },
+                {
+                  "description": "Built sentry gun at 06:21",
+                },
+                {
+                  "description": "Built sentry gun at 06:54",
+                },
+                {
+                  "description": "Built sentry gun at 07:08",
+                },
+                {
+                  "description": "Built sentry gun at 07:34",
+                },
+                {
+                  "description": "Built sentry gun at 08:13",
+                },
+                {
+                  "description": "Built sentry gun at 08:50",
+                },
+                {
+                  "description": "Built sentry gun at 09:07",
+                },
+                {
+                  "description": "Built sentry gun at 10:08",
+                },
+                {
+                  "description": "Built sentry gun at 10:23",
+                },
+                {
+                  "description": "Built sentry gun at 11:33",
+                },
+                {
+                  "description": "Built sentry gun at 11:57",
+                },
+                {
+                  "description": "Built sentry gun at 12:25",
+                },
+                {
+                  "description": "Built sentry gun at 12:58",
+                },
+                {
+                  "description": "Built sentry gun at 13:13",
+                },
+                {
+                  "description": "Built sentry gun at 13:52",
+                },
+              ],
+            },
             "title": "build_sg",
             "value": 22,
+            "weapon_summary": {
+              "0": "22 (100%)",
+            },
+          },
+          "det_building": {
+            "description": "Detonated buildings",
+            "details": {
+              "karms": [
+                {
+                  "description": "Detonated sentry gun at 08:58",
+                },
+                {
+                  "description": "Detonated dispenser at 10:25",
+                },
+                {
+                  "description": "Detonated sentry gun at 13:44",
+                },
+              ],
+            },
+            "title": "det_building",
+            "value": 3,
+            "weapon_summary": {
+              "0": "3 (100%)",
+            },
+          },
+          "repair_building": {
+            "description": "Repaired buildings",
+            "details": {
+              "karms": [
+                {
+                  "description": "Repaired building at 00:50",
+                },
+                {
+                  "description": "Repaired building at 02:13",
+                },
+                {
+                  "description": "Repaired building at 02:13",
+                },
+                {
+                  "description": "Repaired building at 02:14",
+                },
+                {
+                  "description": "Repaired building at 03:47",
+                },
+                {
+                  "description": "Repaired building at 03:48",
+                },
+                {
+                  "description": "Repaired building at 03:56",
+                },
+                {
+                  "description": "Repaired building at 04:03",
+                },
+                {
+                  "description": "Repaired building at 04:43",
+                },
+                {
+                  "description": "Repaired building at 05:23",
+                },
+                {
+                  "description": "Repaired building at 05:25",
+                },
+                {
+                  "description": "Repaired building at 07:17",
+                },
+                {
+                  "description": "Repaired building at 07:37",
+                },
+                {
+                  "description": "Repaired building at 10:14",
+                },
+                {
+                  "description": "Repaired building at 10:14",
+                },
+                {
+                  "description": "Repaired building at 10:14",
+                },
+                {
+                  "description": "Repaired building at 10:15",
+                },
+                {
+                  "description": "Repaired building at 10:15",
+                },
+                {
+                  "description": "Repaired building at 10:34",
+                },
+                {
+                  "description": "Repaired building at 11:41",
+                },
+                {
+                  "description": "Repaired building at 11:41",
+                },
+                {
+                  "description": "Repaired building at 13:30",
+                },
+                {
+                  "description": "Repaired building at 13:33",
+                },
+                {
+                  "description": "Repaired building at 13:36",
+                },
+                {
+                  "description": "Repaired building at 13:37",
+                },
+              ],
+            },
+            "title": "repair_building",
+            "value": 25,
+            "weapon_summary": {
+              "0": "25 (100%)",
+            },
+          },
+          "upgrade_building": {
+            "description": "Upgraded buildings",
+            "details": {
+              "karms": [
+                {
+                  "description": "Upgraded to level 2 at 00:44",
+                },
+                {
+                  "description": "Upgraded to level 3 at 00:49",
+                },
+                {
+                  "description": "Upgraded to level 2 at 03:32",
+                },
+                {
+                  "description": "Upgraded to level 2 at 04:32",
+                },
+                {
+                  "description": "Upgraded to level 3 at 04:35",
+                },
+                {
+                  "description": "Upgraded to level 2 at 05:13",
+                },
+                {
+                  "description": "Upgraded to level 3 at 05:19",
+                },
+                {
+                  "description": "Upgraded to level 2 at 05:56",
+                },
+                {
+                  "description": "Upgraded to level 2 at 06:24",
+                },
+                {
+                  "description": "Upgraded to level 2 at 06:55",
+                },
+                {
+                  "description": "Upgraded to level 3 at 06:57",
+                },
+                {
+                  "description": "Upgraded to level 2 at 07:35",
+                },
+                {
+                  "description": "Upgraded to level 2 at 09:12",
+                },
+                {
+                  "description": "Upgraded to level 3 at 09:17",
+                },
+                {
+                  "description": "Upgraded to level 2 at 10:32",
+                },
+                {
+                  "description": "Upgraded to level 3 at 10:45",
+                },
+                {
+                  "description": "Upgraded to level 2 at 11:35",
+                },
+                {
+                  "description": "Upgraded to level 2 at 12:30",
+                },
+                {
+                  "description": "Upgraded to level 2 at 13:19",
+                },
+              ],
+            },
+            "title": "upgrade_building",
+            "value": 19,
+            "weapon_summary": {
+              "0": "19 (100%)",
+            },
           },
         },
         "classes": [
@@ -5807,6 +7828,43 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "16": "1 (2%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Death": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Death at 04:55",
+                  "weapon": 11,
+                },
+              ],
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 08:54",
+                  "weapon": 15,
+                },
+              ],
+              "arenzi": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier arenzi at 01:11",
+                  "weapon": 11,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier arenzi at 14:51",
+                  "weapon": 11,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 4,
+            "weapon_summary": {
+              "11": "3 (75%)",
+              "15": "1 (25%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -5888,6 +7946,7 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 22.5,
         "name": "karms",
         "objectives": {
           "flag_time_in_seconds": {
@@ -6496,6 +8555,52 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "13": "64 (93%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Death": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Death at 01:45",
+                  "weapon": 13,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Death at 10:05",
+                  "weapon": 13,
+                },
+              ],
+              "Doug": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Doug at 09:47",
+                  "weapon": 13,
+                },
+              ],
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 04:24",
+                  "weapon": 13,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 12:55",
+                  "weapon": 13,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Hampster w/Radioactive Bananas* at 14:46",
+                  "weapon": 13,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 6,
+            "weapon_summary": {
+              "13": "6 (100%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -6650,6 +8755,7 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 39.3,
         "name": "johnbest",
         "objectives": {
           "flag_time_in_seconds": {
@@ -6669,6 +8775,31 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
         "round_number": 0,
         "steamID": "0:0:4649312",
         "team": 2,
+        "weaponStats": {
+          "infectee": {
+            "description": "Infections received",
+            "details": {
+              "Doug": [
+                {
+                  "description": "Infected by Doug at 05:58",
+                },
+                {
+                  "description": "Infected by Doug at 07:36",
+                },
+              ],
+              "arenzi": [
+                {
+                  "description": "Infected by arenzi at 09:44",
+                },
+              ],
+            },
+            "title": "infectee",
+            "value": 3,
+            "weapon_summary": {
+              "0": "3 (100%)",
+            },
+          },
+        },
       },
       {
         "classes": [
@@ -7159,6 +9290,23 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
               "12": "12 (39%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Death": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Death at 14:03",
+                  "weapon": 11,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 1,
+            "weapon_summary": {
+              "11": "1 (100%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -7219,6 +9367,7 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             },
           },
         },
+        "mvp_score": 14.7,
         "name": "JaNordy-TPF-TFC-NEW-NEW",
         "objectives": {
           "flag_time_in_seconds": {
@@ -7267,6 +9416,21 @@ exports[`Player stats - schtop match > per-player stats for round 1 1`] = `
             "value": 4,
             "weapon_summary": {
               "12": "4 (100%)",
+            },
+          },
+          "infectee": {
+            "description": "Infections received",
+            "details": {
+              "Hampster w/Radioactive Bananas*": [
+                {
+                  "description": "Infected by Hampster w/Radioactive Bananas* at 04:38",
+                },
+              ],
+            },
+            "title": "infectee",
+            "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
             },
           },
         },
@@ -7807,6 +9971,13 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "5": "2 (13%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -7889,22 +10060,57 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 50.8,
         "name": "Cheese",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Got button at 12:11",
+                },
+              ],
+            },
             "title": "button",
             "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Captured flag at 01:39",
+                },
+                {
+                  "description": "Captured flag at 06:06",
+                },
+                {
+                  "description": "Captured flag at 09:30",
+                },
+                {
+                  "description": "Captured flag at 13:04",
+                },
+                {
+                  "description": "Captured flag at 14:05",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 5,
+            "weapon_summary": {
+              "0": "5 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -7912,8 +10118,84 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Picked up flag at 01:01",
+                },
+                {
+                  "description": "Picked up flag at 01:22",
+                },
+                {
+                  "description": "Picked up flag at 02:24",
+                },
+                {
+                  "description": "Picked up flag at 02:55",
+                },
+                {
+                  "description": "Picked up flag at 03:06",
+                },
+                {
+                  "description": "Picked up flag at 03:20",
+                },
+                {
+                  "description": "Picked up flag at 04:22",
+                },
+                {
+                  "description": "Picked up flag at 05:43",
+                },
+                {
+                  "description": "Picked up flag at 05:54",
+                },
+                {
+                  "description": "Picked up flag at 08:25",
+                },
+                {
+                  "description": "Picked up flag at 08:37",
+                },
+                {
+                  "description": "Picked up flag at 09:06",
+                },
+                {
+                  "description": "Picked up flag at 09:17",
+                },
+                {
+                  "description": "Picked up flag at 09:40",
+                },
+                {
+                  "description": "Picked up flag at 10:03",
+                },
+                {
+                  "description": "Picked up flag at 10:31",
+                },
+                {
+                  "description": "Picked up flag at 11:23",
+                },
+                {
+                  "description": "Picked up flag at 11:48",
+                },
+                {
+                  "description": "Picked up flag at 12:47",
+                },
+                {
+                  "description": "Picked up flag at 13:15",
+                },
+                {
+                  "description": "Picked up flag at 13:25",
+                },
+                {
+                  "description": "Picked up flag at 13:37",
+                },
+                {
+                  "description": "Picked up flag at 13:56",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 23,
+            "weapon_summary": {
+              "0": "23 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -7947,8 +10229,403 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
           },
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "Cheese": [
+                {
+                  "description": "Conc jumped at 00:06",
+                },
+                {
+                  "description": "Conc jumped at 00:10",
+                },
+                {
+                  "description": "Conc jumped at 00:18",
+                },
+                {
+                  "description": "Conc jumped at 00:22",
+                },
+                {
+                  "description": "Conc jumped at 00:31",
+                },
+                {
+                  "description": "Conc jumped at 00:35",
+                },
+                {
+                  "description": "Conc jumped at 00:44",
+                },
+                {
+                  "description": "Conc jumped at 00:48",
+                },
+                {
+                  "description": "Conc jumped at 00:55",
+                },
+                {
+                  "description": "Conc jumped at 01:00",
+                },
+                {
+                  "description": "Conc jumped at 01:07",
+                },
+                {
+                  "description": "Conc jumped at 01:11",
+                },
+                {
+                  "description": "Conc jumped at 01:19",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 01:23",
+                },
+                {
+                  "description": "Conc jumped at 01:43",
+                },
+                {
+                  "description": "Conc jumped at 01:47",
+                },
+                {
+                  "description": "Conc jumped at 01:54",
+                },
+                {
+                  "description": "Conc jumped at 01:59",
+                },
+                {
+                  "description": "Conc jumped at 02:06",
+                },
+                {
+                  "description": "Conc jumped at 02:11",
+                },
+                {
+                  "description": "Conc jumped at 02:21",
+                },
+                {
+                  "description": "Conc jumped at 02:30",
+                },
+                {
+                  "description": "Conc jumped at 02:34",
+                },
+                {
+                  "description": "Conc jumped at 02:49",
+                },
+                {
+                  "description": "Conc jumped at 02:53",
+                },
+                {
+                  "description": "Conc jumped at 03:01",
+                },
+                {
+                  "description": "Conc jumped at 03:06",
+                },
+                {
+                  "description": "Conc jumped at 03:14",
+                },
+                {
+                  "description": "Conc jumped at 03:18",
+                },
+                {
+                  "description": "Conc jumped at 03:26",
+                },
+                {
+                  "description": "Conc jumped at 03:30",
+                },
+                {
+                  "description": "Conc jumped at 03:38",
+                },
+                {
+                  "description": "Conc jumped at 03:42",
+                },
+                {
+                  "description": "Conc jumped at 03:49",
+                },
+                {
+                  "description": "Conc jumped at 03:54",
+                },
+                {
+                  "description": "Conc jumped at 04:03",
+                },
+                {
+                  "description": "Conc jumped at 04:07",
+                },
+                {
+                  "description": "Conc jumped at 04:16",
+                },
+                {
+                  "description": "Conc jumped at 04:21",
+                },
+                {
+                  "description": "Conc jumped at 04:28",
+                },
+                {
+                  "description": "Conc jumped at 04:32",
+                },
+                {
+                  "description": "Conc jumped at 04:39",
+                },
+                {
+                  "description": "Conc jumped at 04:44",
+                },
+                {
+                  "description": "Conc jumped at 04:49",
+                },
+                {
+                  "description": "Conc jumped at 04:53",
+                },
+                {
+                  "description": "Conc jumped at 05:04",
+                },
+                {
+                  "description": "Conc jumped at 05:08",
+                },
+                {
+                  "description": "Conc jumped at 05:15",
+                },
+                {
+                  "description": "Conc jumped at 05:20",
+                },
+                {
+                  "description": "Conc jumped at 05:27",
+                },
+                {
+                  "description": "Conc jumped at 05:32",
+                },
+                {
+                  "description": "Conc jumped at 05:38",
+                },
+                {
+                  "description": "Conc jumped at 05:43",
+                },
+                {
+                  "description": "Conc jumped at 05:50",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 05:54",
+                },
+                {
+                  "description": "Conc jumped at 06:11",
+                },
+                {
+                  "description": "Conc jumped at 06:15",
+                },
+                {
+                  "description": "Conc jumped at 06:24",
+                },
+                {
+                  "description": "Conc jumped at 06:28",
+                },
+                {
+                  "description": "Conc jumped at 06:40",
+                },
+                {
+                  "description": "Conc jumped at 06:45",
+                },
+                {
+                  "description": "Conc jumped at 07:05",
+                },
+                {
+                  "description": "Conc jumped at 07:10",
+                },
+                {
+                  "description": "Conc jumped at 07:18",
+                },
+                {
+                  "description": "Conc jumped at 07:23",
+                },
+                {
+                  "description": "Conc jumped at 07:30",
+                },
+                {
+                  "description": "Conc jumped at 07:34",
+                },
+                {
+                  "description": "Conc jumped at 07:46",
+                },
+                {
+                  "description": "Conc jumped at 07:50",
+                },
+                {
+                  "description": "Conc jumped at 08:02",
+                },
+                {
+                  "description": "Conc jumped at 08:07",
+                },
+                {
+                  "description": "Conc jumped at 08:16",
+                },
+                {
+                  "description": "Conc jumped at 08:21",
+                },
+                {
+                  "description": "Conc jumped at 08:31",
+                },
+                {
+                  "description": "Conc jumped at 08:35",
+                },
+                {
+                  "description": "Conc jumped at 08:43",
+                },
+                {
+                  "description": "Conc jumped at 08:47",
+                },
+                {
+                  "description": "Conc jumped at 09:01",
+                },
+                {
+                  "description": "Conc jumped at 09:06",
+                },
+                {
+                  "description": "Conc jumped at 09:12",
+                },
+                {
+                  "description": "Conc jumped at 09:16",
+                },
+                {
+                  "description": "Conc jumped at 09:34",
+                },
+                {
+                  "description": "Conc jumped at 09:38",
+                },
+                {
+                  "description": "Conc jumped at 09:47",
+                },
+                {
+                  "description": "Conc jumped at 09:52",
+                },
+                {
+                  "description": "Conc jumped at 09:57",
+                },
+                {
+                  "description": "Conc jumped at 10:02",
+                },
+                {
+                  "description": "Conc jumped at 10:09",
+                },
+                {
+                  "description": "Conc jumped at 10:13",
+                },
+                {
+                  "description": "Conc jumped at 10:20",
+                },
+                {
+                  "description": "Conc jumped at 10:25",
+                },
+                {
+                  "description": "Conc jumped at 10:37",
+                },
+                {
+                  "description": "Conc jumped at 10:42",
+                },
+                {
+                  "description": "Conc jumped at 10:49",
+                },
+                {
+                  "description": "Conc jumped at 10:57",
+                },
+                {
+                  "description": "Conc jumped at 11:01",
+                },
+                {
+                  "description": "Conc jumped at 11:09",
+                },
+                {
+                  "description": "Conc jumped at 11:19",
+                },
+                {
+                  "description": "Conc jumped at 11:28",
+                },
+                {
+                  "description": "Conc jumped at 11:33",
+                },
+                {
+                  "description": "Conc jumped at 11:42",
+                },
+                {
+                  "description": "Conc jumped at 11:46",
+                },
+                {
+                  "description": "Conc jumped at 11:53",
+                },
+                {
+                  "description": "Conc jumped at 11:58",
+                },
+                {
+                  "description": "Conc jumped at 12:06",
+                },
+                {
+                  "description": "Conc jumped at 12:10",
+                },
+                {
+                  "description": "Conc jumped at 12:17",
+                },
+                {
+                  "description": "Conc jumped at 12:21",
+                },
+                {
+                  "description": "Conc jumped at 12:29",
+                },
+                {
+                  "description": "Conc jumped at 12:33",
+                },
+                {
+                  "description": "Conc jumped at 12:42",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 12:47",
+                },
+                {
+                  "description": "Conc jumped at 13:08",
+                },
+                {
+                  "description": "Conc jumped at 13:13",
+                },
+                {
+                  "description": "Conc jumped at 13:20",
+                },
+                {
+                  "description": "Conc jumped at 13:25",
+                },
+                {
+                  "description": "Conc jumped at 13:32",
+                },
+                {
+                  "description": "Conc jumped at 13:37",
+                },
+                {
+                  "description": "Conc jumped at 13:42",
+                },
+                {
+                  "description": "Conc jumped at 13:53",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 13:57",
+                },
+                {
+                  "description": "Conc jumped at 14:10",
+                },
+                {
+                  "description": "Conc jumped at 14:14",
+                },
+                {
+                  "description": "Conc jumped at 14:19",
+                },
+                {
+                  "description": "Conc jumped at 14:24",
+                },
+                {
+                  "description": "Conc jumped at 14:42",
+                },
+                {
+                  "description": "Conc jumped at 14:54",
+                },
+                {
+                  "description": "Conc jumped at 14:58",
+                },
+              ],
+            },
             "title": "concs",
             "value": 128,
+            "weapon_summary": {
+              "0": "128 (100%)",
+            },
           },
         },
       },
@@ -8416,6 +11093,13 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "5": "1 (5%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -8506,22 +11190,57 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 40.8,
         "name": "karms",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "karms": [
+                {
+                  "description": "Got button at 01:33",
+                },
+                {
+                  "description": "Got button at 04:56",
+                },
+                {
+                  "description": "Got button at 07:38",
+                },
+                {
+                  "description": "Got button at 08:59",
+                },
+                {
+                  "description": "Got button at 14:27",
+                },
+              ],
+            },
             "title": "button",
             "value": 5,
+            "weapon_summary": {
+              "0": "5 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "karms": [
+                {
+                  "description": "Captured flag at 02:36",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 1,
+            "weapon_summary": {
+              "0": "1 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -8529,8 +11248,48 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "karms": [
+                {
+                  "description": "Picked up flag at 00:53",
+                },
+                {
+                  "description": "Picked up flag at 01:20",
+                },
+                {
+                  "description": "Picked up flag at 02:29",
+                },
+                {
+                  "description": "Picked up flag at 05:49",
+                },
+                {
+                  "description": "Picked up flag at 07:41",
+                },
+                {
+                  "description": "Picked up flag at 08:33",
+                },
+                {
+                  "description": "Picked up flag at 09:03",
+                },
+                {
+                  "description": "Picked up flag at 09:47",
+                },
+                {
+                  "description": "Picked up flag at 10:12",
+                },
+                {
+                  "description": "Picked up flag at 10:58",
+                },
+                {
+                  "description": "Picked up flag at 13:53",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 11,
+            "weapon_summary": {
+              "0": "11 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -8568,8 +11327,298 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
           },
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "karms": [
+                {
+                  "description": "Conc jumped at 00:06",
+                },
+                {
+                  "description": "Conc jumped at 00:21",
+                },
+                {
+                  "description": "Conc jumped at 00:28",
+                },
+                {
+                  "description": "Conc jumped at 00:32",
+                },
+                {
+                  "description": "Conc jumped at 00:42",
+                },
+                {
+                  "description": "Conc jumped at 00:46",
+                },
+                {
+                  "description": "Conc jumped at 01:02",
+                },
+                {
+                  "description": "Conc jumped at 01:07",
+                },
+                {
+                  "description": "Conc jumped at 01:27",
+                },
+                {
+                  "description": "Conc jumped at 01:32",
+                },
+                {
+                  "description": "Conc jumped at 01:42",
+                },
+                {
+                  "description": "Conc jumped at 01:47",
+                },
+                {
+                  "description": "Conc jumped at 01:58",
+                },
+                {
+                  "description": "Conc jumped at 02:02",
+                },
+                {
+                  "description": "Conc jumped at 02:13",
+                },
+                {
+                  "description": "Conc jumped at 02:26",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 02:31",
+                },
+                {
+                  "description": "Conc jumped at 02:41",
+                },
+                {
+                  "description": "Conc jumped at 02:46",
+                },
+                {
+                  "description": "Conc jumped at 02:55",
+                },
+                {
+                  "description": "Conc jumped at 03:00",
+                },
+                {
+                  "description": "Conc jumped at 03:14",
+                },
+                {
+                  "description": "Conc jumped at 03:22",
+                },
+                {
+                  "description": "Conc jumped at 03:33",
+                },
+                {
+                  "description": "Conc jumped at 03:38",
+                },
+                {
+                  "description": "Conc jumped at 03:47",
+                },
+                {
+                  "description": "Conc jumped at 03:52",
+                },
+                {
+                  "description": "Conc jumped at 03:59",
+                },
+                {
+                  "description": "Conc jumped at 04:20",
+                },
+                {
+                  "description": "Conc jumped at 04:25",
+                },
+                {
+                  "description": "Conc jumped at 04:36",
+                },
+                {
+                  "description": "Conc jumped at 04:41",
+                },
+                {
+                  "description": "Conc jumped at 04:51",
+                },
+                {
+                  "description": "Conc jumped at 04:55",
+                },
+                {
+                  "description": "Conc jumped at 05:04",
+                },
+                {
+                  "description": "Conc jumped at 05:16",
+                },
+                {
+                  "description": "Conc jumped at 05:21",
+                },
+                {
+                  "description": "Conc jumped at 05:30",
+                },
+                {
+                  "description": "Conc jumped at 05:36",
+                },
+                {
+                  "description": "Conc jumped at 05:42",
+                },
+                {
+                  "description": "Conc jumped at 05:47",
+                },
+                {
+                  "description": "Conc jumped at 05:55",
+                },
+                {
+                  "description": "Conc jumped at 06:01",
+                },
+                {
+                  "description": "Conc jumped at 06:36",
+                },
+                {
+                  "description": "Conc jumped at 06:41",
+                },
+                {
+                  "description": "Conc jumped at 06:49",
+                },
+                {
+                  "description": "Conc jumped at 07:19",
+                },
+                {
+                  "description": "Conc jumped at 07:24",
+                },
+                {
+                  "description": "Conc jumped at 07:33",
+                },
+                {
+                  "description": "Conc jumped at 07:37",
+                },
+                {
+                  "description": "Conc jumped at 08:00",
+                },
+                {
+                  "description": "Conc jumped at 08:04",
+                },
+                {
+                  "description": "Conc jumped at 08:21",
+                },
+                {
+                  "description": "Conc jumped at 08:26",
+                },
+                {
+                  "description": "Conc jumped at 08:39",
+                },
+                {
+                  "description": "Conc jumped at 08:44",
+                },
+                {
+                  "description": "Conc jumped at 08:51",
+                },
+                {
+                  "description": "Conc jumped at 08:58",
+                },
+                {
+                  "description": "Conc jumped at 09:10",
+                },
+                {
+                  "description": "Conc jumped at 09:15",
+                },
+                {
+                  "description": "Conc jumped at 09:24",
+                },
+                {
+                  "description": "Conc jumped at 09:29",
+                },
+                {
+                  "description": "Conc jumped at 09:39",
+                },
+                {
+                  "description": "Conc jumped at 09:46",
+                },
+                {
+                  "description": "Conc jumped at 09:57",
+                },
+                {
+                  "description": "Conc jumped at 10:01",
+                },
+                {
+                  "description": "Conc jumped at 10:20",
+                },
+                {
+                  "description": "Conc jumped at 10:27",
+                },
+                {
+                  "description": "Conc jumped at 10:36",
+                },
+                {
+                  "description": "Conc jumped at 11:05",
+                },
+                {
+                  "description": "Conc jumped at 11:09",
+                },
+                {
+                  "description": "Conc jumped at 11:48",
+                },
+                {
+                  "description": "Conc jumped at 11:53",
+                },
+                {
+                  "description": "Conc jumped at 12:07",
+                },
+                {
+                  "description": "Conc jumped at 12:17",
+                },
+                {
+                  "description": "Conc jumped at 12:31",
+                },
+                {
+                  "description": "Conc jumped at 12:35",
+                },
+                {
+                  "description": "Conc jumped at 12:45",
+                },
+                {
+                  "description": "Conc jumped at 12:53",
+                },
+                {
+                  "description": "Conc jumped at 13:13",
+                },
+                {
+                  "description": "Conc jumped at 13:32",
+                },
+                {
+                  "description": "Conc jumped at 13:36",
+                },
+                {
+                  "description": "Conc jumped at 13:44",
+                },
+                {
+                  "description": "Conc jumped at 14:08",
+                },
+                {
+                  "description": "Conc jumped at 14:21",
+                },
+                {
+                  "description": "Conc jumped at 14:25",
+                },
+                {
+                  "description": "Conc jumped at 14:50",
+                },
+                {
+                  "description": "Conc jumped at 14:57",
+                },
+              ],
+            },
             "title": "concs",
             "value": 88,
+            "weapon_summary": {
+              "0": "88 (100%)",
+            },
+          },
+          "infecter": {
+            "description": "Infections given",
+            "details": {
+              "Dampster*": [
+                {
+                  "description": "Infected Dampster* at 11:39",
+                },
+                {
+                  "description": "Infected Dampster* at 13:18",
+                },
+              ],
+            },
+            "title": "infecter",
+            "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
         },
       },
@@ -9092,6 +12141,13 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "5": "1 (5%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -9194,22 +12250,60 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 53.3,
         "name": "johnbest",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "johnbest": [
+                {
+                  "description": "Got button at 00:27",
+                },
+                {
+                  "description": "Got button at 02:38",
+                },
+                {
+                  "description": "Got button at 03:44",
+                },
+                {
+                  "description": "Got button at 11:04",
+                },
+                {
+                  "description": "Got button at 13:22",
+                },
+              ],
+            },
             "title": "button",
             "value": 5,
+            "weapon_summary": {
+              "0": "5 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "johnbest": [
+                {
+                  "description": "Captured flag at 07:55",
+                },
+                {
+                  "description": "Captured flag at 14:39",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -9217,8 +12311,60 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "johnbest": [
+                {
+                  "description": "Picked up flag at 00:55",
+                },
+                {
+                  "description": "Picked up flag at 01:54",
+                },
+                {
+                  "description": "Picked up flag at 02:09",
+                },
+                {
+                  "description": "Picked up flag at 02:26",
+                },
+                {
+                  "description": "Picked up flag at 03:08",
+                },
+                {
+                  "description": "Picked up flag at 03:22",
+                },
+                {
+                  "description": "Picked up flag at 07:44",
+                },
+                {
+                  "description": "Picked up flag at 08:30",
+                },
+                {
+                  "description": "Picked up flag at 08:35",
+                },
+                {
+                  "description": "Picked up flag at 09:38",
+                },
+                {
+                  "description": "Picked up flag at 11:31",
+                },
+                {
+                  "description": "Picked up flag at 13:29",
+                },
+                {
+                  "description": "Picked up flag at 13:51",
+                },
+                {
+                  "description": "Picked up flag at 14:06",
+                },
+                {
+                  "description": "Picked up flag at 14:20",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 15,
+            "weapon_summary": {
+              "0": "15 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -9236,8 +12382,307 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
         "weaponStats": {
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "johnbest": [
+                {
+                  "description": "Conc jumped at 00:10",
+                },
+                {
+                  "description": "Conc jumped at 00:15",
+                },
+                {
+                  "description": "Conc jumped at 00:22",
+                },
+                {
+                  "description": "Conc jumped at 00:26",
+                },
+                {
+                  "description": "Conc jumped at 00:33",
+                },
+                {
+                  "description": "Conc jumped at 00:44",
+                },
+                {
+                  "description": "Conc jumped at 00:54",
+                },
+                {
+                  "description": "Conc jumped at 01:01",
+                },
+                {
+                  "description": "Conc jumped at 01:12",
+                },
+                {
+                  "description": "Conc jumped at 01:25",
+                },
+                {
+                  "description": "Conc jumped at 01:30",
+                },
+                {
+                  "description": "Conc jumped at 01:38",
+                },
+                {
+                  "description": "Conc jumped at 01:42",
+                },
+                {
+                  "description": "Conc jumped at 02:00",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 02:11",
+                },
+                {
+                  "description": "Conc jumped at 02:20",
+                },
+                {
+                  "description": "Conc jumped at 02:33",
+                },
+                {
+                  "description": "Conc jumped at 02:38",
+                },
+                {
+                  "description": "Conc jumped at 02:51",
+                },
+                {
+                  "description": "Conc jumped at 03:03",
+                },
+                {
+                  "description": "Conc jumped at 03:08",
+                },
+                {
+                  "description": "Conc jumped at 03:16",
+                },
+                {
+                  "description": "Conc jumped at 03:20",
+                },
+                {
+                  "description": "Conc jumped at 03:27",
+                },
+                {
+                  "description": "Conc jumped at 03:39",
+                },
+                {
+                  "description": "Conc jumped at 03:43",
+                },
+                {
+                  "description": "Conc jumped at 03:52",
+                },
+                {
+                  "description": "Conc jumped at 04:04",
+                },
+                {
+                  "description": "Conc jumped at 04:22",
+                },
+                {
+                  "description": "Conc jumped at 04:37",
+                },
+                {
+                  "description": "Conc jumped at 04:42",
+                },
+                {
+                  "description": "Conc jumped at 04:47",
+                },
+                {
+                  "description": "Conc jumped at 04:52",
+                },
+                {
+                  "description": "Conc jumped at 04:59",
+                },
+                {
+                  "description": "Conc jumped at 05:03",
+                },
+                {
+                  "description": "Conc jumped at 05:11",
+                },
+                {
+                  "description": "Conc jumped at 05:23",
+                },
+                {
+                  "description": "Conc jumped at 05:28",
+                },
+                {
+                  "description": "Conc jumped at 05:34",
+                },
+                {
+                  "description": "Conc jumped at 05:46",
+                },
+                {
+                  "description": "Conc jumped at 05:58",
+                },
+                {
+                  "description": "Conc jumped at 06:02",
+                },
+                {
+                  "description": "Conc jumped at 06:11",
+                },
+                {
+                  "description": "Conc jumped at 06:15",
+                },
+                {
+                  "description": "Conc jumped at 06:36",
+                },
+                {
+                  "description": "Conc jumped at 06:41",
+                },
+                {
+                  "description": "Conc jumped at 06:55",
+                },
+                {
+                  "description": "Conc jumped at 07:09",
+                },
+                {
+                  "description": "Conc jumped at 07:24",
+                },
+                {
+                  "description": "Conc jumped at 07:40",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 07:44",
+                },
+                {
+                  "description": "Conc jumped at 08:02",
+                },
+                {
+                  "description": "Conc jumped at 08:20",
+                },
+                {
+                  "description": "Conc jumped at 08:32",
+                },
+                {
+                  "description": "Conc jumped at 08:42",
+                },
+                {
+                  "description": "Conc jumped at 08:47",
+                },
+                {
+                  "description": "Conc jumped at 08:54",
+                },
+                {
+                  "description": "Conc jumped at 08:58",
+                },
+                {
+                  "description": "Conc jumped at 09:07",
+                },
+                {
+                  "description": "Conc jumped at 09:18",
+                },
+                {
+                  "description": "Conc jumped at 09:24",
+                },
+                {
+                  "description": "Conc jumped at 09:32",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 09:38",
+                },
+                {
+                  "description": "Conc jumped at 09:44",
+                },
+                {
+                  "description": "Conc jumped at 10:01",
+                },
+                {
+                  "description": "Conc jumped at 10:05",
+                },
+                {
+                  "description": "Conc jumped at 10:14",
+                },
+                {
+                  "description": "Conc jumped at 10:27",
+                },
+                {
+                  "description": "Conc jumped at 10:42",
+                },
+                {
+                  "description": "Conc jumped at 10:55",
+                },
+                {
+                  "description": "Conc jumped at 11:00",
+                },
+                {
+                  "description": "Conc jumped at 11:18",
+                },
+                {
+                  "description": "Conc jumped at 11:27",
+                },
+                {
+                  "description": "Conc jumped at 11:36",
+                },
+                {
+                  "description": "Conc jumped at 11:47",
+                },
+                {
+                  "description": "Conc jumped at 12:02",
+                },
+                {
+                  "description": "Conc jumped at 12:08",
+                },
+                {
+                  "description": "Conc jumped at 12:14",
+                },
+                {
+                  "description": "Conc jumped at 12:26",
+                },
+                {
+                  "description": "Conc jumped at 12:34",
+                },
+                {
+                  "description": "Conc jumped at 12:40",
+                },
+                {
+                  "description": "Conc jumped at 12:47",
+                },
+                {
+                  "description": "Conc jumped at 12:52",
+                },
+                {
+                  "description": "Conc jumped at 13:04",
+                },
+                {
+                  "description": "Conc jumped at 13:09",
+                },
+                {
+                  "description": "Conc jumped at 13:16",
+                },
+                {
+                  "description": "Conc jumped at 13:21",
+                },
+                {
+                  "description": "Conc jumped at 13:35",
+                },
+                {
+                  "description": "Conc jumped at 13:39",
+                },
+                {
+                  "description": "Conc jumped at 13:45",
+                },
+                {
+                  "description": "Conc jumped at 13:58",
+                },
+                {
+                  "description": "Conc jumped at 14:16",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 14:20",
+                },
+                {
+                  "description": "Conc jumped at 14:43",
+                },
+                {
+                  "description": "Conc jumped at 14:48",
+                },
+                {
+                  "description": "Conc jumped at 14:55",
+                },
+              ],
+            },
             "title": "concs",
             "value": 96,
+            "weapon_summary": {
+              "0": "96 (100%)",
+            },
           },
         },
       },
@@ -9743,6 +13188,13 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "11": "3 (11%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {},
+            "title": "kill_flag_carrier",
+            "value": 0,
+            "weapon_summary": {},
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -9858,22 +13310,51 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 51.8,
         "name": "JaNordy-TPF-TFC-NEW-NEW",
         "objectives": {
           "button": {
             "description": "Got button / objective",
+            "details": {
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "description": "Got button at 06:36",
+                },
+                {
+                  "description": "Got button at 10:02",
+                },
+              ],
+            },
             "title": "button",
             "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
           "flag_capture": {
             "description": "Flag captures",
+            "details": {
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "description": "Captured flag at 03:53",
+                },
+                {
+                  "description": "Captured flag at 11:43",
+                },
+              ],
+            },
             "title": "flag_capture",
             "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
           "flag_capture_bonus": {
             "description": "Flag captures with bonus",
+            "details": {},
             "title": "flag_capture_bonus",
             "value": 0,
+            "weapon_summary": {},
           },
           "flag_time_in_seconds": {
             "title": "flag_time_in_seconds",
@@ -9881,8 +13362,42 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
           },
           "flag_touch": {
             "description": "Flag touches",
+            "details": {
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "description": "Picked up flag at 02:37",
+                },
+                {
+                  "description": "Picked up flag at 03:40",
+                },
+                {
+                  "description": "Picked up flag at 05:23",
+                },
+                {
+                  "description": "Picked up flag at 05:51",
+                },
+                {
+                  "description": "Picked up flag at 07:36",
+                },
+                {
+                  "description": "Picked up flag at 10:43",
+                },
+                {
+                  "description": "Picked up flag at 11:31",
+                },
+                {
+                  "description": "Picked up flag at 12:44",
+                },
+                {
+                  "description": "Picked up flag at 13:05",
+                },
+              ],
+            },
             "title": "flag_touch",
             "value": 9,
+            "weapon_summary": {
+              "0": "9 (100%)",
+            },
           },
           "toss_percent": {
             "title": "toss_percent",
@@ -9900,8 +13415,310 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
         "weaponStats": {
           "concs": {
             "description": "Conc jumps",
+            "details": {
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "description": "Conc jumped at 00:08",
+                },
+                {
+                  "description": "Conc jumped at 00:13",
+                },
+                {
+                  "description": "Conc jumped at 00:21",
+                },
+                {
+                  "description": "Conc jumped at 00:25",
+                },
+                {
+                  "description": "Conc jumped at 00:36",
+                },
+                {
+                  "description": "Conc jumped at 00:40",
+                },
+                {
+                  "description": "Conc jumped at 00:55",
+                },
+                {
+                  "description": "Conc jumped at 00:59",
+                },
+                {
+                  "description": "Conc jumped at 01:07",
+                },
+                {
+                  "description": "Conc jumped at 01:12",
+                },
+                {
+                  "description": "Conc jumped at 01:21",
+                },
+                {
+                  "description": "Conc jumped at 01:41",
+                },
+                {
+                  "description": "Conc jumped at 01:45",
+                },
+                {
+                  "description": "Conc jumped at 02:07",
+                },
+                {
+                  "description": "Conc jumped at 02:11",
+                },
+                {
+                  "description": "Conc jumped at 02:52",
+                },
+                {
+                  "description": "Conc jumped at 02:59",
+                },
+                {
+                  "description": "Conc jumped at 03:06",
+                },
+                {
+                  "description": "Conc jumped at 03:10",
+                },
+                {
+                  "description": "Conc jumped at 03:21",
+                },
+                {
+                  "description": "Conc jumped at 03:25",
+                },
+                {
+                  "description": "Conc jumped at 03:33",
+                },
+                {
+                  "description": "Conc jumped at 03:39",
+                },
+                {
+                  "description": "Conc jumped at 03:58",
+                },
+                {
+                  "description": "Conc jumped at 04:03",
+                },
+                {
+                  "description": "Conc jumped at 04:20",
+                },
+                {
+                  "description": "Conc jumped at 04:24",
+                },
+                {
+                  "description": "Conc jumped at 04:34",
+                },
+                {
+                  "description": "Conc jumped at 04:39",
+                },
+                {
+                  "description": "Conc jumped at 04:47",
+                },
+                {
+                  "description": "Conc jumped at 04:52",
+                },
+                {
+                  "description": "Conc jumped at 05:01",
+                },
+                {
+                  "description": "Conc jumped at 05:05",
+                },
+                {
+                  "description": "Conc jumped at 05:13",
+                },
+                {
+                  "description": "Conc jumped at 05:17",
+                },
+                {
+                  "description": "Conc jumped at 05:29",
+                },
+                {
+                  "description": "Conc jumped at 05:35",
+                },
+                {
+                  "description": "Conc jumped at 05:46",
+                },
+                {
+                  "description": "Conc jumped at 05:50",
+                },
+                {
+                  "description": "Conc jumped at 06:03",
+                },
+                {
+                  "description": "Conc jumped at 06:07",
+                },
+                {
+                  "description": "Conc jumped at 06:14",
+                },
+                {
+                  "description": "Conc jumped at 06:18",
+                },
+                {
+                  "description": "Conc jumped at 06:30",
+                },
+                {
+                  "description": "Conc jumped at 06:34",
+                },
+                {
+                  "description": "Conc jumped at 06:54",
+                },
+                {
+                  "description": "Conc jumped at 06:58",
+                },
+                {
+                  "description": "Conc jumped at 07:11",
+                },
+                {
+                  "description": "Conc jumped at 07:15",
+                },
+                {
+                  "description": "Conc jumped at 07:26",
+                },
+                {
+                  "description": "Conc jumped at 07:30",
+                },
+                {
+                  "description": "Conc jumped at 07:43",
+                },
+                {
+                  "description": "Conc jumped at 07:48",
+                },
+                {
+                  "description": "Conc jumped at 07:55",
+                },
+                {
+                  "description": "Conc jumped at 07:59",
+                },
+                {
+                  "description": "Conc jumped at 08:12",
+                },
+                {
+                  "description": "Conc jumped at 08:16",
+                },
+                {
+                  "description": "Conc jumped at 08:30",
+                },
+                {
+                  "description": "Conc jumped at 08:35",
+                },
+                {
+                  "description": "Conc jumped at 08:48",
+                },
+                {
+                  "description": "Conc jumped at 08:52",
+                },
+                {
+                  "description": "Conc jumped at 09:04",
+                },
+                {
+                  "description": "Conc jumped at 09:08",
+                },
+                {
+                  "description": "Conc jumped at 09:18",
+                },
+                {
+                  "description": "Conc jumped at 09:28",
+                },
+                {
+                  "description": "Conc jumped at 09:40",
+                },
+                {
+                  "description": "Conc jumped at 09:45",
+                },
+                {
+                  "description": "Conc jumped at 09:55",
+                },
+                {
+                  "description": "Conc jumped at 10:00",
+                },
+                {
+                  "description": "Conc jumped at 10:22",
+                },
+                {
+                  "description": "Conc jumped at 10:42",
+                },
+                {
+                  "description": "Conc jumped at 10:51",
+                },
+                {
+                  "description": "Conc jumped at 10:55",
+                },
+                {
+                  "description": "Conc jumped at 11:05",
+                },
+                {
+                  "description": "Conc jumped at 11:13",
+                },
+                {
+                  "description": "Conc jumped at 11:17",
+                },
+                {
+                  "description": "Conc jumped at 11:29",
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-bad",
+                  "description": "Conc jumped at 11:33",
+                },
+                {
+                  "description": "Conc jumped at 11:48",
+                },
+                {
+                  "description": "Conc jumped at 11:53",
+                },
+                {
+                  "description": "Conc jumped at 12:11",
+                },
+                {
+                  "description": "Conc jumped at 12:16",
+                },
+                {
+                  "description": "Conc jumped at 12:24",
+                },
+                {
+                  "description": "Conc jumped at 12:29",
+                },
+                {
+                  "description": "Conc jumped at 12:37",
+                },
+                {
+                  "description": "Conc jumped at 12:41",
+                },
+                {
+                  "description": "Conc jumped at 12:53",
+                },
+                {
+                  "description": "Conc jumped at 12:57",
+                },
+                {
+                  "description": "Conc jumped at 13:14",
+                },
+                {
+                  "description": "Conc jumped at 13:18",
+                },
+                {
+                  "description": "Conc jumped at 13:29",
+                },
+                {
+                  "description": "Conc jumped at 13:33",
+                },
+                {
+                  "description": "Conc jumped at 13:41",
+                },
+                {
+                  "description": "Conc jumped at 13:51",
+                },
+                {
+                  "description": "Conc jumped at 14:04",
+                },
+                {
+                  "description": "Conc jumped at 14:08",
+                },
+                {
+                  "description": "Conc jumped at 14:19",
+                },
+                {
+                  "description": "Conc jumped at 14:36",
+                },
+              ],
+            },
             "title": "concs",
             "value": 98,
+            "weapon_summary": {
+              "0": "98 (100%)",
+            },
           },
         },
       },
@@ -10569,6 +14386,56 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "3": "6 (9%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Cheese": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Cheese at 11:23",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Cheese at 13:15",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Cheese at 13:37",
+                  "weapon": 18,
+                },
+              ],
+              "johnbest": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier johnbest at 03:22",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier johnbest at 08:35",
+                  "weapon": 1,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier johnbest at 09:38",
+                  "weapon": 18,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier johnbest at 11:31",
+                  "weapon": 18,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 7,
+            "weapon_summary": {
+              "1": "1 (14%)",
+              "18": "6 (86%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -10717,6 +14584,7 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 27.6,
         "name": "Doug",
         "objectives": {
           "flag_time_in_seconds": {
@@ -11308,6 +15176,31 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "13": "55 (87%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier JaNordy-TPF-TFC-NEW-NEW at 13:07",
+                  "weapon": 1,
+                },
+              ],
+              "karms": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier karms at 13:55",
+                  "weapon": 13,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 2,
+            "weapon_summary": {
+              "1": "1 (50%)",
+              "13": "1 (50%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -11474,6 +15367,7 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 32.1,
         "name": "arenzi",
         "objectives": {
           "flag_time_in_seconds": {
@@ -11498,13 +15392,252 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
         "buildables": {
           "build_disp": {
             "description": "Built dispensers",
+            "details": {
+              "Dampster*": [
+                {
+                  "description": "Built dispenser at 03:17",
+                },
+                {
+                  "description": "Built dispenser at 05:53",
+                },
+              ],
+            },
             "title": "build_disp",
             "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
           },
           "build_sg": {
             "description": "Built sentry guns",
+            "details": {
+              "Dampster*": [
+                {
+                  "description": "Built sentry gun at 00:17",
+                },
+                {
+                  "description": "Built sentry gun at 01:03",
+                },
+                {
+                  "description": "Built sentry gun at 01:19",
+                },
+                {
+                  "description": "Built sentry gun at 01:44",
+                },
+                {
+                  "description": "Built sentry gun at 02:51",
+                },
+                {
+                  "description": "Built sentry gun at 04:44",
+                },
+                {
+                  "description": "Built sentry gun at 07:02",
+                },
+                {
+                  "description": "Built sentry gun at 07:32",
+                },
+                {
+                  "description": "Built sentry gun at 08:59",
+                },
+                {
+                  "description": "Built sentry gun at 09:29",
+                },
+                {
+                  "description": "Built sentry gun at 10:00",
+                },
+                {
+                  "description": "Built sentry gun at 10:18",
+                },
+                {
+                  "description": "Built sentry gun at 10:45",
+                },
+                {
+                  "description": "Built sentry gun at 11:15",
+                },
+                {
+                  "description": "Built sentry gun at 11:49",
+                },
+                {
+                  "description": "Built sentry gun at 12:22",
+                },
+                {
+                  "description": "Built sentry gun at 13:20",
+                },
+                {
+                  "description": "Built sentry gun at 13:45",
+                },
+              ],
+            },
             "title": "build_sg",
             "value": 18,
+            "weapon_summary": {
+              "0": "18 (100%)",
+            },
+          },
+          "det_building": {
+            "description": "Detonated buildings",
+            "details": {
+              "Dampster*": [
+                {
+                  "description": "Detonated sentry gun at 01:11",
+                },
+                {
+                  "description": "Detonated sentry gun at 07:14",
+                },
+                {
+                  "description": "Detonated sentry gun at 13:37",
+                },
+              ],
+            },
+            "title": "det_building",
+            "value": 3,
+            "weapon_summary": {
+              "0": "3 (100%)",
+            },
+          },
+          "repair_building": {
+            "description": "Repaired buildings",
+            "details": {
+              "Dampster*": [
+                {
+                  "description": "Repaired building at 00:37",
+                },
+                {
+                  "description": "Repaired building at 01:50",
+                },
+                {
+                  "description": "Repaired building at 01:50",
+                },
+                {
+                  "description": "Repaired building at 01:51",
+                },
+                {
+                  "description": "Repaired building at 02:57",
+                },
+                {
+                  "description": "Repaired building at 02:57",
+                },
+                {
+                  "description": "Repaired building at 03:08",
+                },
+                {
+                  "description": "Repaired building at 03:08",
+                },
+                {
+                  "description": "Repaired building at 03:11",
+                },
+                {
+                  "description": "Repaired building at 03:58",
+                },
+                {
+                  "description": "Repaired building at 04:12",
+                },
+                {
+                  "description": "Repaired building at 04:13",
+                },
+                {
+                  "description": "Repaired building at 04:14",
+                },
+                {
+                  "description": "Repaired building at 04:15",
+                },
+                {
+                  "description": "Repaired building at 04:15",
+                },
+                {
+                  "description": "Repaired building at 05:12",
+                },
+                {
+                  "description": "Repaired building at 05:31",
+                },
+                {
+                  "description": "Repaired building at 07:07",
+                },
+                {
+                  "description": "Repaired building at 09:12",
+                },
+                {
+                  "description": "Repaired building at 10:22",
+                },
+                {
+                  "description": "Repaired building at 11:53",
+                },
+                {
+                  "description": "Repaired building at 14:25",
+                },
+              ],
+            },
+            "title": "repair_building",
+            "value": 22,
+            "weapon_summary": {
+              "0": "22 (100%)",
+            },
+          },
+          "upgrade_building": {
+            "description": "Upgraded buildings",
+            "details": {
+              "Dampster*": [
+                {
+                  "description": "Upgraded to level 2 at 00:26",
+                },
+                {
+                  "description": "Upgraded to level 2 at 01:22",
+                },
+                {
+                  "description": "Upgraded to level 3 at 01:24",
+                },
+                {
+                  "description": "Upgraded to level 2 at 01:49",
+                },
+                {
+                  "description": "Upgraded to level 2 at 02:55",
+                },
+                {
+                  "description": "Upgraded to level 3 at 03:05",
+                },
+                {
+                  "description": "Upgraded to level 2 at 04:55",
+                },
+                {
+                  "description": "Upgraded to level 3 at 05:06",
+                },
+                {
+                  "description": "Upgraded to level 2 at 07:09",
+                },
+                {
+                  "description": "Upgraded to level 2 at 09:05",
+                },
+                {
+                  "description": "Upgraded to level 2 at 10:19",
+                },
+                {
+                  "description": "Upgraded to level 3 at 10:26",
+                },
+                {
+                  "description": "Upgraded to level 2 at 11:17",
+                },
+                {
+                  "description": "Upgraded to level 3 at 11:25",
+                },
+                {
+                  "description": "Upgraded to level 2 at 13:25",
+                },
+                {
+                  "description": "Upgraded to level 3 at 13:32",
+                },
+                {
+                  "description": "Upgraded to level 2 at 13:49",
+                },
+                {
+                  "description": "Upgraded to level 3 at 13:56",
+                },
+              ],
+            },
+            "title": "upgrade_building",
+            "value": 18,
+            "weapon_summary": {
+              "0": "18 (100%)",
+            },
           },
         },
         "classes": [
@@ -11965,6 +16098,44 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "15": "11 (39%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Cheese": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Cheese at 05:44",
+                  "weapon": 15,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Cheese at 09:06",
+                  "weapon": 15,
+                },
+              ],
+              "JaNordy-TPF-TFC-NEW-NEW": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier JaNordy-TPF-TFC-NEW-NEW at 02:41",
+                  "weapon": 11,
+                },
+              ],
+              "karms": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier karms at 08:33",
+                  "weapon": 1,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 4,
+            "weapon_summary": {
+              "1": "1 (25%)",
+              "11": "1 (25%)",
+              "15": "2 (50%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {},
@@ -12005,6 +16176,7 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 15.6,
         "name": "Dampster*",
         "objectives": {
           "flag_time_in_seconds": {
@@ -12024,6 +16196,26 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
         "round_number": 0,
         "steamID": "0:1:206377",
         "team": 2,
+        "weaponStats": {
+          "infectee": {
+            "description": "Infections received",
+            "details": {
+              "karms": [
+                {
+                  "description": "Infected by karms at 11:39",
+                },
+                {
+                  "description": "Infected by karms at 13:18",
+                },
+              ],
+            },
+            "title": "infectee",
+            "value": 2,
+            "weapon_summary": {
+              "0": "2 (100%)",
+            },
+          },
+        },
       },
       {
         "classes": [
@@ -12513,6 +16705,36 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
               "12": "24 (67%)",
             },
           },
+          "kill_flag_carrier": {
+            "description": "Flag carrier kills",
+            "details": {
+              "Cheese": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier Cheese at 03:21",
+                  "weapon": 12,
+                },
+              ],
+              "johnbest": [
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier johnbest at 00:56",
+                  "weapon": 12,
+                },
+                {
+                  "cssClassToAdd": "weapon-highlight-good",
+                  "description": "Killed flag carrier johnbest at 02:28",
+                  "weapon": 11,
+                },
+              ],
+            },
+            "title": "kill_flag_carrier",
+            "value": 3,
+            "weapon_summary": {
+              "11": "1 (33%)",
+              "12": "2 (67%)",
+            },
+          },
           "kill_while_conced": {
             "description": "Enemy kills while conced",
             "details": {
@@ -12590,6 +16812,7 @@ exports[`Player stats - schtop match > per-player stats for round 2 1`] = `
             },
           },
         },
+        "mvp_score": 18.2,
         "name": "Death",
         "objectives": {
           "flag_time_in_seconds": {

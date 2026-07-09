@@ -20,6 +20,7 @@ export default async function(
     templates?: HampalyzerTemplates,
     database?: DB,
     logId?: number,
+    summaryOnly?: boolean,
 ): Promise<ParseResponse> {
 
     const useDB = !!database;
@@ -98,7 +99,7 @@ export default async function(
             date: allStats.stats[0]!.date,
             time: allStats.stats[0]!.time,
             players: allStats.players,
-            damage_stats_exist: allStats.stats[0]!.damage_stats_exist
+            stats_available: allStats.stats[0]!.stats_available
         };
 
         // assemble every players' stats
@@ -127,13 +128,25 @@ export default async function(
         
         // if everything is successful up to this point, log into the database as a transaction
         if (useDB) {
-            dbSuccess = await database.matchTransaction(
-                allStats,
-                matchMeta,
-                playersStats,
-                flagPaceChartMarkup,
-                logId
-            );
+            if (summaryOnly && logId) {
+                // Summary-only reparse: update existing JSON without re-inserting events/rounds
+                const playerMapping = await database.ensurePlayersPublic(allStats.rawStats.players);
+                dbSuccess = await database.updateLogJsons(
+                    logId,
+                    allStats,
+                    playersStats,
+                    flagPaceChartMarkup,
+                    playerMapping,
+                );
+            } else {
+                dbSuccess = await database.matchTransaction(
+                    allStats,
+                    matchMeta,
+                    playersStats,
+                    flagPaceChartMarkup,
+                    logId
+                );
+            }
         }
         // Use "old" templates if running in non-database mode.
         else {

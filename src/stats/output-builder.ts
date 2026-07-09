@@ -98,7 +98,10 @@ export function generateOutputStats(
             flag_movements: roundState.teamFlagMovements,
             game_time_as_seconds: matchEndEvent.gameTimeAsSeconds ? matchEndEvent.gameTimeAsSeconds : 0,
         },
-        damage_stats_exist: damageStatsExist,
+        stats_available: {
+            damage_stats: damageStatsExist,
+            mvp_stats: true,
+        },
     };
 }
 
@@ -137,6 +140,14 @@ export function generateOutputTeamsStatsDetailed(
                             "kill_while_conced",
                             statEvents.filter(ev => ev.whileConced === true),
                             "Enemy kills while conced",
+                        );
+                        hydrateStat(
+                            poStats,
+                            thisPlayer,
+                            "kills",
+                            "kill_flag_carrier",
+                            statEvents.filter(ev => ev.playerToWasCarryingFlag === true),
+                            "Flag carrier kills",
                         );
                         break;
                     case "team_kill":
@@ -180,6 +191,36 @@ export function generateOutputTeamsStatsDetailed(
                         break;
                     case "build_sg":
                         hydrateStat(poStats, thisPlayer, "buildables", "build_sg", statEvents, "Built sentry guns");
+                        break;
+                    case "build_tele":
+                        hydrateStat(poStats, thisPlayer, "buildables", "build_tele", statEvents, "Built teleporters");
+                        break;
+                    case "repair_building":
+                        hydrateStat(poStats, thisPlayer, "buildables", "repair_building", statEvents, "Repaired buildings");
+                        break;
+                    case "upgrade_building":
+                        hydrateStat(poStats, thisPlayer, "buildables", "upgrade_building", statEvents, "Upgraded buildings");
+                        break;
+                    case "det_building":
+                        hydrateStat(poStats, thisPlayer, "buildables", "det_building", statEvents, "Detonated buildings");
+                        break;
+                    case "healer":
+                        hydrateStat(poStats, thisPlayer, "weaponStats", "healer", statEvents, "Heals given");
+                        break;
+                    case "healee":
+                        hydrateStat(poStats, thisPlayer, "weaponStats", "healee", statEvents, "Heals received");
+                        break;
+                    case "infecter":
+                        hydrateStat(poStats, thisPlayer, "weaponStats", "infecter", statEvents, "Infections given");
+                        break;
+                    case "infectee":
+                        hydrateStat(poStats, thisPlayer, "weaponStats", "infectee", statEvents, "Infections received");
+                        break;
+                    case "pass_infecter":
+                        hydrateStat(poStats, thisPlayer, "weaponStats", "pass_infecter", statEvents, "Passed infections");
+                        break;
+                    case "pass_infectee":
+                        hydrateStat(poStats, thisPlayer, "weaponStats", "pass_infectee", statEvents, "Received passed infections");
                         break;
                     case "damager":
                         hydrateStat(poStats, thisPlayer, "damage", "to_enemies", statEvents, "Damage dealt to enemies");
@@ -398,6 +439,10 @@ export function generateStatDetails(player: Player, category: string, stat: Gene
                     return generateFacetedStats(stat.events!, e =>
                         `Killed ${e.playerToWasCarryingFlag ? "flag carrier " : ""}${e.playerTo?.name} while conced at ${getTime(e)}`,
                     true);
+                case "kill_flag_carrier":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Killed flag carrier ${e.playerTo?.name} at ${getTime(e)}`,
+                    true);
                 case "teamkill":
                     return generateFacetedStats(stat.events!, e =>
                         `Team killed ${e.playerToWasCarryingFlag ? "flag carrier " : ""}${e.playerTo?.name} at ${getTime(e)}`,
@@ -434,14 +479,111 @@ export function generateStatDetails(player: Player, category: string, stat: Gene
                     return generateFacetedStats(stat.events!, e =>
                         `Airshoted ${e.playerToWasCarryingFlag ? "while carrying flag " : ""}by ${e.playerFrom?.name} at ${getTime(e)} (${e.data?.value} meters)`,
                     );
+                case "healer":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Healed ${e.playerTo?.name} at ${getTime(e)}`,
+                    true);
+                case "healee":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Healed by ${e.playerFrom?.name} at ${getTime(e)}`,
+                    );
+                case "infecter":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Infected ${e.playerTo?.name} at ${getTime(e)}`,
+                    true);
+                case "infectee":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Infected by ${e.playerFrom?.name} at ${getTime(e)}`,
+                    );
+                case "pass_infecter":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Passed infection to ${e.playerTo?.name} at ${getTime(e)}`,
+                    true);
+                case "pass_infectee":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Received passed infection from ${e.playerFrom?.name} at ${getTime(e)}`,
+                    );
+                case "concs":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Conc jumped at ${getTime(e)}`,
+                    );
                 default:
                     console.log(`generateStatDetails: not implemented: weaponStats > ${stat.title}`);
+            }
+            break;
+        case "objectives":
+            switch (stat.title) {
+                case "flag_touch":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Picked up flag at ${getTime(e)}`,
+                    );
+                case "flag_capture":
+                case "flag_capture_bonus":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Captured flag at ${getTime(e)}`,
+                    );
+                case "button":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Got button at ${getTime(e)}`,
+                    );
+                case "det_entrance":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Opened det entrance at ${getTime(e)}`,
+                    );
+                default:
+                    break;
+            }
+            break;
+        case "buildables":
+            switch (stat.title) {
+                case "build_sg":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Built sentry gun at ${getTime(e)}`,
+                    );
+                case "build_disp":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Built dispenser at ${getTime(e)}`,
+                    );
+                case "build_tele":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Built teleporter at ${getTime(e)}`,
+                    );
+                case "repair_building":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Repaired building at ${getTime(e)}`,
+                    );
+                case "upgrade_building":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Upgraded to level ${e.data?.level ?? '?'} at ${getTime(e)}`,
+                    );
+                case "det_building":
+                    return generateFacetedStats(stat.events!, e =>
+                        `Detonated ${getBuildingName(e.data?.building)} at ${getTime(e)}`,
+                    );
+                default:
+                    break;
             }
             break;
         case "damage":
             break;
         default:
             console.log(`generateStatDetails: not implemented: ${category} > ${stat.title}`);
+    }
+}
+
+function getBuildingName(building?: Weapon): string {
+    switch (building) {
+        case Weapon.SentryGun:
+        case Weapon.BuildingSentryGun:
+            return "sentry gun";
+        case Weapon.BuildingDispenser:
+            return "dispenser";
+        case Weapon.BuildingTeleporter:
+        case Weapon.BuildingTeleporterEntrance:
+        case Weapon.BuildingTeleporterExit:
+            return "teleporter";
+        default:
+            return "building";
     }
 }
 

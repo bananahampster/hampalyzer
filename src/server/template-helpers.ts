@@ -93,6 +93,12 @@ export default class TemplateUtils {
             return JSON.stringify(context);
         });
 
+        // temporary: OR subexpression helper for backward compat with old data
+        Handlebars.registerHelper('or', function(...args: unknown[]) {
+            args.pop(); // remove Handlebars options argument
+            return args.some(Boolean);
+        });
+
         // team composition
         Handlebars.registerHelper('playerList', function(this: OutputPlayer[], teamId?: string) {
             const players = this.map(player => {
