@@ -234,6 +234,7 @@ export interface DefenseTeamStats extends ITeamStats {
     teamRole: TeamRole.Defense;
     team: number;
     airshots: number;
+    fc_kills: number;
 }
 
 export interface OtherTeamStats extends ITeamStats {

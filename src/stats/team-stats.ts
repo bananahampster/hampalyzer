@@ -91,6 +91,7 @@ export function generateTeamRoleComparison(stats: [OutputStats, OutputStats]): T
         damage_enemy: defenseTeams[1].damage_enemy - defenseTeams[0].damage_enemy,
         damage_team: defenseTeams[1].damage_team - defenseTeams[0].damage_team,
         airshots: defenseTeams[1].airshots - defenseTeams[0].airshots,
+        fc_kills: defenseTeams[1].fc_kills - defenseTeams[0].fc_kills,
     };
 
     return [offenseDiff, defenseDiff];

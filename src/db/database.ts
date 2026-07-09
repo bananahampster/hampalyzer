@@ -424,6 +424,17 @@ export class DB {
             return result[0]!;
     }
 
+    /** Gets a single log's reparse metadata by its parsed log name */
+    public async getReparseLogByName(logName: string): Promise<ReparseMetadata | undefined> {
+        const result = await this.query<ReparseMetadata>(
+            'SELECT id, log_file1, log_file2 FROM logs WHERE parsedlog = $1',
+            logName,
+        );
+
+        if (result.length === 1)
+            return result[0];
+    }
+
     /** Gets all the logs to reparse on server start */
     public async getReparseLogs(reparseType: ReparseType = ReparseType.ReparseNew): Promise<ReparseMetadata[]> {
         switch (reparseType) {
@@ -736,14 +747,8 @@ export class DB {
         try {
             await client.query('BEGIN');
 
-            // Update game summary
-            const summary = DB.cleanUpSummary(parsedStats, chartMarkup);
-            await client.query(
-                'UPDATE parsedgames SET summary = $1 WHERE logId = $2',
-                [summary, logId],
-            );
-
             // Delete and re-insert player summaries (simpler than matching per-player)
+            // NOTE: must happen BEFORE cleanUpSummary, which mutates shared stat objects in-place
             await client.query(
                 'DELETE FROM parsedgameplayers WHERE logId = $1',
                 [logId],
@@ -762,6 +767,13 @@ export class DB {
                     [logId, playerId, playerStats],
                 );
             }
+
+            // Update game summary (cleanUpSummary strips detailed stats via mutation)
+            const summary = DB.cleanUpSummary(parsedStats, chartMarkup);
+            await client.query(
+                'UPDATE parsedgames SET summary = $1 WHERE logId = $2',
+                [summary, logId],
+            );
 
             await client.query('COMMIT');
         }

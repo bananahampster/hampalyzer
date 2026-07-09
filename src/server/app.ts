@@ -234,7 +234,7 @@ class App {
                         else {
                             res.render(
                                 'game', 
-                                { ...summary, baseUrl }
+                                { ...summary, baseUrl, log_name }
                             );
                         }                        
                     })
@@ -256,6 +256,30 @@ class App {
                         }        
                     })
                     .catch((e) => res.status(500).json({ error: `Server had an internal error: ${e.name}.` }));
+            }
+        });
+
+        router.post('/reparse/:log_name', async (req, res) => {
+            const { log_name } = req.params;
+            const game = await this.database.getReparseLogByName(log_name);
+
+            if (!game) {
+                res.status(404).json({ error: "Log not found." });
+                return;
+            }
+
+            const filenames: string[] = [game.log_file1];
+            if (game.log_file2 != null && game.log_file2 !== "") {
+                filenames.push(game.log_file2);
+            }
+
+            console.warn(`Reparsing single log: ${log_name} (${filenames.join(" + ")})`);
+
+            const parsedLog = await this.parseLogs(filenames, { logId: game.id, skipValidation: false, summaryOnly: true });
+            if (parsedLog.success) {
+                res.redirect(`/parsedlogs/${log_name}/`);
+            } else {
+                res.status(500).json({ error: `Reparse failed: ${parsedLog.error_reason} - ${parsedLog.message}` });
             }
         });
 

@@ -306,6 +306,7 @@ function generateOutputTeamStatsDetail(teamPlayers: PlayerOutputStatsRound[], te
                 break;
             case TeamRole.Defense:
                 aggregatedStats.airshots += getSummarizedStat(player, "weaponStats", "airshot");
+                aggregatedStats.fc_kills += getSummarizedStat(player, "kills", "kill_flag_carrier");
                 break;
         }
 
@@ -679,6 +680,7 @@ function blankTeamStats(teamRole: TeamRole = TeamRole.Unknown): TeamStats {
             break;
         case TeamRole.Defense:
             blankStats.airshots = 0;
+            blankStats.fc_kills = 0;
             break;
     }
 

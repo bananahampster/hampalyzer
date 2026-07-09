@@ -139,13 +139,15 @@ export default class TemplateUtils {
                 </tr>`;
         });
 
-        Handlebars.registerHelper('defenseSummary', function(this: DefenseTeamStats, damageStatsExist: boolean, teamId: string, players?: OutputPlayer[]) {
+        Handlebars.registerHelper('defenseSummary', function(this: DefenseTeamStats, damageStatsExist: boolean, mvpStatsExist: boolean, teamId: string, players?: OutputPlayer[]) {
             const isComparison = teamId === 'Comp'; // first parameter can sometimes be object??
             return `
                 <tr ${isComparison && 'class="comp"'}>
                     <td class="team">${TemplateUtils.getTeamName(teamId, players)}</td>
                     ${TemplateUtils.getRow(this.frags, isComparison, "kills-total")}
-                    ${TemplateUtils.getRow(this.kills, isComparison, "kills")}
+                    ${TemplateUtils.getRow(this.kills, isComparison, "kills")}` +
+                    (mvpStatsExist ? `
+                    ${TemplateUtils.getRow(this.fc_kills, isComparison, "flag-kills")}` : "") + `
                     ${TemplateUtils.getRow(this.team_kills, isComparison, "team-kills")}
                     ${TemplateUtils.getRow(this.conc_kills, isComparison, "conc-kills")}` +
                     (damageStatsExist ? `
